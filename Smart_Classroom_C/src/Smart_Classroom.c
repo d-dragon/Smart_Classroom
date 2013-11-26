@@ -15,7 +15,8 @@
 #define OFF 5
 
 //Declare MODE comparison String
-const char sta[4] = "STA", aut[4] = "AUT", pre[4] = "PRE", man[4] = "MAN", off[4] = "OFF";
+const char sta[4] = "STA", aut[4] = "AUT", pre[4] = "PRE", man[4] = "MAN",
+		off[4] = "OFF";
 
 int set_Mode(char[]);
 
@@ -66,53 +67,63 @@ int main(void) {
 				case START:
 					send(new_fd, "START\n", sizeof "START", 0);
 					printf("START\n");
-					bzero(buf,sizeof buf);
+					bzero(buf, sizeof buf);
 					break;
 				case AUTO:
 					send(new_fd, "AUTO\n", sizeof "AUTO", 0);
 					printf("AUTO\n");
-					bzero(buf,sizeof buf);
+					bzero(buf, sizeof buf);
 					break;
 				case PRESENTATION:
 					send(new_fd, "PRESENTATION\n", sizeof "PRESENTATION", 0);
 					printf("PRESENTATION\n");
-					bzero(buf,sizeof buf);
+					bzero(buf, sizeof buf);
 					break;
 				case MANUAL:
 					send(new_fd, "MANUAL\n", sizeof "MANUAL", 0);
 					printf("MANUAL\n");
-					bzero(buf,sizeof buf);
-					while (flagMan){
+					bzero(buf, sizeof buf);
+					while (flagMan) {
 						unsigned int temp;
 						printf("Proccessing in Manual Mode\n");
-						numRead = read(new_fd,buf, sizeof buf);
+						numRead = read(new_fd, buf, sizeof buf);
 						temp = set_Mode(buf);
-						if (temp == START || temp == PRESENTATION ||temp == AUTO || temp ==OFF ){
+						if (temp == START || temp == PRESENTATION
+								|| temp == AUTO || temp == OFF) {
 							flagMan = 0;
 							printf("Change Mode\n");
-							switch(temp){
+							switch (temp) {
 							case START:
-								buf[256] = "STA";
+								send(new_fd, "START\n", sizeof "START", 0);
+								printf("START\n");
+								bzero(buf, sizeof buf);
 								break;
 							case PRESENTATION:
-								buf[256] = "PRE";
+								send(new_fd, "PRESENTATION\n",
+										sizeof "PRESENTATION", 0);
+								printf("PRESENTATION\n");
+								bzero(buf, sizeof buf);
 								break;
 							case AUTO:
-								buf[256] = "AUT";
+								send(new_fd, "AUTO\n", sizeof "AUTO", 0);
+								printf("AUTO\n");
+								bzero(buf, sizeof buf);
 								break;
 							case OFF:
-								buf[256] = "OFF";
+								send(new_fd, "OFF\n", sizeof "OFF", 0);
+								printf("OFF\n");
+								bzero(buf, sizeof buf);
 								break;
 							}
-						}else{
-							printf("%s\n",buf);
+						} else {
+							printf("%s\n", buf);
 						}
 					}
 					break;
 				case OFF:
 					send(new_fd, "OFF\n", sizeof "OFF", 0);
 					printf("OFF\n");
-					bzero(buf,sizeof buf);
+					bzero(buf, sizeof buf);
 					break;
 				}
 				/*if (buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i'
