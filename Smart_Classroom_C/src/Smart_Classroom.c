@@ -87,6 +87,14 @@ int main(void) {
 						unsigned int temp;
 						printf("Proccessing in Manual Mode\n");
 						numRead = read(new_fd, buf, sizeof buf);
+						if (numRead < 0) {
+							perror("Receive Error");
+						} else if (numRead == 0) {
+							close(new_fd);
+							exit(0);
+						} else {
+							printf("Data received: %s", buf);
+						}
 						temp = set_Mode(buf);
 						if (temp == START || temp == PRESENTATION
 								|| temp == AUTO || temp == OFF) {
