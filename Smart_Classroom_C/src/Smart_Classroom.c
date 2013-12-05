@@ -27,13 +27,13 @@ int main(void) {
 	init_Network();
 	get_Hostname();
 
-	addinfo = getnameinfo(servinfo->ai_addr, sizeof servinfo->ai_addr, host,
-			sizeof host, service, sizeof service, 0);
-	if (addinfo == 0) {
-		perror("getnameinfo");
-	} else {
-		printf("Service:%s\n", service);
-	}
+	/*addinfo = getnameinfo(servinfo->ai_addr, sizeof servinfo->ai_addr, host,
+	 sizeof host, service, sizeof service, 0);
+	 if (addinfo == 0) {
+	 perror("getnameinfo");
+	 } else {
+	 printf("Service:%s\n", service);
+	 }*/
 
 	while (1) { // main accept() loop
 		sin_size = sizeof their_addr;
@@ -49,7 +49,9 @@ int main(void) {
 				inet_ntoa(their_addr.sin_addr));
 		send(new_fd, "Hello Client\n", 14, 0);
 		gpio_export(60);
+		gpio_export(48);
 		gpio_set_dir(60, OUTPUT_PIN);
+		gpio_set_dir(48, OUTPUT_PIN);
 		if (!fork()) { // this is the child process
 			while (1) {
 				int flagMan = 1;
@@ -67,16 +69,29 @@ int main(void) {
 				case START:
 					send(new_fd, "START\n", sizeof "START", 0);
 					printf("START\n");
+
+					gpio_set_value(60, LOW);
+					usleep(10000);
+					gpio_set_value(48, LOW);
+					usleep(10000);
 					bzero(buf, sizeof buf);
 					break;
 				case AUTO:
 					send(new_fd, "AUTO\n", sizeof "AUTO", 0);
 					printf("AUTO\n");
+					gpio_set_value(60, HIGH);
+					usleep(10000);
+					gpio_set_value(48, LOW);
+					usleep(10000);
 					bzero(buf, sizeof buf);
 					break;
 				case PRESENTATION:
 					send(new_fd, "PRESENTATION\n", sizeof "PRESENTATION", 0);
 					printf("PRESENTATION\n");
+					gpio_set_value(60, LOW);
+					usleep(10000);
+					gpio_set_value(48, HIGH);
+					usleep(10000);
 					bzero(buf, sizeof buf);
 					break;
 				case MANUAL:
@@ -131,6 +146,10 @@ int main(void) {
 				case OFF:
 					send(new_fd, "OFF\n", sizeof "OFF", 0);
 					printf("OFF\n");
+					gpio_set_value(60, HIGH);
+					usleep(10000);
+					gpio_set_value(48, HIGH);
+					usleep(10000);
 					bzero(buf, sizeof buf);
 					break;
 				}
