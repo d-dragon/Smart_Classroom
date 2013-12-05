@@ -11,8 +11,9 @@ import android.widget.Button;
 
 public class loading_Activity extends Activity implements OnClickListener {
 
-    private final int WAIT_TIME = 5000;
+    private final int WAIT_TIME = 1000;
     private Socket_ini connector;
+    private Socket_UDP conSocket_UDP;
     private shareNetwork shared;
     private Button btnConnect;
     
@@ -28,7 +29,9 @@ public class loading_Activity extends Activity implements OnClickListener {
 		//findViewById(R.id.mainSpinner1).setVisibility(View.VISIBLE);
 		
 		shared = (shareNetwork) getApplicationContext();
-		connector = shared.getNetworkInstance();
+		connector = shared.getNetworkSocket_TCP();
+		conSocket_UDP = shared.getNetworkInSocket_UDP();
+		conSocket_UDP.start();
 		connector.connectToNetwork();
 	
 		new Handler().postDelayed(new Runnable(){ 
@@ -70,7 +73,7 @@ public class loading_Activity extends Activity implements OnClickListener {
 					
 					//Simulating a long running task
 			        try {
-						Thread.sleep(5000);
+						Thread.sleep(1000);
 					} 
 			        catch (InterruptedException e) {
 						e.printStackTrace();

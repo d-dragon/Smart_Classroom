@@ -27,7 +27,7 @@ public class Main extends Activity implements OnClickListener {
 		setContentView(R.layout.main);
 
 		shared = (shareNetwork) getApplicationContext();
-		connector = shared.getNetworkInstance();
+		connector = shared.getNetworkSocket_TCP();
 		btStart = (Button) findViewById(R.id.btStart);
 		btStart.setOnClickListener(this);
 		btAuto = (Button) findViewById(R.id.btAuto);

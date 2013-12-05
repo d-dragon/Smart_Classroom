@@ -11,6 +11,7 @@ import android.util.Log;
 public class loading_Task extends AsyncTask<String, Integer, Integer> {
 	
 	private Socket_ini connector;
+	private Socket_UDP conSocket_UDP;
     private shareNetwork shared;
 	public interface LoadingTaskFinishedListener {
 		void onTaskFinished(); // If you want to pass something back to the listener add a param to this method
@@ -32,7 +33,8 @@ public class loading_Task extends AsyncTask<String, Integer, Integer> {
 		this.finishedListener = finishedListener;
 		
 		shared = (shareNetwork) c;
-		connector = shared.getNetworkInstance();
+		connector = shared.getNetworkSocket_TCP();
+		conSocket_UDP = shared.getNetworkInSocket_UDP();
 	}
 
 	@Override
