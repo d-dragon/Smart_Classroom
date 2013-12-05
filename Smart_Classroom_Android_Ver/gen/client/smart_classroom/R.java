@@ -33,26 +33,24 @@ public final class R {
         public static final int logo=0x7f020002;
     }
     public static final class id {
-        public static final int action_settings=0x7f090013;
-        public static final int btAuto=0x7f09000a;
-        public static final int btEqu=0x7f090010;
-        public static final int btMan=0x7f09000d;
-        public static final int btOff=0x7f09000c;
-        public static final int btP1=0x7f090003;
-        public static final int btPre=0x7f09000b;
-        public static final int btPro=0x7f090012;
-        public static final int btStart=0x7f090009;
-        public static final int btnC=0x7f090005;
+        public static final int action_settings=0x7f090011;
+        public static final int btAuto=0x7f090008;
+        public static final int btEqu=0x7f09000e;
+        public static final int btMan=0x7f09000b;
+        public static final int btOff=0x7f09000a;
+        public static final int btP1=0x7f090002;
+        public static final int btPre=0x7f090009;
+        public static final int btPro=0x7f090010;
+        public static final int btStart=0x7f090007;
+        public static final int btnC=0x7f090003;
         public static final int etIP=0x7f090000;
         public static final int etPort=0x7f090001;
-        public static final int pbLoading=0x7f090004;
-        public static final int tab1=0x7f09000f;
-        public static final int tab2=0x7f090011;
-        public static final int tabHost=0x7f09000e;
-        public static final int tv1=0x7f090006;
-        public static final int tvLight=0x7f090008;
-        public static final int tvSplash=0x7f090002;
-        public static final int tvTemp=0x7f090007;
+        public static final int tab1=0x7f09000d;
+        public static final int tab2=0x7f09000f;
+        public static final int tabHost=0x7f09000c;
+        public static final int tv1=0x7f090004;
+        public static final int tvLight=0x7f090006;
+        public static final int tvTemp=0x7f090005;
     }
     public static final class layout {
         public static final int loading=0x7f030000;

@@ -20,14 +20,14 @@
         android:inputType="numberDecimal" >
     </EditText>
 
-    <TextView
+   <!--  <TextView
         android:id="@+id/tvSplash"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/pleasewait"
         android:textColor="#000000" >
-    </TextView>
+    </TextView> -->
 
     <Button
         android:id="@+id/btP1"
@@ -38,14 +38,14 @@
         android:textSize="16sp" >
     </Button>
 
-    <ProgressBar
+   <!--  <ProgressBar
         android:id="@+id/pbLoading"
         style="?android:attr/progressBarStyleInverse"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:indeterminate="true" >
-    </ProgressBar>
+    </ProgressBar> -->
 
     <Button
         android:id="@+id/btnC"

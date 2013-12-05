@@ -19,21 +19,21 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class Splashctivity extends Activity implements
-		LoadingTaskFinishedListener, OnClickListener {
+public class Splashctivity extends Activity implements OnClickListener {
 
 	private Socket_ini connector;
 	private Socket_UDP conSocket_UDP = null;
 	private shareNetwork shared;
 	private Button btnConnect, btP1;
-	private ProgressBar pb;
-	private TextView tv;
+	// private ProgressBar pb;
+	// private TextView tv;
 
 	final String P1 = "P1";
+	private static final int WAIT_TIME = 1000;
 
 	public EditText etIP, etPort;
 	public String IP = " ";
-	public int Port = 0;
+	public int Port = 1991;
 
 	// Debugging
 	private static final String TAG = "BcastChat";
@@ -59,7 +59,7 @@ public class Splashctivity extends Activity implements
 			case MESSAGE_READ:
 				String readBuf = (String) msg.obj;
 				IP = readBuf;
-				etIP.setText(IP);
+				// etIP.setText(IP);
 				etPort.setText("1991");
 				break;
 			case MESSAGE_TOAST:
@@ -89,12 +89,12 @@ public class Splashctivity extends Activity implements
 
 		btnConnect = (Button) findViewById(R.id.btnC);
 		btnConnect.setOnClickListener(this);
-		btnConnect.setVisibility(View.INVISIBLE);
+		btnConnect.setVisibility(View.VISIBLE);
 
-		pb = (ProgressBar) findViewById(R.id.pbLoading);
+		// pb = (ProgressBar) findViewById(R.id.pbLoading);
 
-		tv = (TextView) findViewById(R.id.tvSplash);
-		new loading_Task(this, getApplicationContext()).execute("abc");
+		// tv = (TextView) findViewById(R.id.tvSplash);
+		// new loading_Task(this, getApplicationContext()).execute("abc");
 
 		// Pass in whatever you need a url is just an example we don't use it in
 		// this tutorial
@@ -106,6 +106,7 @@ public class Splashctivity extends Activity implements
 					.permitAll().build();
 			StrictMode.setThreadPolicy(policy);
 		}
+
 	}
 
 	public void onStart() {
@@ -145,37 +146,30 @@ public class Splashctivity extends Activity implements
 	}
 
 	// This is the callback for when your async task has finished
-	@Override
-	public void onTaskFinished() {
-		completeSplash();
-	}
+	/*
+	 * @Override public void onTaskFinished() { completeSplash(); }
+	 * 
+	 * private void completeSplash() { if (connector.ismIsConnected()) {
+	 * startApp(); finish(); // Don't forget to finish this Splash Activity so
+	 * the user // can't return to it! } else {
+	 * Toast.makeText(getApplicationContext(),
+	 * "Connection Fail! Please press 'Connect' again",
+	 * Toast.LENGTH_SHORT).show(); pb.setVisibility(View.INVISIBLE);
+	 * btnConnect.setVisibility(View.VISIBLE); tv.setVisibility(View.INVISIBLE);
+	 * } }
+	 */
 
-	private void completeSplash() {
-		if (connector.ismIsConnected()) {
-			startApp();
-			finish(); // Don't forget to finish this Splash Activity so the user
-						// can't return to it!
-		} else {
-			Toast.makeText(getApplicationContext(),
-					"Connection Fail! Please press 'Connect' again",
-					Toast.LENGTH_SHORT).show();
-			pb.setVisibility(View.INVISIBLE);
-			btnConnect.setVisibility(View.VISIBLE);
-			tv.setVisibility(View.INVISIBLE);
-		}
-	}
-
-	private void startApp() {
-		Intent intent = new Intent(Splashctivity.this, Main.class);// MainActivity.class
-		startActivity(intent);
-	}
+	/*
+	 * private void startApp() { Intent intent = new Intent(Splashctivity.this,
+	 * Main.class);// MainActivity.class startActivity(intent); }
+	 */
 
 	@Override
 	public void onClick(View v) {
 
 		switch (v.getId()) {
 		case R.id.btnC:
-			IP = etIP.getText().toString();
+			// IP = etIP.getText().toString();
 			try {
 				Port = Integer.parseInt(etPort.getText().toString());
 			} catch (NumberFormatException e) {
@@ -186,10 +180,36 @@ public class Splashctivity extends Activity implements
 			}
 			connector.setIp(IP);
 			connector.setPort(Port);
-			pb.setVisibility(View.VISIBLE);
-			tv.setVisibility(View.VISIBLE);
+			// pb.setVisibility(View.VISIBLE);
+			// tv.setVisibility(View.VISIBLE);
 			btnConnect.setVisibility(View.INVISIBLE);
 			connector.connectToNetwork();
+			new Handler().postDelayed(new Runnable() {
+				@Override
+				public void run() {
+
+					// Simulating a long running task
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+
+					/*
+					 * Create an Intent that will start the
+					 * ProfileData-Activity.
+					 */
+
+				}
+			}, WAIT_TIME);
+			if (connector.ismIsConnected()) {
+				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
+				Splashctivity.this.startActivity(mainIntent);
+				Splashctivity.this.finish();
+			} else {
+				btnConnect.setVisibility(View.VISIBLE);
+
+			}
 
 			break;
 		case R.id.btP1:
@@ -200,7 +220,6 @@ public class Splashctivity extends Activity implements
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			etIP.setText(IP);
 
 			break;
 		}
