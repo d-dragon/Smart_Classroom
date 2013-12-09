@@ -4,6 +4,7 @@ import client.smart_classroom.R;
 import client.smart_classroom.loading_Task.LoadingTaskFinishedListener;
 import network.Socket_ini.*;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,8 +16,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class Splashctivity extends Activity implements OnClickListener {
@@ -29,11 +28,10 @@ public class Splashctivity extends Activity implements OnClickListener {
 	// private TextView tv;
 
 	final String P1 = "P1";
-	private static final int WAIT_TIME = 1000;
 
 	public EditText etIP, etPort;
-	public String IP = " ";
-	public int Port = 1991;
+	public String IP = "", readBuf;
+	public int Port = 1991, temp;
 
 	// Debugging
 	private static final String TAG = "BcastChat";
@@ -47,7 +45,8 @@ public class Splashctivity extends Activity implements OnClickListener {
 	public static final String TOAST = "toast";
 
 	// The Handler that gets information back from the BluetoothChatService
-	private final Handler mHandler = new Handler() {
+	@SuppressLint("HandlerLeak")
+	public final Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 
@@ -57,9 +56,11 @@ public class Splashctivity extends Activity implements OnClickListener {
 			switch (msg.what) {
 
 			case MESSAGE_READ:
-				String readBuf = (String) msg.obj;
-				IP = readBuf;
-				// etIP.setText(IP);
+				readBuf = (String) msg.obj.toString();
+				IP = readBuf.trim();
+//				temp = IP.length();
+				
+				etIP.setText(IP);
 				etPort.setText("1991");
 				break;
 			case MESSAGE_TOAST:
@@ -90,6 +91,14 @@ public class Splashctivity extends Activity implements OnClickListener {
 		btnConnect = (Button) findViewById(R.id.btnC);
 		btnConnect.setOnClickListener(this);
 		btnConnect.setVisibility(View.VISIBLE);
+		/**
+		 * Disable StrictMode
+		 */
+		if (android.os.Build.VERSION.SDK_INT > 9) {
+			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+					.permitNetwork().build();
+			StrictMode.setThreadPolicy(policy);
+		}
 
 		// pb = (ProgressBar) findViewById(R.id.pbLoading);
 
@@ -98,14 +107,6 @@ public class Splashctivity extends Activity implements OnClickListener {
 
 		// Pass in whatever you need a url is just an example we don't use it in
 		// this tutorial
-		/**
-		 * Disable StrictMode
-		 */
-		if (android.os.Build.VERSION.SDK_INT > 9) {
-			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-					.permitAll().build();
-			StrictMode.setThreadPolicy(policy);
-		}
 
 	}
 
@@ -169,7 +170,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 
 		switch (v.getId()) {
 		case R.id.btnC:
-			// IP = etIP.getText().toString();
+			IP = etIP.getText().toString();
 			try {
 				Port = Integer.parseInt(etPort.getText().toString());
 			} catch (NumberFormatException e) {
@@ -184,36 +185,18 @@ public class Splashctivity extends Activity implements OnClickListener {
 			// tv.setVisibility(View.VISIBLE);
 			btnConnect.setVisibility(View.INVISIBLE);
 			connector.connectToNetwork();
-			new Handler().postDelayed(new Runnable() {
-				@Override
-				public void run() {
-
-					// Simulating a long running task
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-
-					/*
-					 * Create an Intent that will start the
-					 * ProfileData-Activity.
-					 */
-
-				}
-			}, WAIT_TIME);
-			if (connector.ismIsConnected()) {
+//			if (connector.ismIsConnected()) {
 				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
 				Splashctivity.this.startActivity(mainIntent);
 				Splashctivity.this.finish();
-			} else {
-				btnConnect.setVisibility(View.VISIBLE);
+//			} else {
+//				btnConnect.setVisibility(View.VISIBLE);
 
-			}
+//			}
 
 			break;
 		case R.id.btP1:
-
+			
 			try {
 				sendMessage(P1);
 			} catch (Exception e) {
