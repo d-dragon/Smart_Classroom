@@ -73,7 +73,8 @@ src/Smart_Classroom.d: ../src/Smart_Classroom.c ../src/GPIO.h \
  /usr/arm-linux-gnueabi/include/sys/ucontext.h \
  /usr/arm-linux-gnueabi/include/bits/sigthread.h \
  /usr/arm-linux-gnueabi/include/sys/resource.h \
- /usr/arm-linux-gnueabi/include/bits/resource.h
+ /usr/arm-linux-gnueabi/include/bits/resource.h \
+ /usr/arm-linux-gnueabi/include/ifaddrs.h
 
 ../src/GPIO.h:
 
@@ -228,3 +229,5 @@ src/Smart_Classroom.d: ../src/Smart_Classroom.c ../src/GPIO.h \
 /usr/arm-linux-gnueabi/include/sys/resource.h:
 
 /usr/arm-linux-gnueabi/include/bits/resource.h:
+
+/usr/arm-linux-gnueabi/include/ifaddrs.h:

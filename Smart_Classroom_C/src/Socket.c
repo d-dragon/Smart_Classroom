@@ -12,7 +12,7 @@ void sigchld_handler(int s) {
 		;
 }
 
-int init_Network(void) {
+int init_TCPNetwork(void) {
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -81,12 +81,95 @@ void get_Hostname() {
 				inet_ntoa(*((struct in_addr *) hostinfo->h_addr_list[0])));
 	}
 }
-// get sockaddr, IPv4 or IPv6:
-//void *get_in_addr(struct sockaddr *sa)
-//{
-//	if (sa->sa_family == AF_INET) {
-//		return &(((struct sockaddr_in*)sa)->sin_addr);
-//	}
-//
-//	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-//}
+
+int init_UDPNetwork() {
+	broadcastEnable = 1;
+	/*Create socket */
+	socketfd_UDP = socket(AF_INET, SOCK_DGRAM, 0);
+	if (socketfd_UDP == -1)
+		perror("Error: socket failed");
+
+	ret = setsockopt(socketfd_UDP, SOL_SOCKET, SO_BROADCAST, &broadcastEnable,
+			sizeof(broadcastEnable));
+	bzero((char*) &server_address, sizeof(server_address));
+
+	/*Fill in server's sockaddr_in*/
+	server_address.sin_family = AF_INET;
+	server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_address.sin_port = htons(atoi(PORT_UDP));
+
+	/*Bind server socket and listen for incoming clients*/
+	checkCall = bind(socketfd_UDP, (struct sockaddr *) &server_address,
+			sizeof(struct sockaddr));
+	if (checkCall == -1)
+		perror("Error: bind call failed");
+	return 1;
+	/*	while (1) {
+	 printf("SERVER_UDP: waiting for data from client\n");
+
+	 clientLength = sizeof(client_address);
+	 message = recvfrom(socketfd_UDP, buf_UDP, sizeof(buf_UDP), 0,
+	 (struct sockaddr*) &client_address, &clientLength);
+	 if (message == -1)
+	 perror("Error: recvfrom call failed");
+
+	 printf("SERVER: read %d bytes from IP %s(%s)\n", message,
+	 inet_ntoa(client_address.sin_addr), buf_UDP);
+
+	 if (!strcmp(buf_UDP, "quit"))
+	 break;
+
+	 strcpy(buf_UDP, "ok");
+
+	 message = sendto(socketfd_UDP, buf_UDP, strlen(buf_UDP) + 1, 0,
+	 (struct sockaddr*) &client_address, sizeof(client_address));
+	 if (message == -1)
+	 perror("Error: sendto call failed");
+
+	 printf("SERVER: send completed\n");
+	 }
+	 checkCall = close(socketfd_UDP);
+	 if (checkCall == -1)
+	 perror("Error: bind call failed");*/
+
+}
+void get_ifaddress() {
+	if (getifaddrs(&ifaddr) == -1) {
+		perror("getifaddrs");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Walk through linked list, maintaining head pointer so we
+	 can free list later */
+
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+
+		/* Display interface name and family (including symbolic
+		 form of the latter for the common families) */
+
+		printf("%s  address family: %d%s\n", ifa->ifa_name, family,
+				(family == AF_PACKET) ? " (AF_PACKET)" :
+				(family == AF_INET) ? " (AF_INET)" :
+				(family == AF_INET6) ? " (AF_INET6)" : "");
+
+		/* For an AF_INET* interface address, display the address */
+
+		if (family == AF_INET) {
+			ss = getnameinfo(ifa->ifa_addr,
+					(family == AF_INET) ?
+							sizeof(struct sockaddr_in) :
+							sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL,
+					0, NI_NUMERICHOST);
+			if (ss != 0) {
+				printf("getnameinfo() failed: %s\n", gai_strerror(s));
+				exit(EXIT_FAILURE);
+			}
+			printf("\taddress: <%s>\n", host);
+		}
+	}
+}
+

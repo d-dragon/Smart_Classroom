@@ -21,30 +21,42 @@ const char sta[4] = "STA", aut[4] = "AUT", pre[4] = "PRE", man[4] = "MAN",
 int set_Mode(char[]);
 
 int main(void) {
-//	Init comparison string
+
+	int flag_TCP = 0;
 
 //	Init Network
-	init_Network();
+	init_UDPNetwork();
+	init_TCPNetwork();
 	get_Hostname();
-
-	/*addinfo = getnameinfo(servinfo->ai_addr, sizeof servinfo->ai_addr, host,
-	 sizeof host, service, sizeof service, 0);
-	 if (addinfo == 0) {
-	 perror("getnameinfo");
-	 } else {
-	 printf("Service:%s\n", service);
-	 }*/
+	get_ifaddress();
 
 	while (1) { // main accept() loop
-		sin_size = sizeof their_addr;
+		printf("SERVER_UDP: waiting for data from client\n");
+		printf("IP Address: %s\n", host);
+		clientLength = sizeof(client_address);
+		message = recvfrom(socketfd_UDP, buf_UDP, sizeof(buf_UDP), 0,
+				(struct sockaddr*) &client_address, &clientLength);
+		if (message == -1)
+			perror("Error: recvfrom call failed");
+
+		printf("SERVER: read %d bytes from IP %s(%s)\n", message,
+				inet_ntoa(client_address.sin_addr), buf_UDP);
+
+		if (buf_UDP[0] == 'P' && buf_UDP[1] == '1') {
+			message = sendto(socketfd_UDP, host, sizeof(host), 0,
+					(struct sockaddr*) &client_address, sizeof(client_address));
+
+			sin_size = sizeof their_addr;
+
+		}else
+			continue;
+
 		new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size);
 		if (new_fd == -1) {
 			perror("accept");
 			continue;
 		}
-//		inet_ntop(their_addr.ss_family,
-//			get_in_addr((struct sockaddr *)&their_addr),
-//			s, sizeof s);
+
 		printf("server: got connection from %s\n",
 				inet_ntoa(their_addr.sin_addr));
 		send(new_fd, "Hello Client\n", 14, 0);
@@ -153,30 +165,10 @@ int main(void) {
 					bzero(buf, sizeof buf);
 					break;
 				}
-				/*if (buf[0] == 'e' && buf[1] == 'x' && buf[2] == 'i'
-				 && buf[3] == 't') {
-				 send(new_fd, "Disconnected!", sizeof "Disconnected!", 0);
-				 printf("Client Disconnected!\n");
-				 close(new_fd); // parent doesn't need this
-				 bzero(buf, 512); //clear buf
-				 gpio_unexport(60);
-				 exit(0);
-				 break;
-				 }
-				 if (buf[0] == 'b' && buf[1] == 'a' && buf[2] == 't') {
-				 gpio_set_value(60, HIGH);
-				 }
-				 if (buf[0] == 't' && buf[1] == 'a' && buf[2] == 't') {
-				 gpio_set_value(60, LOW);
-				 }
-				 bzero(buf, 512); //clear buf*/
+
 			}
-
 		}
-
 	}
-
-	return 0;
 }
 int set_Mode(char buf[]) {
 	unsigned int temp[6], mode = 0, i;
