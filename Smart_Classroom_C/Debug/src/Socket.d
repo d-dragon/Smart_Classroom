@@ -72,7 +72,8 @@ src/Socket.d: ../src/Socket.c ../src/Socket.h \
  /usr/arm-linux-gnueabi/include/sys/ucontext.h \
  /usr/arm-linux-gnueabi/include/bits/sigthread.h \
  /usr/arm-linux-gnueabi/include/sys/resource.h \
- /usr/arm-linux-gnueabi/include/bits/resource.h
+ /usr/arm-linux-gnueabi/include/bits/resource.h \
+ /usr/arm-linux-gnueabi/include/ifaddrs.h
 
 ../src/Socket.h:
 
@@ -223,3 +224,5 @@ src/Socket.d: ../src/Socket.c ../src/Socket.h \
 /usr/arm-linux-gnueabi/include/sys/resource.h:
 
 /usr/arm-linux-gnueabi/include/bits/resource.h:
+
+/usr/arm-linux-gnueabi/include/ifaddrs.h:
