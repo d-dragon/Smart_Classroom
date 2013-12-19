@@ -9,18 +9,21 @@ CPP_SRCS += \
 C_SRCS += \
 ../src/GPIO.c \
 ../src/Smart_Classroom.c \
-../src/Socket.c 
+../src/Socket.c \
+../src/UART.c 
 
 OBJS += \
 ./src/GPIO.o \
 ./src/Smart_Classroom.o \
 ./src/Smart_Classroom_C.o \
-./src/Socket.o 
+./src/Socket.o \
+./src/UART.o 
 
 C_DEPS += \
 ./src/GPIO.d \
 ./src/Smart_Classroom.d \
-./src/Socket.d 
+./src/Socket.d \
+./src/UART.d 
 
 CPP_DEPS += \
 ./src/Smart_Classroom_C.d 
@@ -30,14 +33,14 @@ CPP_DEPS += \
 src/%.o: ../src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -I/usr/arm-linux-gnueabi/include -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	arm-linux-gnueabi-gcc -I/usr/arm-linux-gnueabi/include -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/usr/arm-linux-gnueabi/include/c++/4.7.2 -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	arm-linux-gnueabi-g++ -I/usr/arm-linux-gnueabi/include/c++/4.7.2 -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -6,6 +6,7 @@
  */
 #include "GPIO.h"
 #include "Socket.h"
+#include "UART.h"
 
 //Define mode control
 #define START 1
@@ -22,14 +23,15 @@ int set_Mode(char[]);
 
 int main(void) {
 
-	int flag_TCP = 0;
+	int i;
 
 //	Init Network
 	init_UDPNetwork();
 	init_TCPNetwork();
 	get_Hostname();
 	get_ifaddress();
-
+//Init UART
+	init_UART();
 	while (1) { // main accept() loop
 		printf("SERVER_UDP: waiting for data from client\n");
 		printf("IP Address: %s\n", host);
@@ -87,6 +89,13 @@ int main(void) {
 					gpio_set_value(48, LOW);
 					usleep(10000);
 					bzero(buf, sizeof buf);
+					write_UART("i");
+					usleep(10000);
+					read_UART();
+					for(i = 0; i < strlen(buf_UART) - 1; i++){
+						printf("%c",buf_UART[i]);
+					}
+
 					break;
 				case AUTO:
 					send(new_fd, "AUTO\n", sizeof "AUTO", 0);

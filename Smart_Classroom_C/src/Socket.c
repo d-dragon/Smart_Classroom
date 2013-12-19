@@ -138,6 +138,7 @@ void get_ifaddress() {
 		perror("getifaddrs");
 		exit(EXIT_FAILURE);
 	}
+	const char *s;
 
 	/* Walk through linked list, maintaining head pointer so we
 	 can free list later */
@@ -157,15 +158,16 @@ void get_ifaddress() {
 				(family == AF_INET6) ? " (AF_INET6)" : "");
 
 		/* For an AF_INET* interface address, display the address */
-
-		if (family == AF_INET) {
+		s = ifa->ifa_name;
+//		printf("%s",s);
+		if (family == AF_INET && s[0] == 'e') {
 			ss = getnameinfo(ifa->ifa_addr,
 					(family == AF_INET) ?
 							sizeof(struct sockaddr_in) :
 							sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL,
 					0, NI_NUMERICHOST);
 			if (ss != 0) {
-				printf("getnameinfo() failed: %s\n", gai_strerror(s));
+				printf("getnameinfo() failed: %s\n", gai_strerror(ss));
 				exit(EXIT_FAILURE);
 			}
 			printf("\taddress: <%s>\n", host);
