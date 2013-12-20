@@ -23,10 +23,10 @@
 volatile int STOP;
 int fd_UART, r_UART, w_UART;
 struct termios config_UART;
-char buf_UART[255];
+char buf_UART[10];
 
 void init_UART();
-int read_UART();
+void read_UART();
 int write_UART(char[]);
 
 

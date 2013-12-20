@@ -20,14 +20,14 @@ void init_UART() {
 	config_UART.c_oflag = 0;
 	//set input mode (non-canonical, no echo...
 	config_UART.c_lflag = 0;
-	config_UART.c_cc[VTIME] = 10; //inter-character timer each 1 second
+	config_UART.c_cc[VTIME] = 20; //inter-character timer each 2 second
 	config_UART.c_cc[VMIN] = 0; // non-blocking read
 
 	tcflush(fd_UART, TCIFLUSH);
 	tcsetattr(fd_UART, TCSANOW, &config_UART); //set configuration
 }
 
-int read_UART(){
+void read_UART(){
 	STOP = FALSE;
 	while(STOP == FALSE){
 		r_UART = read(fd_UART, buf_UART, sizeof(buf_UART));
@@ -36,7 +36,6 @@ int read_UART(){
 			STOP = TRUE;
 		}
 	}
-	return 0;
 }
 int write_UART(char buf_write[]){
 	w_UART = write(fd_UART, buf_write, sizeof(buf_write));
