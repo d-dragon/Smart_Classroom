@@ -122,10 +122,12 @@ int send_code(unsigned long code){
 
 //main program
 void loop(){
-  char buf_tem[10], buf_hum[10];
+  char buf_tem[2], buf_hum[2], buf_send[7];
   float tem, hum;
   char c;
+  String buf_lig;
   uint16_t val = 0;
+  int i = 0;
   boolean learn_code = true;
   while(softUART.available()>0){
     c = softUART.read();
@@ -137,55 +139,42 @@ void loop(){
        //read then send light value
        if(BH1750_Read(B1750_Slave_address) == 2){
         val = ((buff[0]<<8) |buff[1])/1.2;
+        buf_lig = String(val);
         Serial.print("Light:");
-        Serial.println(val); 
+        Serial.println(buf_lig); 
       } 
       
       //read then send tem-hum value
-      delay(150);
+//      delay(250);
       int result = DHT11.acquireAndWait();
-      /*
-      switch(result){
-      case IDDHTLIB_OK: 
-//        Serial.println("OK"); 
-        break;
-      case IDDHTLIB_ERROR_CHECKSUM: 
-        Serial.println("Error\n\r\tChecksum error"); 
-        break;
-      case IDDHTLIB_ERROR_TIMEOUT: 
-        Serial.println("Error\n\r\tTime out error"); 
-        break;
-      case IDDHTLIB_ERROR_ACQUIRING: 
-        Serial.println("Error\n\r\tAcquiring"); 
-        break;
-      case IDDHTLIB_ERROR_DELTA: 
-        Serial.println("Error\n\r\tDelta time to small"); 
-        break;
-      case IDDHTLIB_ERROR_NOTSTARTED: 
-        Serial.println("Error\n\r\tNot started"); 
-        break;
-      default: 
-        Serial.println("Unknown error"); 
-        break;
-      }
-      */
-      delay(100);
+      delay(200);
       hum = DHT11.getHumidity();
+      delay(100);
       tem = DHT11.getCelsius();
+      delay(100);
       //dtostrf() - convert float to string
       //dtostrf(floatVar, minStringWidthIncDecimalPoint, numVarsAfterDecimal, charBuf);
-      dtostrf(tem, 3,0, buf_tem);
-      Serial.print("Temperature:");
-      Serial.println(buf_tem);
-      dtostrf(hum, 3,0, buf_hum);
-      Serial.print("Humidity:");
-      Serial.println(buf_hum); 
-      
+      dtostrf(tem, 2,0, buf_tem);
+//      Serial.print("Temperature:");
+//      Serial.println(buf_tem);
+      dtostrf(hum, 2,0, buf_hum);
+//      Serial.print("Humidity:");
+//      Serial.println(buf_hum); 
+      while(i<2){
+        buf_send[i] = buf_tem[i];
+        buf_send[i+2] = buf_hum[i];
+        buf_send[i+4] = buf_lig[i];
+        i++;
+      }
+      i = 0;
+      while(i<3){
+        buf_send[i+4] = buf_lig[i];
+        i++;
+      }
+      Serial.write(buf_send);
       //send sensor value to server   
-      softUART.write(val);
-      softUART.write(buf_hum);
-      softUART.write(buf_tem);
-      
+      softUART.write(buf_send);
+       
     }
     
     //learn IR code - c = code
