@@ -248,9 +248,16 @@ void mode_off() {
 }
 
 void getSensorValue() {
-	write_UART("i");
-	read_UART();
-
-	printf("%s", buf_UART);
 	bzero(buf_UART, sizeof(buf_UART));
+
+	while(buf_UART[0] != '2')
+	{
+		write_UART("i");
+		read_UART();
+		sleep(1);
+
+	}
+	printf("OK");
+	printf("%s", buf_UART);
+
 }
