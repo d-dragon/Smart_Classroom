@@ -100,12 +100,15 @@ public class Main extends Activity implements OnClickListener {
 
 				try {
 					connector.SendCommand("AUT");
+					
 				} catch (Exception e) {
 					// TODO: handle exception
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
-
+				String serverMessage = connector.ReceiveData();
+				Toast.makeText(getApplicationContext(), serverMessage, Toast.LENGTH_SHORT).show();
+				serverMessage = "";
 			}
 			break;
 		case R.id.btPre:

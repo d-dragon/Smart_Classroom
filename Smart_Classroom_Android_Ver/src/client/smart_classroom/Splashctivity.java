@@ -183,16 +183,23 @@ public class Splashctivity extends Activity implements OnClickListener {
 			connector.setPort(Port);
 			// pb.setVisibility(View.VISIBLE);
 			// tv.setVisibility(View.VISIBLE);
-			btnConnect.setVisibility(View.INVISIBLE);
+//			btnConnect.setVisibility(View.INVISIBLE);
 			connector.connectToNetwork();
-//			if (connector.ismIsConnected()) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			if (connector.ismIsConnected() == true) {
 				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
 				Splashctivity.this.startActivity(mainIntent);
 				Splashctivity.this.finish();
-//			} else {
+			}
+			else {
 //				btnConnect.setVisibility(View.VISIBLE);
-
-//			}
+				Toast.makeText(getApplicationContext(), "Connecting Fail! Try again", Toast.LENGTH_SHORT).show();	
+			}
 
 			break;
 		case R.id.btP1:

@@ -1,7 +1,9 @@
 package network.Socket_ini;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -9,7 +11,7 @@ import android.content.Context;
 import android.os.Handler;
 
 public class Socket_ini {
-	private boolean mIsConnected = false;
+	private boolean mIsConnected;
 	private static final String defaultIP = "192.168.1.32";
 	private static final int defaultPort = 1991;
 	private String ip;
@@ -18,6 +20,7 @@ public class Socket_ini {
 	Socket mSocket = null;
 	Thread mThread = null;
 	ClientThread newThread;
+	public String serverMessage;
 
 	public Socket_ini(Context context) {
 		this.mHandler = new Handler();
@@ -30,7 +33,6 @@ public class Socket_ini {
 			try {
 				Socket socket = new Socket(ip, port);
 				mSocket = socket;
-
 				mIsConnected = true;
 			} catch (Exception e0) {
 				mIsConnected = false;
@@ -159,4 +161,15 @@ public class Socket_ini {
 		
 		
 	}
+	public String ReceiveData(){
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+			serverMessage = in.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return serverMessage;
+	}
+
 }
