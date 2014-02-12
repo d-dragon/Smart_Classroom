@@ -165,7 +165,7 @@ void mode_start() {
 }
 
 void mode_auto() {
-	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
+//	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
 	printf("AUTO\n");
 	gpio_set_value(60, HIGH);
 	usleep(10000);
@@ -173,6 +173,7 @@ void mode_auto() {
 	usleep(10000);
 	bzero(buf, sizeof buf);
 	getSensorValue();
+	send(new_fd,buf_UART, sizeof buf_UART, 0);
 }
 
 void mode_presentation() {
@@ -250,7 +251,7 @@ void mode_off() {
 void getSensorValue() {
 	bzero(buf_UART, sizeof(buf_UART));
 
-	while(buf_UART[0] != '2')
+	while(buf_UART[0] != '3')
 	{
 		write_UART("i");
 		read_UART();
