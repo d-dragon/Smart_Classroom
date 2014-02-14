@@ -20,7 +20,7 @@ void init_UART() {
 	config_UART.c_oflag = 0;
 	//set input mode (non-canonical, no echo...
 	config_UART.c_lflag = 0;
-	config_UART.c_cc[VTIME] = 20; //inter-character timer each 2 second
+	config_UART.c_cc[VTIME] = 5; //inter-character timer each 0.5 second
 	config_UART.c_cc[VMIN] = 0; // non-blocking read
 
 	tcflush(fd_UART, TCIFLUSH);

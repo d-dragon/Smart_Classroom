@@ -14,11 +14,17 @@
 #define PRESENTATION 3
 #define MANUAL 4
 #define OFF 5
+#define POWER 6
+#define MENU 7
+#define UP 8
+#define DOWN 9
 
 //Declare MODE comparison String
 const char sta[4] = "STA", aut[4] = "AUT", pre[4] = "PRE", man[4] = "MAN",
-		off[4] = "OFF";
+		off[4] = "OFF", poe[4] = "POW", men[4] = "MEN", upp[4] = "UPP", dow[4] =
+				"DOW";
 int flagMan;
+int stop = 0;
 
 int set_Mode(char[]);
 
@@ -84,7 +90,7 @@ int main(void) {
 					close(new_fd);
 					exit(0);
 				} else {
-					printf("Data received: %s", buf);
+					//	printf("Data received: %s", buf);
 				}
 				switch (set_Mode(buf)) {
 				case START:
@@ -109,8 +115,9 @@ int main(void) {
 	}
 }
 int set_Mode(char buf[]) {
-	unsigned int temp[6], mode = 0, i;
-	temp[0] = temp[1] = temp[2] = temp[3] = temp[4] = 0;
+	unsigned int temp[10], mode = 0, i;
+	temp[0] = temp[1] = temp[2] = temp[3] = temp[4] = temp[5] = temp[6] =
+			temp[7] = temp[8] = 0;
 	for (i = 0; i < 3; i++) {
 		if (buf[i] == sta[i]) {
 			if (++temp[0] == 3) {
@@ -147,6 +154,34 @@ int set_Mode(char buf[]) {
 			}
 			continue;
 		}
+		if (buf[i] == poe[i]) {
+			if (++temp[5] == 3) {
+				mode = POWER;
+				temp[5] = 0;
+			}
+			continue;
+		}
+		if (buf[i] == men[i]) {
+			if (++temp[6] == 3) {
+				mode = MENU;
+				temp[6] = 0;
+			}
+			continue;
+		}
+		if (buf[i] == upp[i]) {
+			if (++temp[7] == 3) {
+				mode = UP;
+				temp[7] = 0;
+			}
+			continue;
+		}
+		if (buf[i] == dow[i]) {
+			if (++temp[8] == 3) {
+				mode = DOWN;
+				temp[8] = 0;
+			}
+			continue;
+		}
 	}
 	return mode;
 }
@@ -165,15 +200,21 @@ void mode_start() {
 }
 
 void mode_auto() {
-//	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
+	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
 	printf("AUTO\n");
 	gpio_set_value(60, HIGH);
 	usleep(10000);
 	gpio_set_value(48, LOW);
 	usleep(10000);
 	bzero(buf, sizeof buf);
+	stop = 0;
 	getSensorValue();
-	send(new_fd,buf_UART, sizeof buf_UART, 0);
+	printf("%s", buf_UART);
+//	int a = send(new_fd,buf_UART, sizeof buf_UART, 0);
+//	if(a < 0){
+//		perror("send");
+//	}else
+//		printf("send ok");
 }
 
 void mode_presentation() {
@@ -184,6 +225,7 @@ void mode_presentation() {
 	gpio_set_value(48, HIGH);
 	usleep(10000);
 	bzero(buf, sizeof buf);
+	write_UART("w");
 }
 
 void mode_manual() {
@@ -202,7 +244,49 @@ void mode_manual() {
 		} else {
 			printf("Data received: %s", buf);
 		}
+		if (buf[0] == '1') {
+			write_UART("1");
+			bzero(buf, sizeof buf);
+			continue;
+		}
+		if (buf[0] == '2') {
+			write_UART("2");
+			bzero(buf, sizeof buf);
+			continue;
+		}
+		if (buf[0] == '3') {
+			write_UART("3");
+			bzero(buf, sizeof buf);
+			continue;
+		}
+		if (buf[0] == '4') {
+			write_UART("4");
+			bzero(buf, sizeof buf);
+			continue;
+		}
 		temp = set_Mode(buf);
+		/*		if(temp == POWER || temp == MENU || temp == UP || temp == DOWN){
+		 switch(temp){
+		 case POWER:
+		 write_UART("1");
+		 bzero(buf, sizeof buf);
+		 break;
+		 case MENU:
+		 write_UART("2");
+		 bzero(buf, sizeof buf);
+		 break;
+		 case UP:
+		 write_UART("3");
+		 bzero(buf, sizeof buf);
+		 break;
+		 case DOWN:
+		 write_UART("4");
+		 bzero(buf, sizeof buf);
+		 break;
+		 }
+		 continue;
+		 }else
+		 printf("@@\n");*/
 		if (temp == START || temp == PRESENTATION || temp == AUTO || temp == OFF) {
 			flagMan = 0;
 			printf("Change Mode\n");
@@ -231,6 +315,7 @@ void mode_manual() {
 				printf("OFF\n");
 				bzero(buf, sizeof buf);
 				break;
+
 			}
 		} else {
 			printf("%s\n", buf);
@@ -251,14 +336,15 @@ void mode_off() {
 void getSensorValue() {
 	bzero(buf_UART, sizeof(buf_UART));
 
-	while(buf_UART[0] != '3')
-	{
+	while (stop == 0) {
 		write_UART("i");
+		usleep(500000);
 		read_UART();
-		sleep(1);
-
+		if (buf_UART[0] == '1' || buf_UART[0] == '2' || buf_UART[0] == '3') {
+			stop = 1;
+		} else
+			sleep(1);
 	}
-	printf("OK");
-	printf("%s", buf_UART);
+//	printf("OK");
 
 }
