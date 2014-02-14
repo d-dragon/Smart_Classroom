@@ -16,7 +16,7 @@ public class Main extends Activity implements OnClickListener {
 
 	private Socket_ini connector;
 	private shareNetwork shared;
-	Button btStart, btAuto, btPre, btMan, btOff, btEqu, btPro;
+	Button btStart, btAuto, btPre, btMan, btOff, btEqu, btPro1, btPro2, btPro3, btPro4;
 	EditText etCommand;
 	String comamnd;
 	TabHost tabs;
@@ -40,8 +40,14 @@ public class Main extends Activity implements OnClickListener {
 		btOff.setOnClickListener(this);
 		btEqu = (Button) findViewById(R.id.btEqu);
 		btEqu.setOnClickListener(this);
-		btPro = (Button) findViewById(R.id.btPro);
-		btPro.setOnClickListener(this);
+		btPro1 = (Button) findViewById(R.id.btPro1);
+		btPro1.setOnClickListener(this);
+		btPro2 = (Button) findViewById(R.id.btPro2);
+		btPro2.setOnClickListener(this);
+		btPro3 = (Button) findViewById(R.id.btPro3);
+		btPro3.setOnClickListener(this);
+		btPro4 = (Button) findViewById(R.id.btPro4);
+		btPro4.setOnClickListener(this);
 
 		tabs = (TabHost) findViewById(R.id.tabHost);
 		tabs.setup();
@@ -68,15 +74,15 @@ public class Main extends Activity implements OnClickListener {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		connector.SendCommand("exit");
-		connector.closeSocket();
+	//	connector.SendCommand("exit");
+	//	connector.closeSocket();
 
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		connector.closeSocket();
+	//	connector.closeSocket();
 	}
 
 	@SuppressLint("ShowToast")
@@ -93,6 +99,7 @@ public class Main extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
+				
 			}
 			break;
 		case R.id.btAuto:
@@ -131,6 +138,7 @@ public class Main extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
+				
 			}
 			break;
 		case R.id.btOff:
@@ -155,10 +163,43 @@ public class Main extends Activity implements OnClickListener {
 				}
 			}
 			break;
-		case R.id.btPro:
+		case R.id.btPro1:
 			if (connector.ismIsConnected()) {
 				try {
-					connector.SendCommand("Projector");
+					connector.SendCommand("1");
+				} catch (Exception e) {
+					// TODO: handle exception
+					Toast.makeText(getApplicationContext(),
+							"Send command error", Toast.LENGTH_SHORT).show();
+				}
+			}
+			break;
+		case R.id.btPro2:
+			if (connector.ismIsConnected()) {
+				try {
+					connector.SendCommand("2");
+				} catch (Exception e) {
+					// TODO: handle exception
+					Toast.makeText(getApplicationContext(),
+							"Send command error", Toast.LENGTH_SHORT).show();
+				}
+			}
+			break;
+		case R.id.btPro3:
+			if (connector.ismIsConnected()) {
+				try {
+					connector.SendCommand("3");
+				} catch (Exception e) {
+					// TODO: handle exception
+					Toast.makeText(getApplicationContext(),
+							"Send command error", Toast.LENGTH_SHORT).show();
+				}
+			}
+			break;
+		case R.id.btPro4:
+			if (connector.ismIsConnected()) {
+				try {
+					connector.SendCommand("4");
 				} catch (Exception e) {
 					// TODO: handle exception
 					Toast.makeText(getApplicationContext(),

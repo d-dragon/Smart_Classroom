@@ -33,14 +33,17 @@ public final class R {
         public static final int logo=0x7f020002;
     }
     public static final class id {
-        public static final int action_settings=0x7f090011;
+        public static final int action_settings=0x7f090014;
         public static final int btAuto=0x7f090008;
         public static final int btEqu=0x7f09000e;
         public static final int btMan=0x7f09000b;
         public static final int btOff=0x7f09000a;
         public static final int btP1=0x7f090002;
         public static final int btPre=0x7f090009;
-        public static final int btPro=0x7f090010;
+        public static final int btPro1=0x7f090010;
+        public static final int btPro2=0x7f090011;
+        public static final int btPro3=0x7f090012;
+        public static final int btPro4=0x7f090013;
         public static final int btStart=0x7f090007;
         public static final int btnC=0x7f090003;
         public static final int etIP=0x7f090000;
@@ -68,6 +71,10 @@ public final class R {
         public static final int Manual=0x7f06000e;
         public static final int Off=0x7f06000f;
         public static final int Pre=0x7f06000d;
+        public static final int ProButDown=0x7f060014;
+        public static final int ProButMenu=0x7f060012;
+        public static final int ProButPower=0x7f060011;
+        public static final int ProButUp=0x7f060013;
         public static final int R1=0x7f060010;
         public static final int Start=0x7f06000b;
         public static final int Temp=0x7f060009;

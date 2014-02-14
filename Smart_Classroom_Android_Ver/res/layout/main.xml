@@ -125,19 +125,35 @@
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/Command" />
-                          "
+                          
                     </LinearLayout>
 
                     <LinearLayout
                         android:id="@+id/tab2"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent" >
+                        android:layout_height="match_parent"
+                        android:orientation="vertical" >
 
                         <Button
-                            android:id="@+id/btPro"
+                            android:id="@+id/btPro1"
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/Command" />
+                            android:text="@string/ProButPower" />  
+                        <Button
+                            android:id="@+id/btPro2"
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ProButMenu" /> 
+                        <Button
+                            android:id="@+id/btPro3"
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ProButUp" />
+                        <Button
+                            android:id="@+id/btPro4"
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/ProButDown" />          
                     </LinearLayout>
                 </FrameLayout>
             </LinearLayout>
