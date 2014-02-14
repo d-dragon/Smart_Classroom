@@ -140,8 +140,8 @@ void loop(){
        if(BH1750_Read(B1750_Slave_address) == 2){
         val = ((buff[0]<<8) |buff[1])/1.2;
         buf_lig = String(val);
-        Serial.print("Light:");
-        Serial.println(buf_lig); 
+//        Serial.print("Light:");
+//        Serial.println(buf_lig); 
       } 
       
       //read then send tem-hum value
@@ -201,8 +201,36 @@ void loop(){
     }
     
     //send IR code
-    if(c = 'w'){
+    
+    if(c == '1'){//POWER
       //call Function send IR code
+       for (int i = 0; i < 3; i++){
+      
+        irsend.sendNEC(2356380030, 32);
+        delay (50);
+      } 
+      
+    }
+    if(c == '2'){//MENU
+      //call Function send IR code
+       for (int i = 0; i < 2; i++){
+      
+        irsend.sendNEC(2356404510, 32);
+        delay (50);
+      } 
+      
+    }
+    if(c == '3'){//UP
+      //call Function send IR code
+        irsend.sendNEC(2356380540, 32);
+        delay (50);
+      
+    }
+    if(c == '4'){//DOWN
+      //call Function send IR code
+        irsend.sendNEC(2356364220, 32);
+        delay (50);
+      
     }
   }
   
