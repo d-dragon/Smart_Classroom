@@ -10,20 +10,23 @@ C_SRCS += \
 ../src/GPIO.c \
 ../src/Smart_Classroom.c \
 ../src/Socket.c \
-../src/UART.c 
+../src/UART.c \
+../src/streamming.c 
 
 OBJS += \
 ./src/GPIO.o \
 ./src/Smart_Classroom.o \
 ./src/Smart_Classroom_C.o \
 ./src/Socket.o \
-./src/UART.o 
+./src/UART.o \
+./src/streamming.o 
 
 C_DEPS += \
 ./src/GPIO.d \
 ./src/Smart_Classroom.d \
 ./src/Socket.d \
-./src/UART.d 
+./src/UART.d \
+./src/streamming.d 
 
 CPP_DEPS += \
 ./src/Smart_Classroom_C.d 

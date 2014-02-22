@@ -7,6 +7,8 @@
 #include "GPIO.h"
 #include "Socket.h"
 #include "UART.h"
+#include <signal.h>
+#include <math.h>
 
 //Define mode control
 #define START 1
@@ -25,6 +27,7 @@ const char sta[4] = "STA", aut[4] = "AUT", pre[4] = "PRE", man[4] = "MAN",
 				"DOW";
 int flagMan;
 int stop = 0;
+pid_t pid_stream;
 
 int set_Mode(char[]);
 
@@ -34,6 +37,8 @@ void mode_presentation();
 void mode_manual();
 void mode_off();
 void getSensorValue();
+void stream();
+void kill_stream();
 
 int main(void) {
 
@@ -196,20 +201,122 @@ void mode_start() {
 	gpio_set_value(48, LOW);
 	usleep(10000);
 	bzero(buf, sizeof buf);
+	stream();
 
 }
 
 void mode_auto() {
 	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
-	printf("AUTO\n");
-	gpio_set_value(60, HIGH);
-	usleep(10000);
-	gpio_set_value(48, LOW);
-	usleep(10000);
-	bzero(buf, sizeof buf);
-	stop = 0;
-	getSensorValue();
-	printf("%s", buf_UART);
+	/*printf("AUTO\n");
+	 gpio_set_value(60, HIGH);
+	 usleep(10000);
+	 gpio_set_value(48, LOW);
+	 usleep(10000);
+	 bzero(buf, sizeof buf);
+	 stop = 0;
+	 getSensorValue();
+	 printf("%s", buf_UART);*/
+
+	pid_t child_pid;
+	switch (child_pid = fork()) {
+	case -1:
+		perror("fork");
+		break;
+	case 0: //child process
+		while (1) {
+			printf("Child processing\n");
+			stop = 0;
+			int light = 0, i, n = 0;
+			getSensorValue();
+			for (i = 6; i >= 4; i--) {
+				if (((buf_UART[i] >= '0') && (buf_UART[i] <= '9'))) {
+					printf("%c", buf_UART[i]);
+					light += pow(10, n) * (buf_UART[i] - '0');
+					n++;
+				}
+
+			}
+			printf("light: %d [lx]", light);
+			if (light < 10) {
+				gpio_set_value(60, HIGH);
+				usleep(10000);
+				gpio_set_value(48, HIGH);
+				usleep(10000);
+			} else {
+				if (light < 50) {
+					gpio_set_value(60, LOW);
+					usleep(10000);
+					gpio_set_value(48, HIGH);
+					usleep(10000);
+				} else {
+					gpio_set_value(60, LOW);
+					usleep(10000);
+					gpio_set_value(48, LOW);
+					usleep(10000);
+				}
+
+			}
+			sleep(1);
+		}
+		break;
+	default: //parent process
+		while (flagMan) {
+			//		stop = 0;
+			//		getSensorValue();
+
+			unsigned int temp;
+			numRead = read(new_fd, buf, sizeof buf);
+			if (numRead < 0) {
+				perror("Receive Error");
+			} else if (numRead == 0) {
+				close(new_fd);
+				exit(0);
+			} else {
+				printf("Data received: %s", buf);
+			}
+			temp = set_Mode(buf);
+			if (temp == START || temp == PRESENTATION || temp == OFF
+					|| temp == MANUAL) {
+				flagMan = 0;
+				printf("Change Mode\n");
+				switch (temp) {
+				case START:
+					kill(child_pid, SIGKILL);
+					mode_start();
+					send(new_fd, "START\n", sizeof "START", 0);
+					printf("START\n");
+					bzero(buf, sizeof buf);
+
+					break;
+				case PRESENTATION:
+					kill(child_pid, SIGKILL);
+					mode_presentation();
+					send(new_fd, "PRESENTATION\n", sizeof "PRESENTATION", 0);
+					printf("PRESENTATION\n");
+					bzero(buf, sizeof buf);
+					break;
+				case MANUAL:
+					kill(child_pid, SIGKILL);
+					mode_manual();
+					send(new_fd, "MANUAL\n", sizeof "MANUAL", 0);
+					printf("MANUAL\n");
+					bzero(buf, sizeof buf);
+					break;
+				case OFF:
+					kill(child_pid, SIGKILL);
+					mode_off();
+					send(new_fd, "OFF\n", sizeof "OFF", 0);
+					printf("OFF\n");
+					bzero(buf, sizeof buf);
+					break;
+
+				}
+			}
+
+		}
+		break;
+	}
+
 //	int a = send(new_fd,buf_UART, sizeof buf_UART, 0);
 //	if(a < 0){
 //		perror("send");
@@ -225,7 +332,7 @@ void mode_presentation() {
 	gpio_set_value(48, HIGH);
 	usleep(10000);
 	bzero(buf, sizeof buf);
-	write_UART("w");
+//	write_UART("w");
 }
 
 void mode_manual() {
@@ -331,6 +438,7 @@ void mode_off() {
 	gpio_set_value(48, HIGH);
 	usleep(10000);
 	bzero(buf, sizeof buf);
+//	kill_stream();
 }
 
 void getSensorValue() {
@@ -348,3 +456,33 @@ void getSensorValue() {
 //	printf("OK");
 
 }
+
+void stream() {
+	int status;
+//	pid_stream = fork();
+	if ((pid_stream = fork()) == 0) {
+		status =
+				system(
+						" mjpg_streamer -i \"input_uvc.so -d /dev/video0 -f 30 -r 640x480 \" -o \"output_http.so -p 8085 -w var/www/mjpg-streamer\"");
+		_exit(EXIT_SUCCESS);
+		//		printf(pid_stream);
+	}
+
+	printf("\n Now you can do other thing in main process");
+
+	//	return 0;
+}
+
+void kill_stream() {
+	/*char line[20];
+	 FILE *cmd = popen("pidof mjpg_streamer", "r");
+
+	 fgets(line, 20, cmd);
+	 pid_t pid = strtoul(line, NULL, 20);
+	 kill (pid, SIGKILL);
+	 pclose(cmd);*/
+	kill(pid_stream, SIGKILL);
+//		pid_stream = NULL;
+
+}
+
