@@ -83,8 +83,13 @@ int main(void) {
 		send(new_fd, "Hello Client\n", 14, 0);
 		gpio_export(60); //pin 12
 		gpio_export(48); //pin 15
+
 		gpio_set_dir(60, OUTPUT_PIN);
+		gpio_set_value(60, OFFF);
 		gpio_set_dir(48, OUTPUT_PIN);
+		gpio_set_value(48, OFFF);
+
+
 		if (!fork()) { // this is the child process
 			while (1) {
 				flagMan = 1;
@@ -196,9 +201,9 @@ void mode_start() {
 	send(new_fd, "START\n", sizeof "START", 0);
 	printf("START\n");
 
-	gpio_set_value(60, LOW);
+	gpio_set_value(60, ON);
 	usleep(10000);
-	gpio_set_value(48, LOW);
+	gpio_set_value(48, ON);
 	usleep(10000);
 	bzero(buf, sizeof buf);
 	stream();
@@ -238,20 +243,20 @@ void mode_auto() {
 			}
 			printf("light: %d [lx]", light);
 			if (light < 10) {
-				gpio_set_value(60, HIGH);
+				gpio_set_value(60, ON);
 				usleep(10000);
-				gpio_set_value(48, HIGH);
+				gpio_set_value(48, ON);
 				usleep(10000);
 			} else {
 				if (light < 50) {
-					gpio_set_value(60, LOW);
+					gpio_set_value(60, ON);
 					usleep(10000);
-					gpio_set_value(48, HIGH);
+					gpio_set_value(48, OFFF);
 					usleep(10000);
 				} else {
-					gpio_set_value(60, LOW);
+					gpio_set_value(60, OFFF);
 					usleep(10000);
-					gpio_set_value(48, LOW);
+					gpio_set_value(48,OFFF);
 					usleep(10000);
 				}
 
@@ -327,12 +332,12 @@ void mode_auto() {
 void mode_presentation() {
 	send(new_fd, "PRESENTATION\n", sizeof "PRESENTATION", 0);
 	printf("PRESENTATION\n");
-	gpio_set_value(60, LOW);
+	gpio_set_value(60, ON);
 	usleep(10000);
-	gpio_set_value(48, HIGH);
+	gpio_set_value(48, OFFF);
 	usleep(10000);
 	bzero(buf, sizeof buf);
-//	write_UART("w");
+	write_UART("w");
 }
 
 void mode_manual() {
@@ -433,12 +438,16 @@ void mode_manual() {
 void mode_off() {
 	send(new_fd, "OFF\n", sizeof "OFF", 0);
 	printf("OFF\n");
-	gpio_set_value(60, HIGH);
+	gpio_set_value(60, OFFF);
 	usleep(10000);
-	gpio_set_value(48, HIGH);
+	gpio_set_value(48, OFFF);
+	usleep(10000);
+	gpio_set_value(115, OFFF);
+	usleep(10000);
+	gpio_set_value(117, OFFF);
 	usleep(10000);
 	bzero(buf, sizeof buf);
-//	kill_stream();
+	kill_stream();
 }
 
 void getSensorValue() {
@@ -464,7 +473,7 @@ void stream() {
 		status =
 				system(
 						" mjpg_streamer -i \"input_uvc.so -d /dev/video0 -f 30 -r 640x480 \" -o \"output_http.so -p 8085 -w var/www/mjpg-streamer\"");
-		_exit(EXIT_SUCCESS);
+		_exit(EXIT_SUCCESS); //PID mjpg_streamer = pid_stream + 1
 		//		printf(pid_stream);
 	}
 
@@ -474,15 +483,10 @@ void stream() {
 }
 
 void kill_stream() {
-	/*char line[20];
-	 FILE *cmd = popen("pidof mjpg_streamer", "r");
-
-	 fgets(line, 20, cmd);
-	 pid_t pid = strtoul(line, NULL, 20);
-	 kill (pid, SIGKILL);
-	 pclose(cmd);*/
-	kill(pid_stream, SIGKILL);
-//		pid_stream = NULL;
+	if (pid_stream) {
+		kill(pid_stream, SIGKILL);
+		kill(pid_stream + 1, SIGKILL); //kill mjpg_stream
+	}
 
 }
 

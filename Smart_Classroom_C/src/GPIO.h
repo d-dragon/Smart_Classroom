@@ -26,8 +26,8 @@ typedef enum {
 	OUTPUT_PIN= 1
 } PIN_DIRECTION;
 typedef enum {
-	LOW = 0,
-	HIGH = 1
+	ON = 0,
+	OFFF = 1
 } PIN_VALUE;
 
 /**********************************************

@@ -81,7 +81,7 @@ int gpio_set_value(unsigned int gpio, PIN_VALUE value){
 		return fd;
 	}
 
-	if (value == LOW)
+	if (value == ON)
 		write(fd, "0", 2);
 	else
 		write(fd, "1", 2);
