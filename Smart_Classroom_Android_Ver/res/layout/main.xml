@@ -118,14 +118,20 @@
                     <LinearLayout
                         android:id="@+id/tab1"
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent" >
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal" >
 
                         <Button
-                            android:id="@+id/btEqu"
+                            android:id="@+id/btEqu1"
                             android:layout_width="fill_parent"
                             android:layout_height="wrap_content"
-                            android:text="@string/Command" />
-                          
+                            android:text="@string/Equipment1" />
+                        
+                        <Button
+                            android:id="@+id/btEqu2"
+                            android:layout_width="fill_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/Equipment2" /> 
                     </LinearLayout>
 
                     <LinearLayout

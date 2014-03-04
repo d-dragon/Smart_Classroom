@@ -18,10 +18,12 @@
 	<string name="Manual">Manual</string>
 	<string name="Off">Off</string>
 	<string name="R1">Room 1</string>
+	<string name="R2">Room 2</string>
+	<string name="R3">Room 3</string>
 	<string name="ProButPower">Power</string>
 	<string name="ProButMenu">Menu</string>
 	<string name="ProButUp">Up</string>
 	<string name="ProButDown">Down</string>
-	
-
+	<string name="Equipment1">Light1</string>
+	<string name="Equipment2">Light2</string>
 </resources>

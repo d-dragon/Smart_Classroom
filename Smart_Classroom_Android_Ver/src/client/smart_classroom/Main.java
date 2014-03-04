@@ -16,7 +16,7 @@ public class Main extends Activity implements OnClickListener {
 
 	private Socket_ini connector;
 	private shareNetwork shared;
-	Button btStart, btAuto, btPre, btMan, btOff, btEqu, btPro1, btPro2, btPro3, btPro4;
+	Button btStart, btAuto, btPre, btMan, btOff, btEqu1,btEqu2 , btPro1, btPro2, btPro3, btPro4;
 	EditText etCommand;
 	String comamnd;
 	TabHost tabs;
@@ -38,8 +38,10 @@ public class Main extends Activity implements OnClickListener {
 		btMan.setOnClickListener(this);
 		btOff = (Button) findViewById(R.id.btOff);
 		btOff.setOnClickListener(this);
-		btEqu = (Button) findViewById(R.id.btEqu);
-		btEqu.setOnClickListener(this);
+		btEqu1 = (Button) findViewById(R.id.btEqu1);
+		btEqu1.setOnClickListener(this);
+		btEqu2 = (Button) findViewById(R.id.btEqu2);
+		btEqu2.setOnClickListener(this);
 		btPro1 = (Button) findViewById(R.id.btPro1);
 		btPro1.setOnClickListener(this);
 		btPro2 = (Button) findViewById(R.id.btPro2);
@@ -152,10 +154,21 @@ public class Main extends Activity implements OnClickListener {
 				}
 			}
 			break;
-		case R.id.btEqu:
+		case R.id.btEqu1:
 			if (connector.ismIsConnected()) {
 				try {
-					connector.SendCommand("Equipment");
+					connector.SendCommand("E1");
+				} catch (Exception e) {
+					// TODO: handle exception
+					Toast.makeText(getApplicationContext(),
+							"Send command error", Toast.LENGTH_SHORT).show();
+				}
+			}
+			break;
+		case R.id.btEqu2:
+			if (connector.ismIsConnected()) {
+				try {
+					connector.SendCommand("E2");
 				} catch (Exception e) {
 					// TODO: handle exception
 					Toast.makeText(getApplicationContext(),
