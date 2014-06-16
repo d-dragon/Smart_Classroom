@@ -7,6 +7,8 @@ CPP_SRCS += \
 ../src/Smart_Classroom_C.cpp 
 
 C_SRCS += \
+../src/EnglishTest-.c \
+../src/EnglishTest.c \
 ../src/GPIO.c \
 ../src/Smart_Classroom.c \
 ../src/Socket.c \
@@ -14,6 +16,8 @@ C_SRCS += \
 ../src/streamming.c 
 
 OBJS += \
+./src/EnglishTest-.o \
+./src/EnglishTest.o \
 ./src/GPIO.o \
 ./src/Smart_Classroom.o \
 ./src/Smart_Classroom_C.o \
@@ -22,6 +26,8 @@ OBJS += \
 ./src/streamming.o 
 
 C_DEPS += \
+./src/EnglishTest-.d \
+./src/EnglishTest.d \
 ./src/GPIO.d \
 ./src/Smart_Classroom.d \
 ./src/Socket.d \

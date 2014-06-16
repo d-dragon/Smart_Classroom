@@ -4,6 +4,8 @@
  *  Created on: Nov 13, 2013
  *      Author: d-dragon
  */
+/*
+
 #include "GPIO.h"
 #include "Socket.h"
 #include "UART.h"
@@ -212,7 +214,7 @@ void mode_start() {
 
 void mode_auto() {
 	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
-	/*printf("AUTO\n");
+	printf("AUTO\n");
 	 gpio_set_value(60, HIGH);
 	 usleep(10000);
 	 gpio_set_value(48, LOW);
@@ -220,7 +222,7 @@ void mode_auto() {
 	 bzero(buf, sizeof buf);
 	 stop = 0;
 	 getSensorValue();
-	 printf("%s", buf_UART);*/
+	 printf("%s", buf_UART);
 
 	pid_t child_pid;
 	switch (child_pid = fork()) {
@@ -377,7 +379,7 @@ void mode_manual() {
 			continue;
 		}
 		temp = set_Mode(buf);
-		/*		if(temp == POWER || temp == MENU || temp == UP || temp == DOWN){
+				if(temp == POWER || temp == MENU || temp == UP || temp == DOWN){
 		 switch(temp){
 		 case POWER:
 		 write_UART("1");
@@ -398,7 +400,7 @@ void mode_manual() {
 		 }
 		 continue;
 		 }else
-		 printf("@@\n");*/
+		 printf("@@\n");
 		if (temp == START || temp == PRESENTATION || temp == AUTO || temp == OFF) {
 			flagMan = 0;
 			printf("Change Mode\n");
@@ -489,4 +491,5 @@ void kill_stream() {
 	}
 
 }
+*/
 
