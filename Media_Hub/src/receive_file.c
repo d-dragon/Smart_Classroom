@@ -7,29 +7,28 @@
 
 #include "receive_file.h"
 #include "sock_infra.h"
+#include "logger.h"
 
 FILE *createFileStream(char *str_file_name) {
 
-	printf("'start createFileStream()\n");
 	FILE *tmp_file;
 	char *file_name;
 	file_name = calloc(50, sizeof(char));
 	file_name = str_file_name;
 
-	printf("FileName: %s\n", file_name);
-	printf("create path to file:%s\n", path_to_file);
+	syslog(LOG_INFO, "FileName: %s\n", file_name);
+	syslog(LOG_INFO,"create path to file:%s\n", path_to_file);
 	strcat(path_to_file, DEFAULT_PATH);
 	strcat(path_to_file, file_name);
-	printf("path: %s\n", path_to_file);
+	syslog(LOG_INFO, "path: %s\n", path_to_file);
 
-	printf("create file\n");
+	syslog(LOG_DEBUG, "create file\n");
 	tmp_file = fopen(path_to_file, "w");
 	if (tmp_file == NULL) {
-		perror("File Error");
+		syslog(LOG_ERR, "fopen failed");
 		return NULL;
 	}
-	printf("File stream was created successfully\n");
-//	free(file_name);
+	syslog(LOG_DEBUG,"File stream was created successfully\n");
 	return tmp_file;
 }
 
@@ -102,25 +101,29 @@ void writetoFileStream() {
 void *recvFileThread() {
 
 	path_to_file = calloc(256, sizeof(char));
-	printf("wait for new connection!\n");
-	openStreamSocket();
+	int ret = openStreamSocket();
+	if(ret == SOCK_SUCCESS){
+		syslog(LOG_DEBUG,"TCP socket successfully opened--------\n");
+		syslog(LOG_DEBUG,"waiting for new connection!\n");
+	}else{
+		syslog(LOG_DEBUG,"TCP socket open failed\n");
+	}
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
 		if (child_stream_sock_fd < 0) {
-			perror("accept");
+			syslog(LOG_ERR, "accept call error");
 			continue;
 		}
-		printf("server: got connection from %s\n",
+		syslog(LOG_INFO, "server: got connection from %s\n",
 				inet_ntoa(remote_addr.sin_addr));
-
 		pid_t pid = fork();
 		switch (pid) {
 		case 0:
 			writetoFileStream();
 			break;
 		default:
-			printf("parent process runing from here\n");
+			syslog(LOG_DEBUG,"parent process runing from here\n");
 			break;
 		}
 	}

@@ -9,6 +9,7 @@ OBJS = audio_app.o receive_file.o sock_infra.o
 			
 audio_app: $(OBJS)
 			$(CC) -o $@ $^ $(CFLAGS) -pthread
+			rm *.o
 			
 .PHONY: clean
 

@@ -5,6 +5,7 @@
  *      Author: d-dragon
  */
 #include "sock_infra.h"
+#include "logger.h"
 
 /****************************************************
  * open stream socket just for listen connection,	*
@@ -17,6 +18,8 @@ int openStreamSocket(){
 	if(stream_sock_fd < 0){
 		perror("call socket() error:");
 		return SOCK_ERROR;
+	}else{
+		syslog(LOG_ERR, "Open Sream socket success");
 	}
 
 	/* Initialize socket structure */
@@ -31,6 +34,8 @@ int openStreamSocket(){
 	if(ret < 0){
 		perror("call bind() error:");
 		return SOCK_ERROR;
+	}else{
+		syslog(LOG_DEBUG, "bind socket success!\n");
 	}
 	/* Now start listening for the clients, here
 	 * process will go in sleep mode and will wait
@@ -40,6 +45,8 @@ int openStreamSocket(){
 	if(ret < 0){
 		perror("call listen() error");
 		return SOCK_ERROR;
+	}else{
+		syslog(LOG_DEBUG, "TCP socket is listening incoming connection...\n");
 	}
 	return SOCK_SUCCESS;
 }

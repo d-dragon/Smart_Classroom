@@ -26,7 +26,7 @@ int createFileStream(char *);
 int main() {
 
 	printf("Init Inet socket\n");
-//	init_TCPNetwork();
+	init_TCPNetwork();
 	if (openStreamSocket() == SOCK_SUCCESS){
 		printf("Open stream socket successed\n");
 	}else{
@@ -157,7 +157,9 @@ int createFileStream_(char *StrFileInfo) {
 
 #include "sock_infra.h"
 #include "receive_file.h"
+#include "logger.h"
 #include <pthread.h>
+#include <syslog.h>
 
 #define APP_SUCCESS 1
 #define APP_ERROR 0
@@ -166,10 +168,10 @@ int main(int argc, char *argv[]){
 
 	pthread_t recv_thread;
 	int ret;
-
 	ret = pthread_create(&recv_thread, NULL, recvFileThread(), (void *)"receive file thread!");
 	if(ret){
 		perror("create thread:");
+		syslog(LOG_ERR, "pthread_create %d (failed)\n", ret);
 		exit(EXIT_FAILURE);
 	}
 	pthread_join(recv_thread, NULL);
