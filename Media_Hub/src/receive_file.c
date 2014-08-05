@@ -42,9 +42,9 @@ void writetoFileStream() {
 
 		num_byte_read = read(child_stream_sock_fd, file_buff, sizeof file_buff);
 		if (num_byte_read < 0) {
-			perror("Receive Error");
+			syslog(LOG_ERR,"read() call receive failed!");
 		} else if (num_byte_read == 0) {
-			printf("client closed\n");
+			syslog(LOG_DEBUG,"client connection closed!");
 			flag_check_mod = 0;
 			close(child_stream_sock_fd);
 			exit(0);
@@ -52,13 +52,13 @@ void writetoFileStream() {
 			//					printf("%d bytes received\n", numRead);
 		}
 		if (!flag_check_mod) {
-			printf("'File Info: %s\n", file_buff);
+			syslog(LOG_INFO,"File Info: %s\n", file_buff);
 
 			if ((file_store_audio = createFileStream((char*) file_buff)) != NULL) {
 				if (send(child_stream_sock_fd, "OK", sizeof("OK"), 0) <= 0) {
-					perror("Sending error");
+					syslog(LOG_ERR,"sending respond to client failed!");
 				} else {
-					printf("Start receive file!\n");
+					syslog(LOG_DEBUG,"Starting receive file>>>>>>>>>>>");
 					flag_check_mod = 1;
 				}
 			} else {
@@ -66,15 +66,15 @@ void writetoFileStream() {
 			}
 		} else {
 			if (num_byte_read == 3) {
-				printf("Close stream file\n");
+				syslog(LOG_DEBUG,"Close stream file!");
 				if (strcmp(file_buff, "end") == 0) {
-					printf("EOF-File Stream closed!\n");
+					syslog(LOG_DEBUG, "EOF-File Stream closed!\n");
 					bzero(file_buff, sizeof file_buff);
 					memset(path_to_file, 0, sizeof(path_to_file));
 					flag_check_mod = 0;
 					fclose(file_store_audio);
 				} else {
-					printf("File not closed\n");
+					syslog(LOG_DEBUG, "File not closed\n");
 				}
 			}
 		}
@@ -82,14 +82,14 @@ void writetoFileStream() {
 			int szwrite = fwrite(file_buff, 1, num_byte_read, file_store_audio);
 			//				printf("%d bytes was written\n", szwrite);
 			if (szwrite < num_byte_read) {
-				perror("File write");
+				syslog(LOG_ERR, "write data to stream file failed!");
 			} else if (szwrite == num_byte_read) {
-				printf("Finish receive file session! %d\n", num_byte_read);
+				syslog(LOG_DEBUG,"Finish receive file session! %d\n", num_byte_read);
 				bzero(file_buff, sizeof file_buff);
 			}
 
 			if ((num_byte_read == 0)) {
-				printf("File transfer complete\n");
+				syslog(LOG_DEBUG, "File transfer complete\n");
 				flag_check_mod = 0;
 				fclose(file_store_audio);
 			}
