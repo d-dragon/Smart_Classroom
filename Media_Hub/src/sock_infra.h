@@ -25,11 +25,14 @@
 
 
 /*define and declare server socket*/
-#define PORT 1991
+#define TCP_PORT 1991
+#define UDP_PORT "1992"
+#define BROADCAST_DEST_ADDR "255.255.255.255"
 #define BACKLOG	10
 #define SOCK_ERROR -1
 #define SOCK_SUCCESS 0
 
+//Declare Stream socket variable
 int stream_sock_fd, child_stream_sock_fd;
 int ret;
 struct sockaddr_in serv_addr;
@@ -38,7 +41,16 @@ socklen_t socklen;
 size_t num_byte_read;
 char file_buff[102400];
 
+//Declare Datagram socket variable
+int datagram_sock_fd;
+struct sockaddr_in udp_server_address, udp_client_address;
+unsigned int client_add_lenght;
+int message;
+int broadcast_enable;
+
+//Declare sock function
 int openStreamSocket();
+int openDatagramSocket();
 
 
 #endif /* SOCK_INFRA_H_ */

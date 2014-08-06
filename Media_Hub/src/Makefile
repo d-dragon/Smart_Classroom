@@ -1,7 +1,8 @@
 CC=arm-linux-gnueabihf-gcc
+#CC=gcc
 CFLAGS=-I.
-DEPS = receive_file.h sock_infra.h
-OBJS = audio_app.o receive_file.o sock_infra.o
+DEPS = receive_file.h sock_infra.h advertisement.h
+OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o 
 
 		
 %.o: %.c $(DEPS)

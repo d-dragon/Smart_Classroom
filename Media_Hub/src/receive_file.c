@@ -70,7 +70,7 @@ void writetoFileStream() {
 				if (strcmp(file_buff, "end") == 0) {
 					syslog(LOG_DEBUG, "EOF-File Stream closed!\n");
 					bzero(file_buff, sizeof file_buff);
-					memset(path_to_file, 0, sizeof(path_to_file));
+					memset(path_to_file, 0, sizeof(char));
 					flag_check_mod = 0;
 					fclose(file_store_audio);
 				} else {
