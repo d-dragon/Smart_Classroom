@@ -10,6 +10,7 @@
 
 void *advertise_server_info() {
 
+	sem_wait(&sem_sock);
 	syslog(LOG_DEBUG, "enter advertise server info thread......");
 	int ret;
 	int num_bytes;
@@ -27,7 +28,10 @@ void *advertise_server_info() {
 		return NULL ;
 	} else {
 		syslog(LOG_DEBUG, "openDatagramSocket success!");
+		sem_destroy(&sem_sock);
+		syslog(LOG_DEBUG, "sem_sock was detroyed");
 	}
+
 	while (1) {
 		syslog(LOG_DEBUG, "server advertise its info......");
 		send_recv_buff = "server_info";
@@ -41,6 +45,7 @@ void *advertise_server_info() {
 			syslog(LOG_DEBUG, "In advertisement thread sent data success");
 			sleep(2);
 		}
+
 	}
 
 }

@@ -7,10 +7,10 @@
 #include "sock_infra.h"
 #include "logger.h"
 
-/****************************************************
- * open stream socket just for listen connection,	*
- * not include accept() and communication task		*
- * **************************************************/
+/*
+ * open stream socket just for listen connection,
+ * not include accept() and communication task
+ */
 int openStreamSocket() {
 
 	/*Open server socket*/

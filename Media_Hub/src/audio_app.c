@@ -165,11 +165,21 @@
 #define APP_SUCCESS 1
 #define APP_ERROR 0
 
+
 int main(int argc, char *argv[]) {
 
 	pthread_t recv_file_thread;
 	pthread_t adv_info_thread;
 	int ret;
+
+	/*init socket semaphore*/
+	ret=sem_init(&sem_sock, 0, 0);
+	if(ret != 0){
+		syslog(LOG_ERR,"sock semaphore init failed");
+	}else {
+		syslog(LOG_DEBUG, "sock semaphore was inittialized success");
+	}
+
 	//create receive file thread
 	syslog(LOG_DEBUG, "create recv file thread");
 	ret = pthread_create(&recv_file_thread, NULL, &recvFileThread,
@@ -195,7 +205,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	pthread_join(recv_file_thread, NULL );
-
 	pthread_join(adv_info_thread, NULL );
 	return APP_SUCCESS;
 }

@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <ifaddrs.h>
+#include <semaphore.h>
 
 
 /*define and declare server socket*/
@@ -47,6 +48,11 @@ struct sockaddr_in udp_server_address, udp_client_address;
 unsigned int client_add_lenght;
 int message;
 int broadcast_enable;
+
+/*Declare socket semaphore
+ * UDP socket will start after TCP socket was created
+ */
+sem_t sem_sock;
 
 //Declare sock function
 int openStreamSocket();

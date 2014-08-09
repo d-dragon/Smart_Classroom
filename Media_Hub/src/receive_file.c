@@ -5,6 +5,7 @@
  *      Author: d-dragon
  */
 
+#include <semaphore.h>
 #include "receive_file.h"
 #include "sock_infra.h"
 #include "logger.h"
@@ -101,6 +102,7 @@ void writetoFileStream() {
 void *recvFileThread() {
 
 	path_to_file = calloc(256, sizeof(char));
+
 	int ret = openStreamSocket();
 	if(ret == SOCK_SUCCESS){
 		syslog(LOG_DEBUG,"TCP socket successfully opened--------\n");
@@ -108,6 +110,10 @@ void *recvFileThread() {
 	}else{
 		syslog(LOG_DEBUG,"TCP socket open failed\n");
 	}
+	/*start UDP socket for advertise server info*/
+	syslog(LOG_DEBUG,"<call sem_post> to active init UDP sock");
+	sem_post(&sem_sock);
+
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
