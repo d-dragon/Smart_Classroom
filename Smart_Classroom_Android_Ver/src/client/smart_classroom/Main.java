@@ -1,9 +1,12 @@
 package client.smart_classroom;
 
+import com.smartclassroom.listener.OnEventControlListener;
+
 import network.Socket_ini.Socket_ini;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -12,7 +15,7 @@ import android.widget.EditText;
 import android.widget.TabHost;
 import android.widget.Toast;
 
-public class Main extends Activity implements OnClickListener {
+public class Main extends Activity implements OnClickListener, OnEventControlListener {
 
 	private Socket_ini connector;
 	private shareNetwork shared;
@@ -28,6 +31,7 @@ public class Main extends Activity implements OnClickListener {
 
 		shared = (shareNetwork) getApplicationContext();
 		connector = shared.getNetworkSocket_TCP();
+		connector.setOnEventControlListener(this);
 		btStart = (Button) findViewById(R.id.btStart);
 		btStart.setOnClickListener(this);
 		btAuto = (Button) findViewById(R.id.btAuto);
@@ -115,9 +119,9 @@ public class Main extends Activity implements OnClickListener {
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
-				String serverMessage = connector.ReceiveData();
-				Toast.makeText(getApplicationContext(), serverMessage, Toast.LENGTH_SHORT).show();
-				serverMessage = "";
+//				String serverMessage = connector.ReceiveData();
+//				Toast.makeText(getApplicationContext(), serverMessage, Toast.LENGTH_SHORT).show();
+//				serverMessage = "";
 			}
 			break;
 		case R.id.btPre:
@@ -221,5 +225,24 @@ public class Main extends Activity implements OnClickListener {
 			}
 			break;
 		}
+	}
+
+	/**
+	 * Receive message here
+	 * @author PTD
+	 */
+	@Override
+	public void onEvent(View view, int type, Object data) {
+		String msg = null;
+		switch (type) {
+		case OnEventControlListener.EVENT_TCP_MESSAGE:
+			msg = (String) data;
+			Log.i("MESSAGE", msg);
+			break;
+
+		default:
+			break;
+		}
+		
 	}
 }

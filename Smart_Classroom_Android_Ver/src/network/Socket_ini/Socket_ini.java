@@ -7,12 +7,17 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+
+import com.smartclassroom.listener.OnEventControlListener;
+
 import android.content.Context;
 import android.os.Handler;
 
 public class Socket_ini {
 	private boolean mIsConnected;
-	private static final String defaultIP = "192.168.1.32";
+	// "192.168.1.32"
+	// "10.0.2.2"
+	private static final String defaultIP = "192.168.56.1";
 	private static final int defaultPort = 1991;
 	private String ip;
 	private int port;
@@ -21,11 +26,22 @@ public class Socket_ini {
 	Thread mThread = null;
 	ClientThread newThread;
 	public String serverMessage;
+	
+	private OnEventControlListener onEventControlListener;
 
 	public Socket_ini(Context context) {
 		this.mHandler = new Handler();
 
 		makeDefault();
+	}
+
+	public OnEventControlListener getOnEventControlListener() {
+		return onEventControlListener;
+	}
+
+	public void setOnEventControlListener(
+			OnEventControlListener onEventControlListener) {
+		this.onEventControlListener = onEventControlListener;
 	}
 
 	public class ClientThread extends Thread {
@@ -34,6 +50,12 @@ public class Socket_ini {
 				Socket socket = new Socket(ip, port);
 				mSocket = socket;
 				mIsConnected = true;
+				String msg = null;
+				while(true) {
+					msg = ReceiveData();
+					onEventControlListener.onEvent(null, OnEventControlListener.EVENT_TCP_MESSAGE, msg);
+				}
+				
 			} catch (Exception e0) {
 				mIsConnected = false;
 
