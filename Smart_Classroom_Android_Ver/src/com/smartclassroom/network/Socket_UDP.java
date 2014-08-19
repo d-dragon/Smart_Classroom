@@ -1,7 +1,7 @@
 /**
  * 
  */
-package network.Socket_ini;
+package com.smartclassroom.network;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -11,7 +11,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-import client.smart_classroom.Splashctivity;
+import com.smartclassroom.main.Splashctivity;
 
 import android.content.Context;
 import android.net.DhcpInfo;

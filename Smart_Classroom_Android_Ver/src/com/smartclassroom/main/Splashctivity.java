@@ -1,9 +1,9 @@
-package client.smart_classroom;
+package com.smartclassroom.main;
+
+import com.smartclassroom.main.loading_Task.LoadingTaskFinishedListener;
+import com.smartclassroom.network.*;
 
 import client.smart_classroom.R;
-import client.smart_classroom.loading_Task.LoadingTaskFinishedListener;
-import network.Socket_ini.*;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
@@ -22,7 +22,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 
 	private Socket_ini connector;
 	private Socket_UDP conSocket_UDP = null;
-	private shareNetwork shared;
+	private SmartClassroomApplication shared;
 	private Button btnConnect, btP1;
 	// private ProgressBar pb;
 	// private TextView tv;
@@ -80,7 +80,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 		// Show the splash screen
 		setContentView(R.layout.loading);
 
-		shared = (shareNetwork) getApplicationContext();
+		shared = (SmartClassroomApplication) getApplicationContext();
 		connector = shared.getNetworkSocket_TCP();
 		conSocket_UDP = shared.getNetworkInSocket_UDP();
 		etIP = (EditText) findViewById(R.id.etIP);

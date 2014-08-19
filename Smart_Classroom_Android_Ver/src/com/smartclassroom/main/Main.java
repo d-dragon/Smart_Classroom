@@ -1,10 +1,6 @@
-package client.smart_classroom;
+package com.smartclassroom.main;
 
-import com.smartclassroom.listener.OnEventControlListener;
-
-import network.Socket_ini.Socket_ini;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -14,11 +10,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TabHost;
 import android.widget.Toast;
+import client.smart_classroom.R;
 
-public class Main extends Activity implements OnClickListener, OnEventControlListener {
+import com.smartclassroom.listener.OnEventControlListener;
+import com.smartclassroom.network.Socket_ini;
+
+public class Main extends BaseActivity implements OnClickListener {
 
 	private Socket_ini connector;
-	private shareNetwork shared;
+	private SmartClassroomApplication shared;
 	Button btStart, btAuto, btPre, btMan, btOff, btEqu1,btEqu2 , btPro1, btPro2, btPro3, btPro4;
 	EditText etCommand;
 	String comamnd;
@@ -29,8 +29,9 @@ public class Main extends Activity implements OnClickListener, OnEventControlLis
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		shared = (shareNetwork) getApplicationContext();
-		connector = shared.getNetworkSocket_TCP();
+		shared = (SmartClassroomApplication) getApplicationContext();
+//		connector = shared.getNetworkSocket_TCP();
+		connector = SmartClassroomApplication.getInstance().getNetworkSocket_TCP();
 		connector.setOnEventControlListener(this);
 		btStart = (Button) findViewById(R.id.btStart);
 		btStart.setOnClickListener(this);

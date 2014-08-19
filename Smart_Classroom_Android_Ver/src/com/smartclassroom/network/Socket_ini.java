@@ -1,4 +1,4 @@
-package network.Socket_ini;
+package com.smartclassroom.network;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

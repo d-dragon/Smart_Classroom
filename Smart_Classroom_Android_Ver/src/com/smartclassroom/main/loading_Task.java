@@ -1,9 +1,7 @@
-package client.smart_classroom;
+package com.smartclassroom.main;
 
+import com.smartclassroom.network.*;
 
-
-
-import network.Socket_ini.*;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -12,7 +10,7 @@ public class loading_Task extends AsyncTask<String, Integer, Integer> {
 	
 	private Socket_ini connector;
 	private Socket_UDP conSocket_UDP;
-    private shareNetwork shared;
+    private SmartClassroomApplication shared;
 	public interface LoadingTaskFinishedListener {
 		void onTaskFinished(); // If you want to pass something back to the listener add a param to this method
 	}
@@ -32,7 +30,7 @@ public class loading_Task extends AsyncTask<String, Integer, Integer> {
 		//this.progressBar = progressBar;
 		this.finishedListener = finishedListener;
 		
-		shared = (shareNetwork) c;
+		shared = (SmartClassroomApplication) c;
 		connector = shared.getNetworkSocket_TCP();
 		conSocket_UDP = shared.getNetworkInSocket_UDP();
 	}
