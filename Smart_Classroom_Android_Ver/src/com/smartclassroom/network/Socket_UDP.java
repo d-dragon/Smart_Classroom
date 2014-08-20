@@ -11,14 +11,15 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-import com.smartclassroom.main.Splashctivity;
-
 import android.content.Context;
 import android.net.DhcpInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.util.Log;
+
+import com.smartclassroom.common.Settings;
+import com.smartclassroom.listener.OnEventControlListener;
 
 /**
  * @author Duy
@@ -28,11 +29,17 @@ public class Socket_UDP {
 
 	// Debugging
 	private static final String TAG = "BroadcastService";
-	private static final boolean D = true;
+	// private static final boolean D = true;
 
 	// Member fields
-	private final Handler mHandler;
+	// private final Handler mHandler;
 	private ComThread mConnectedThread;
+	private OnEventControlListener onEventControlListener;
+
+	public void setOnEventControlListener(
+			OnEventControlListener onEventControlListener) {
+		this.onEventControlListener = onEventControlListener;
+	}
 
 	Context mContext;
 
@@ -46,7 +53,7 @@ public class Socket_UDP {
 	 */
 	public Socket_UDP(Context context, Handler handler) {
 		mContext = context;
-		mHandler = handler;
+		// mHandler = handler;
 	}
 
 	/**
@@ -54,7 +61,7 @@ public class Socket_UDP {
 	 * incoming broadcast packets.
 	 */
 	public synchronized void start() {
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.d(TAG, "start");
 
 		mConnectedThread = new ComThread();
@@ -65,7 +72,7 @@ public class Socket_UDP {
 	 * Stop thread
 	 */
 	public synchronized void stop() {
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.d(TAG, "stop");
 		if (mConnectedThread != null) {
 			mConnectedThread.cancel();
@@ -88,11 +95,11 @@ public class Socket_UDP {
 
 			try {
 				myBcastIP = getBroadcastAddress();
-				if (D)
+				if (Settings.DEBUGGABLE)
 					Log.d(TAG, "my bcast ip : " + myBcastIP);
 
 				myLocalIP = getLocalAddress();
-				if (D)
+				if (Settings.DEBUGGABLE)
 					Log.d(TAG, "my local ip : " + myLocalIP);
 
 				mSocket = new DatagramSocket(BCAST_PORT);
@@ -120,12 +127,15 @@ public class Socket_UDP {
 
 					String s = new String(packet.getData(), 0,
 							packet.getLength());
-					if (D)
+					if (Settings.DEBUGGABLE)
 						Log.d(TAG, "Received response " + s);
 
 					// Send the obtained bytes to the UI Activity
-					mHandler.obtainMessage(Splashctivity.MESSAGE_READ, -1, -1,
-							s).sendToTarget();
+					onEventControlListener.onEvent(null,
+							OnEventControlListener.EVENT_UDP_MESSAGE, s);
+					// mHandler.obtainMessage(Splashctivity.MESSAGE_READ, -1,
+					// -1,
+					// s).sendToTarget();
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -157,7 +167,7 @@ public class Socket_UDP {
 					.getSystemService(Context.WIFI_SERVICE);
 
 			WifiInfo info = mWifi.getConnectionInfo();
-			if (D)
+			if (Settings.DEBUGGABLE)
 				Log.d(TAG, "\n\nWiFi Status: " + info.toString());
 
 			// DhcpInfo is a simple object for retrieving the results of a DHCP

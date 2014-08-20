@@ -8,17 +8,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import com.smartclassroom.listener.OnEventControlListener;
-
 import android.content.Context;
 import android.os.Handler;
 
+import com.smartclassroom.common.Constants;
+import com.smartclassroom.common.Logger;
+import com.smartclassroom.listener.OnEventControlListener;
+
 public class Socket_ini {
 	private boolean mIsConnected;
-	// "192.168.1.32"
-	// "10.0.2.2"
-	private static final String defaultIP = "192.168.56.1";
-	private static final int defaultPort = 1991;
 	private String ip;
 	private int port;
 	Handler mHandler = null;
@@ -26,7 +24,7 @@ public class Socket_ini {
 	Thread mThread = null;
 	ClientThread newThread;
 	public String serverMessage;
-	
+
 	private OnEventControlListener onEventControlListener;
 
 	public Socket_ini(Context context) {
@@ -51,26 +49,27 @@ public class Socket_ini {
 				mSocket = socket;
 				mIsConnected = true;
 				String msg = null;
-				while(true) {
+				while (true) {
 					msg = ReceiveData();
-					onEventControlListener.onEvent(null, OnEventControlListener.EVENT_TCP_MESSAGE, msg);
+					onEventControlListener.onEvent(null,
+							OnEventControlListener.EVENT_TCP_MESSAGE, msg);
 				}
-				
-			} catch (Exception e0) {
-				mIsConnected = false;
 
-				String strException = e0.getMessage();
-				if (strException == null)
-					strException = "Connection closed";
-				else
-					strException = "Cannot connect to the server:\r\n"
-							+ strException;
+			} catch (Exception e) {
+				e.printStackTrace();
+				mIsConnected = false;
+				Logger.show(e.getMessage());
+				// String strException = e0.getMessage();
+				// if (strException == null)
+				// strException = "Connection closed";
+				// else
+				// strException = "Cannot connect to the server:\r\n"
+				// + strException;
 			}
 		}
 
-		
 	}
-	
+
 	public void networkDestroy(int whatToDis) {
 		if (mIsConnected) {
 			mIsConnected = false;
@@ -116,79 +115,70 @@ public class Socket_ini {
 	public void setPort(int port) {
 		this.port = port;
 	}
-	
-	public void closeSocket(){
+
+	public void closeSocket() {
+		if (mSocket == null) {
+			return;
+		}
 		try {
 			mSocket.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 	public void makeDefault() {
-		ip = defaultIP;
-		port = defaultPort;
+		ip = Constants.IP;
+		port = Constants.PORT;
 	}
 
 	public ClientThread getNewThread() {
 		return newThread;
 	}
-	
-	/*public void PostCommand(String strCommand) {
-		if (mSocket != null && mIsConnected) {
 
-			try {
-				OutputStream streamOutput = mSocket.getOutputStream();
+	/*
+	 * public void PostCommand(String strCommand) { if (mSocket != null &&
+	 * mIsConnected) {
+	 * 
+	 * try { OutputStream streamOutput = mSocket.getOutputStream();
+	 * 
+	 * try { byte[] arrayOutput = strCommand.getBytes(); int nLen =
+	 * arrayOutput.length; streamOutput.write(arrayOutput, 0, nLen); } catch
+	 * (Exception e0) { // final String strMessage = //
+	 * "Error while sending to server:\r\n" + // e0.getMessage(); }
+	 * 
+	 * } catch (IOException e1) { e1.printStackTrace(); } try { PrintWriter out
+	 * = new PrintWriter(new BufferedWriter( new
+	 * OutputStreamWriter(mSocket.getOutputStream())), true);
+	 * out.print("Xin chao"); } catch (IOException e) { // TODO Auto-generated
+	 * catch block e.printStackTrace(); } } else { // Toast.makeText(context,
+	 * "Please connect to the server first", // Toast.LENGTH_SHORT).show(); } }
+	 */
+	public void SendCommand(String str) {
 
-				try {
-					byte[] arrayOutput = strCommand.getBytes();
-					int nLen = arrayOutput.length;
-					streamOutput.write(arrayOutput, 0, nLen);
-				} catch (Exception e0) {
-					// final String strMessage =
-					// "Error while sending to server:\r\n" +
-					// e0.getMessage();
-				}
-
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			try {
-				PrintWriter out = new PrintWriter(new BufferedWriter(
-						new OutputStreamWriter(mSocket.getOutputStream())),
-						true);
-				out.print("Xin chao");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			// Toast.makeText(context, "Please connect to the server first",
-			// Toast.LENGTH_SHORT).show();
-		}
-	}*/
-	public void SendCommand(String str){
-		
-		
+		PrintWriter out = null;
+		BufferedWriter bufferedWriter = null;
+		OutputStreamWriter outputStreamWriter = null;
 		try {
-			PrintWriter out;
-			out = new PrintWriter(new BufferedWriter(
-					new OutputStreamWriter(mSocket.getOutputStream())), true);
+			outputStreamWriter = new OutputStreamWriter(
+					mSocket.getOutputStream());
+			bufferedWriter = new BufferedWriter(outputStreamWriter);
+			out = new PrintWriter(bufferedWriter, true);
 			out.println(str);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
+
 	}
-	public String ReceiveData(){
+
+	public String ReceiveData() {
+		BufferedReader in = null;
+		InputStreamReader inputStreamReader = null;
 		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(mSocket.getInputStream()));
+			inputStreamReader = new InputStreamReader(mSocket.getInputStream());
+			in = new BufferedReader(inputStreamReader);
 			serverMessage = in.readLine();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return serverMessage;

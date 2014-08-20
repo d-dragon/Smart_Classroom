@@ -1,11 +1,6 @@
 package com.smartclassroom.main;
 
-import com.smartclassroom.main.loading_Task.LoadingTaskFinishedListener;
-import com.smartclassroom.network.*;
-
-import client.smart_classroom.R;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,12 +12,18 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import client.smart_classroom.R;
 
-public class Splashctivity extends Activity implements OnClickListener {
+import com.smartclassroom.common.Settings;
+import com.smartclassroom.listener.OnEventControlListener;
+import com.smartclassroom.network.Socket_UDP;
+import com.smartclassroom.network.Socket_ini;
+
+public class Splashctivity extends BaseActivity implements OnClickListener {
 
 	private Socket_ini connector;
 	private Socket_UDP conSocket_UDP = null;
-	private SmartClassroomApplication shared;
+	// private SmartClassroomApplication shared;
 	private Button btnConnect, btP1;
 	// private ProgressBar pb;
 	// private TextView tv;
@@ -35,7 +36,6 @@ public class Splashctivity extends Activity implements OnClickListener {
 
 	// Debugging
 	private static final String TAG = "BcastChat";
-	private static final boolean D = true;
 
 	// Message types sent from the BluetoothChatService Handler
 	public static final int MESSAGE_READ = 1;
@@ -45,44 +45,51 @@ public class Splashctivity extends Activity implements OnClickListener {
 	public static final String TOAST = "toast";
 
 	// The Handler that gets information back from the BluetoothChatService
-	@SuppressLint("HandlerLeak")
-	public final Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-
-			if (D)
-				Log.e(TAG, "[handleMessage !!!!!!!!!!!! ]");
-
-			switch (msg.what) {
-
-			case MESSAGE_READ:
-				readBuf = (String) msg.obj.toString();
-				IP = readBuf.trim();
-//				temp = IP.length();
-				
-				etIP.setText(IP);
-				etPort.setText("1991");
-				break;
-			case MESSAGE_TOAST:
-				Toast.makeText(getApplicationContext(),
-						msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
-						.show();
-				break;
-			}
-		}
-	};
+//	@SuppressLint("HandlerLeak")
+//	public final Handler mHandler = new Handler() {
+//		@Override
+//		public void handleMessage(Message msg) {
+//
+//			if (Settings.DEBUGGABLE)
+//				Log.e(TAG, "[handleMessage !!!!!!!!!!!! ]");
+//
+//			switch (msg.what) {
+//
+//			case MESSAGE_READ:
+//				readBuf = (String) msg.obj.toString();
+//				IP = readBuf.trim();
+//				// temp = IP.length();
+//
+//				etIP.setText(IP);
+//				etPort.setText("1991");
+//				break;
+//			case MESSAGE_TOAST:
+//				Toast.makeText(getApplicationContext(),
+//						msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
+//						.show();
+//				break;
+//			}
+//		}
+//	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (D)
+		if (Settings.DEBUGGABLE)
+			
 			Log.e(TAG, "+++ ON CREATE +++");
 		// Show the splash screen
 		setContentView(R.layout.loading);
 
-		shared = (SmartClassroomApplication) getApplicationContext();
-		connector = shared.getNetworkSocket_TCP();
-		conSocket_UDP = shared.getNetworkInSocket_UDP();
+		// shared = (SmartClassroomApplication) getApplicationContext();
+		// connector = shared.getNetworkSocket_TCP();
+		// conSocket_UDP = shared.getNetworkInSocket_UDP();
+		connector = SmartClassroomApplication.getInstance()
+				.getNetworkSocket_TCP();
+		conSocket_UDP = SmartClassroomApplication.getInstance()
+				.getNetworkInSocket_UDP();
+		conSocket_UDP.setOnEventControlListener(this);
+		
 		etIP = (EditText) findViewById(R.id.etIP);
 		etPort = (EditText) findViewById(R.id.etPort);
 		btP1 = (Button) findViewById(R.id.btP1);
@@ -109,20 +116,20 @@ public class Splashctivity extends Activity implements OnClickListener {
 		// this tutorial
 
 	}
-
+	
 	public void onStart() {
 		super.onStart();
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "++ ON START ++");
 
-		setup();
+//		setup();
 
 	}
 
 	@Override
 	public synchronized void onResume() {
 		super.onResume();
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "+ ON RESUME +");
 		conSocket_UDP.start();
 
@@ -133,7 +140,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 		super.onStop();
 		if (conSocket_UDP != null)
 			conSocket_UDP.stop();
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "-- ON STOP --");
 	}
 
@@ -142,7 +149,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 		// Stop the Broadcast chat services
 		if (conSocket_UDP != null)
 			conSocket_UDP.stop();
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "--- ON DESTROY ---");
 	}
 
@@ -183,31 +190,30 @@ public class Splashctivity extends Activity implements OnClickListener {
 			connector.setPort(Port);
 			// pb.setVisibility(View.VISIBLE);
 			// tv.setVisibility(View.VISIBLE);
-//			btnConnect.setVisibility(View.INVISIBLE);
+			// btnConnect.setVisibility(View.INVISIBLE);
 			connector.connectToNetwork();
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			if (connector.ismIsConnected() == true) {
 				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
 				Splashctivity.this.startActivity(mainIntent);
 				Splashctivity.this.finish();
-			}
-			else {
-//				btnConnect.setVisibility(View.VISIBLE);
-				Toast.makeText(getApplicationContext(), "Connecting Fail! Try again", Toast.LENGTH_SHORT).show();	
+			} else {
+				// btnConnect.setVisibility(View.VISIBLE);
+				Toast.makeText(getApplicationContext(),
+						"Connecting Fail! Try again", Toast.LENGTH_SHORT)
+						.show();
 			}
 
 			break;
 		case R.id.btP1:
-			
+
 			try {
 				sendMessage(P1);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -215,10 +221,9 @@ public class Splashctivity extends Activity implements OnClickListener {
 		}
 	}
 
-	private void setup() {
-
-		conSocket_UDP = new Socket_UDP(this, mHandler);
-	}
+//	private void setup() {
+//		conSocket_UDP = new Socket_UDP(this, mHandler);
+//	}
 
 	/**
 	 * Sends a message.
@@ -228,7 +233,7 @@ public class Splashctivity extends Activity implements OnClickListener {
 	 */
 	private void sendMessage(String message) {
 
-		if (D)
+		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "[sendMessage]");
 
 		// Check that there's actually something to send
@@ -240,4 +245,31 @@ public class Splashctivity extends Activity implements OnClickListener {
 
 		}
 	}
+
+	@Override
+	public void onEvent(View view, int type, Object data) {
+		String msg = null;
+		switch (type) {
+		case OnEventControlListener.EVENT_UDP_MESSAGE:
+			msg = (String) data;
+//			readBuf = (String) msg.obj.toString();
+			IP = msg.trim();
+			// temp = IP.length();
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					etIP.setText(IP);
+					etPort.setText("1991");
+				}
+			});
+
+			
+			break;
+
+		default:
+			break;
+		}
+	}
+	
+	
 }

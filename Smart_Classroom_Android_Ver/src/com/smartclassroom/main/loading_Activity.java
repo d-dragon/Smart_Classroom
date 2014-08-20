@@ -16,7 +16,7 @@ public class loading_Activity extends Activity implements OnClickListener {
     private final int WAIT_TIME = 1000;
     private Socket_ini connector;
     private Socket_UDP conSocket_UDP;
-    private SmartClassroomApplication shared;
+//    private SmartClassroomApplication shared;
     private Button btnConnect;
     
     @Override
@@ -30,10 +30,11 @@ public class loading_Activity extends Activity implements OnClickListener {
 		
 		//findViewById(R.id.mainSpinner1).setVisibility(View.VISIBLE);
 		
-		shared = (SmartClassroomApplication) getApplicationContext();
+//		shared = (SmartClassroomApplication) getApplicationContext();
 		connector = SmartClassroomApplication.getInstance().getNetworkSocket_TCP();
 //		connector = shared.getNetworkSocket_TCP();
-		conSocket_UDP = shared.getNetworkInSocket_UDP();
+//		conSocket_UDP = shared.getNetworkInSocket_UDP();
+		conSocket_UDP = SmartClassroomApplication.getInstance().getNetworkInSocket_UDP();
 		conSocket_UDP.start();
 		connector.connectToNetwork();
 	

@@ -18,7 +18,7 @@ import com.smartclassroom.network.Socket_ini;
 public class Main extends BaseActivity implements OnClickListener {
 
 	private Socket_ini connector;
-	private SmartClassroomApplication shared;
+//	private SmartClassroomApplication shared;
 	Button btStart, btAuto, btPre, btMan, btOff, btEqu1,btEqu2 , btPro1, btPro2, btPro3, btPro4;
 	EditText etCommand;
 	String comamnd;
@@ -29,7 +29,7 @@ public class Main extends BaseActivity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-		shared = (SmartClassroomApplication) getApplicationContext();
+//		shared = (SmartClassroomApplication) getApplicationContext();
 //		connector = shared.getNetworkSocket_TCP();
 		connector = SmartClassroomApplication.getInstance().getNetworkSocket_TCP();
 		connector.setOnEventControlListener(this);
