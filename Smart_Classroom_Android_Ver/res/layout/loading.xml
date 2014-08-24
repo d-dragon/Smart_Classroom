@@ -3,13 +3,15 @@
     android:layout_height="fill_parent"
     android:background="#E5E5E5"
     android:gravity="top"
-    android:orientation="vertical" >
+    android:orientation="vertical" 
+    >
 
     <EditText
         android:id="@+id/etIP"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/ipadd" >
+        android:hint="@string/ipadd"
+        android:visibility="visible" >
     </EditText>
 
     <EditText
@@ -17,41 +19,45 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:hint="@string/port"
-        android:inputType="numberDecimal" >
+        android:inputType="numberDecimal"
+        android:visibility="visible" >
     </EditText>
 
     <Button
         android:id="@+id/btP1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:text="@string/R1"
+        android:layout_weight="1"
         android:textSize="16sp" >
     </Button>
 
     <Button
         android:id="@+id/btP2"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="@string/R2"
-        android:textSize="16sp" >
+        android:textSize="16sp"
+        android:visibility="gone" >
     </Button>
 
     <Button
         android:id="@+id/btP3"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="@string/R3"
-        android:textSize="16sp" >
+        android:textSize="16sp"
+        android:visibility="gone" >
     </Button>
 
     <Button
         android:id="@+id/btnC"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/Connect" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/Connect"
+        android:layout_weight="1"
+        android:visibility="gone" />
 
 </LinearLayout>

@@ -18,6 +18,7 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.util.Log;
 
+import com.smartclassroom.common.Logger;
 import com.smartclassroom.common.Settings;
 import com.smartclassroom.listener.OnEventControlListener;
 
@@ -27,6 +28,9 @@ import com.smartclassroom.listener.OnEventControlListener;
  */
 public class Socket_UDP {
 
+	private static final int BCAST_PORT = 1992;
+	InetAddress myBcastIP, myLocalIP;
+	DatagramSocket mSocket;
 	// Debugging
 	private static final String TAG = "BroadcastService";
 	// private static final boolean D = true;
@@ -80,27 +84,83 @@ public class Socket_UDP {
 		}
 	}
 
+	public ComThread getmConnectedThread() {
+		return mConnectedThread;
+	}
+
 	public void write(byte[] out) {
 
-		mConnectedThread.write(out);
+		// mConnectedThread.write(out);
+		SendThread sendThread = new SendThread(out);
+		sendThread.start();
+	}
+
+	private class SendThread extends Thread {
+
+		byte[] buffer;
+
+		public SendThread(byte[] out) {
+			this.buffer = out;
+
+			// try {
+			// myBcastIP = getBroadcastAddress();
+			// if (Settings.DEBUGGABLE)
+			// Log.d(TAG, "my bcast ip : " + myBcastIP);
+
+			// myLocalIP = getLocalAddress();
+			// if (Settings.DEBUGGABLE)
+			// Log.d(TAG, "my local ip : " + myLocalIP);
+
+			// mSocket = new DatagramSocket(BCAST_PORT);
+			// mSocket.setBroadcast(true);
+			//
+			// } catch (IOException e) {
+			// Log.e(TAG, "Could not make socket", e);
+			// }
+
+		}
+
+		@Override
+		public void run() {
+
+			if (buffer == null || buffer.length == 0) {
+				return;
+			}
+			String data = null;
+			try {
+				data = new String(buffer);
+
+				DatagramPacket packet = new DatagramPacket(data.getBytes(),
+						data.length(), myBcastIP, BCAST_PORT);
+
+				Logger.show("UDP send:" + data);
+				mSocket.send(packet);
+			} catch (Exception e) {
+				Log.e(TAG, "Exception during write", e);
+			}
+
+		}
+
 	}
 
 	private class ComThread extends Thread {
 
-		private static final int BCAST_PORT = 1992;
-		DatagramSocket mSocket;
-		InetAddress myBcastIP, myLocalIP;
+		// private static final int BCAST_PORT = 1992;
+		// DatagramSocket mSocket;
+		// InetAddress myBcastIP, myLocalIP;
 
 		public ComThread() {
 
 			try {
 				myBcastIP = getBroadcastAddress();
-				if (Settings.DEBUGGABLE)
+				if (Settings.DEBUGGABLE) {
 					Log.d(TAG, "my bcast ip : " + myBcastIP);
+				}
 
 				myLocalIP = getLocalAddress();
-				if (Settings.DEBUGGABLE)
+				if (Settings.DEBUGGABLE) {
 					Log.d(TAG, "my local ip : " + myLocalIP);
+				}
 
 				mSocket = new DatagramSocket(BCAST_PORT);
 				mSocket.setBroadcast(true);
@@ -111,6 +171,9 @@ public class Socket_UDP {
 		}
 
 		public void run() {
+			DatagramPacket packet = null;
+			InetAddress remoteIP = null;
+			String s = null;
 
 			try {
 
@@ -118,15 +181,16 @@ public class Socket_UDP {
 
 				// Listen on socket to receive messages
 				while (true) {
-					DatagramPacket packet = new DatagramPacket(buf, buf.length);
+					packet = new DatagramPacket(buf, buf.length);
 					mSocket.receive(packet);
+					Log.i(TAG, "Broadcast state:" + mSocket.getBroadcast());
 
-					InetAddress remoteIP = packet.getAddress();
-					if (remoteIP.equals(myLocalIP))
+					remoteIP = packet.getAddress();
+					if (remoteIP.equals(myLocalIP)) {
 						continue;
+					}
 
-					String s = new String(packet.getData(), 0,
-							packet.getLength());
+					s = new String(packet.getData(), 0, packet.getLength());
 					if (Settings.DEBUGGABLE)
 						Log.d(TAG, "Received response " + s);
 
@@ -146,13 +210,17 @@ public class Socket_UDP {
 		 * Write broadcast packet.
 		 */
 		public void write(byte[] buffer) {
-
+			if (buffer == null || buffer.length == 0) {
+				return;
+			}
+			String data = null;
 			try {
-				String data = new String(buffer);
+				data = new String(buffer);
 
 				DatagramPacket packet = new DatagramPacket(data.getBytes(),
 						data.length(), myBcastIP, BCAST_PORT);
 
+				Logger.show("UDP send:" + data);
 				mSocket.send(packet);
 			} catch (Exception e) {
 				Log.e(TAG, "Exception during write", e);

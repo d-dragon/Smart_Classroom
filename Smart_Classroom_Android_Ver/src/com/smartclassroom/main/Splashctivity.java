@@ -1,10 +1,8 @@
 package com.smartclassroom.main;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +12,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import client.smart_classroom.R;
 
+import com.smartclassroom.common.Logger;
 import com.smartclassroom.common.Settings;
 import com.smartclassroom.listener.OnEventControlListener;
 import com.smartclassroom.network.Socket_UDP;
@@ -21,7 +20,7 @@ import com.smartclassroom.network.Socket_ini;
 
 public class Splashctivity extends BaseActivity implements OnClickListener {
 
-	private Socket_ini connector;
+	private Socket_ini socket_tcp;
 	private Socket_UDP conSocket_UDP = null;
 	// private SmartClassroomApplication shared;
 	private Button btnConnect, btP1;
@@ -45,38 +44,38 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 	public static final String TOAST = "toast";
 
 	// The Handler that gets information back from the BluetoothChatService
-//	@SuppressLint("HandlerLeak")
-//	public final Handler mHandler = new Handler() {
-//		@Override
-//		public void handleMessage(Message msg) {
-//
-//			if (Settings.DEBUGGABLE)
-//				Log.e(TAG, "[handleMessage !!!!!!!!!!!! ]");
-//
-//			switch (msg.what) {
-//
-//			case MESSAGE_READ:
-//				readBuf = (String) msg.obj.toString();
-//				IP = readBuf.trim();
-//				// temp = IP.length();
-//
-//				etIP.setText(IP);
-//				etPort.setText("1991");
-//				break;
-//			case MESSAGE_TOAST:
-//				Toast.makeText(getApplicationContext(),
-//						msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
-//						.show();
-//				break;
-//			}
-//		}
-//	};
+	// @SuppressLint("HandlerLeak")
+	// public final Handler mHandler = new Handler() {
+	// @Override
+	// public void handleMessage(Message msg) {
+	//
+	// if (Settings.DEBUGGABLE)
+	// Log.e(TAG, "[handleMessage !!!!!!!!!!!! ]");
+	//
+	// switch (msg.what) {
+	//
+	// case MESSAGE_READ:
+	// readBuf = (String) msg.obj.toString();
+	// IP = readBuf.trim();
+	// // temp = IP.length();
+	//
+	// etIP.setText(IP);
+	// etPort.setText("1991");
+	// break;
+	// case MESSAGE_TOAST:
+	// Toast.makeText(getApplicationContext(),
+	// msg.getData().getString(TOAST), Toast.LENGTH_SHORT)
+	// .show();
+	// break;
+	// }
+	// }
+	// };
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (Settings.DEBUGGABLE)
-			
+
 			Log.e(TAG, "+++ ON CREATE +++");
 		// Show the splash screen
 		setContentView(R.layout.loading);
@@ -84,12 +83,13 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		// shared = (SmartClassroomApplication) getApplicationContext();
 		// connector = shared.getNetworkSocket_TCP();
 		// conSocket_UDP = shared.getNetworkInSocket_UDP();
-		connector = SmartClassroomApplication.getInstance()
+		socket_tcp = SmartClassroomApplication.getInstance()
 				.getNetworkSocket_TCP();
+		socket_tcp.setOnEventControlListener(this);
 		conSocket_UDP = SmartClassroomApplication.getInstance()
 				.getNetworkInSocket_UDP();
 		conSocket_UDP.setOnEventControlListener(this);
-		
+
 		etIP = (EditText) findViewById(R.id.etIP);
 		etPort = (EditText) findViewById(R.id.etPort);
 		btP1 = (Button) findViewById(R.id.btP1);
@@ -101,11 +101,12 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		/**
 		 * Disable StrictMode
 		 */
-		if (android.os.Build.VERSION.SDK_INT > 9) {
-			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-					.permitNetwork().build();
-			StrictMode.setThreadPolicy(policy);
-		}
+		// if (android.os.Build.VERSION.SDK_INT > 9) {
+		// StrictMode.ThreadPolicy policy = new
+		// StrictMode.ThreadPolicy.Builder()
+		// .permitAll().build();
+		// StrictMode.setThreadPolicy(policy);
+		// }
 
 		// pb = (ProgressBar) findViewById(R.id.pbLoading);
 
@@ -116,13 +117,13 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		// this tutorial
 
 	}
-	
+
 	public void onStart() {
 		super.onStart();
 		if (Settings.DEBUGGABLE)
 			Log.e(TAG, "++ ON START ++");
 
-//		setup();
+		// setup();
 
 	}
 
@@ -177,41 +178,52 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 
 		switch (v.getId()) {
 		case R.id.btnC:
-			IP = etIP.getText().toString();
-			try {
-				Port = Integer.parseInt(etPort.getText().toString());
-			} catch (NumberFormatException e) {
-				// TODO: handle exception
-				Toast.makeText(getApplicationContext(),
-						"Please Enter only interger type in Port Section",
-						Toast.LENGTH_SHORT).show();
+			if (Settings.DEBUGGABLE) {
+				IP = etIP.getText().toString();
+				try {
+					Port = Integer.parseInt(etPort.getText().toString());
+				} catch (NumberFormatException e) {
+					// TODO: handle exception
+					Toast.makeText(getApplicationContext(),
+							"Please Enter only interger type in Port Section",
+							Toast.LENGTH_SHORT).show();
+				}
 			}
-			connector.setIp(IP);
-			connector.setPort(Port);
+			socket_tcp.setIp(IP);
+			socket_tcp.setPort(Port);
 			// pb.setVisibility(View.VISIBLE);
 			// tv.setVisibility(View.VISIBLE);
 			// btnConnect.setVisibility(View.INVISIBLE);
-			connector.connectToNetwork();
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
-			if (connector.ismIsConnected() == true) {
-				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
-				Splashctivity.this.startActivity(mainIntent);
-				Splashctivity.this.finish();
-			} else {
-				// btnConnect.setVisibility(View.VISIBLE);
-				Toast.makeText(getApplicationContext(),
-						"Connecting Fail! Try again", Toast.LENGTH_SHORT)
-						.show();
-			}
+			socket_tcp.connectToNetwork();
+//			try {
+//				Thread.sleep(800);
+//			} catch (InterruptedException e1) {
+//				e1.printStackTrace();
+//			}
+//			if (socket_tcp.ismIsConnected() == true) {
+//				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
+//				Splashctivity.this.startActivity(mainIntent);
+//				Splashctivity.this.finish();
+//			} else {
+//				// btnConnect.setVisibility(View.VISIBLE);
+//				Toast.makeText(getApplicationContext(),
+//						"Connecting Fail! Try again", Toast.LENGTH_SHORT)
+//						.show();
+//			}
 
 			break;
 		case R.id.btP1:
 
 			try {
+				// Handler m = new Handler();
+				// m.post(new Runnable() {
+				//
+				// @Override
+				// public void run() {
+				// // TODO Auto-generated method stub
+				// sendMessage(P1);
+				// }
+				// });
 				sendMessage(P1);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -221,9 +233,9 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		}
 	}
 
-//	private void setup() {
-//		conSocket_UDP = new Socket_UDP(this, mHandler);
-//	}
+	// private void setup() {
+	// conSocket_UDP = new Socket_UDP(this, mHandler);
+	// }
 
 	/**
 	 * Sends a message.
@@ -240,9 +252,9 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		if (message.length() > 0) {
 			// Get the message bytes and tell the BluetoothChatService to write
 			byte[] send = message.getBytes();
-
+			Logger.show("btn R1 send:" + message);
 			conSocket_UDP.write(send);
-
+			// conSocket_UDP.getmConnectedThread().write(send);
 		}
 	}
 
@@ -252,24 +264,47 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 		switch (type) {
 		case OnEventControlListener.EVENT_UDP_MESSAGE:
 			msg = (String) data;
-//			readBuf = (String) msg.obj.toString();
+			// readBuf = (String) msg.obj.toString();
 			IP = msg.trim();
+
+			Logger.show(IP + Port);
+
+			// Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 			// temp = IP.length();
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
+					Logger.show(IP + Port);
 					etIP.setText(IP);
 					etPort.setText("1991");
+					// btnConnect.setVisibility(View.VISIBLE);
 				}
 			});
 
-			
 			break;
 
+		case OnEventControlListener.EVENT_TCP_STATUS:
+			boolean isConnected = (Boolean) data;
+			if (isConnected) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Intent mainIntent = new Intent(Splashctivity.this, Main.class);
+						Splashctivity.this.startActivity(mainIntent);
+						Splashctivity.this.finish();
+					}
+				});
+				
+			} else {
+				// btnConnect.setVisibility(View.VISIBLE);
+				Toast.makeText(getApplicationContext(),
+						"Connecting Fail! Try again", Toast.LENGTH_SHORT)
+						.show();
+			}
+			break;
 		default:
 			break;
 		}
 	}
-	
-	
+
 }

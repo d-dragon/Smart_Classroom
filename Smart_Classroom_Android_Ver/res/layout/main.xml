@@ -25,7 +25,7 @@
             android:id="@+id/tvTemp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignLeft="@id/tv1"
+            android:layout_toRightOf="@id/tv1"
             android:layout_alignParentTop="true"
             android:text="@string/Temp"
             android:textColor="@color/Text"

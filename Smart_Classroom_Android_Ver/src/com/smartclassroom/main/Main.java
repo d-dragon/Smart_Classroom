@@ -1,6 +1,5 @@
 package com.smartclassroom.main;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -9,6 +8,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TabHost;
+import android.widget.TextView;
 import android.widget.Toast;
 import client.smart_classroom.R;
 
@@ -18,9 +18,11 @@ import com.smartclassroom.network.Socket_ini;
 public class Main extends BaseActivity implements OnClickListener {
 
 	private Socket_ini connector;
-//	private SmartClassroomApplication shared;
-	Button btStart, btAuto, btPre, btMan, btOff, btEqu1,btEqu2 , btPro1, btPro2, btPro3, btPro4;
+	// private SmartClassroomApplication shared;
+	Button btStart, btAuto, btPre, btMan, btOff, btEqu1, btEqu2, btPro1,
+			btPro2, btPro3, btPro4;
 	EditText etCommand;
+	TextView tvTemperature, light;
 	String comamnd;
 	TabHost tabs;
 
@@ -29,10 +31,12 @@ public class Main extends BaseActivity implements OnClickListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 
-//		shared = (SmartClassroomApplication) getApplicationContext();
-//		connector = shared.getNetworkSocket_TCP();
-		connector = SmartClassroomApplication.getInstance().getNetworkSocket_TCP();
+		// shared = (SmartClassroomApplication) getApplicationContext();
+		// connector = shared.getNetworkSocket_TCP();
+		connector = SmartClassroomApplication.getInstance()
+				.getNetworkSocket_TCP();
 		connector.setOnEventControlListener(this);
+		tvTemperature = (TextView) findViewById(R.id.tvTemp);
 		btStart = (Button) findViewById(R.id.btStart);
 		btStart.setOnClickListener(this);
 		btAuto = (Button) findViewById(R.id.btAuto);
@@ -81,21 +85,20 @@ public class Main extends BaseActivity implements OnClickListener {
 	@Override
 	protected void onStop() {
 		super.onStop();
-	//	connector.SendCommand("exit");
-	//	connector.closeSocket();
+		// connector.SendCommand("exit");
+//		 connector.closeSocket();
+		connector.networkDestroy(0);
 
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-	//	connector.closeSocket();
+		// connector.closeSocket();
 	}
 
-	@SuppressLint("ShowToast")
 	@Override
 	public void onClick(View view) {
-		// TODO Auto-generated method stub
 		switch (view.getId()) {
 		case R.id.btStart:
 			if (connector.ismIsConnected()) {
@@ -106,7 +109,7 @@ public class Main extends BaseActivity implements OnClickListener {
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
-				
+
 			}
 			break;
 		case R.id.btAuto:
@@ -114,15 +117,16 @@ public class Main extends BaseActivity implements OnClickListener {
 
 				try {
 					connector.SendCommand("AUT");
-					
+
 				} catch (Exception e) {
 					// TODO: handle exception
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
-//				String serverMessage = connector.ReceiveData();
-//				Toast.makeText(getApplicationContext(), serverMessage, Toast.LENGTH_SHORT).show();
-//				serverMessage = "";
+				// String serverMessage = connector.ReceiveData();
+				// Toast.makeText(getApplicationContext(), serverMessage,
+				// Toast.LENGTH_SHORT).show();
+				// serverMessage = "";
 			}
 			break;
 		case R.id.btPre:
@@ -145,7 +149,7 @@ public class Main extends BaseActivity implements OnClickListener {
 					Toast.makeText(getApplicationContext(),
 							"Send command error", Toast.LENGTH_SHORT).show();
 				}
-				
+
 			}
 			break;
 		case R.id.btOff:
@@ -230,6 +234,7 @@ public class Main extends BaseActivity implements OnClickListener {
 
 	/**
 	 * Receive message here
+	 * 
 	 * @author PTD
 	 */
 	@Override
@@ -238,12 +243,19 @@ public class Main extends BaseActivity implements OnClickListener {
 		switch (type) {
 		case OnEventControlListener.EVENT_TCP_MESSAGE:
 			msg = (String) data;
+			final String strMsg = msg;
 			Log.i("MESSAGE", msg);
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					tvTemperature.setText(strMsg);
+				}
+			});
 			break;
 
 		default:
 			break;
 		}
-		
+
 	}
 }

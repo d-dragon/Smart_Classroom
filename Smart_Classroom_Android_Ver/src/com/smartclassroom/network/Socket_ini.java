@@ -48,6 +48,7 @@ public class Socket_ini {
 				Socket socket = new Socket(ip, port);
 				mSocket = socket;
 				mIsConnected = true;
+				onEventControlListener.onEvent(null, OnEventControlListener.EVENT_TCP_STATUS, mIsConnected);
 				String msg = null;
 				while (true) {
 					msg = ReceiveData();
@@ -58,7 +59,9 @@ public class Socket_ini {
 			} catch (Exception e) {
 				e.printStackTrace();
 				mIsConnected = false;
-				Logger.show(e.getMessage());
+				onEventControlListener.onEvent(null, OnEventControlListener.EVENT_TCP_STATUS, mIsConnected);
+//				Logger.show(e.getMessage());
+				
 				// String strException = e0.getMessage();
 				// if (strException == null)
 				// strException = "Connection closed";

@@ -3,27 +3,30 @@
 
     <string name="app_name">Smart Classroom</string>
     <string name="action_settings">Settings</string>
-    <string name="Connect">Connect</string>
     <string name="Disconnect">Disconnect</string>
     <string name="pleasewait">Please Wait</string>
+    <string name="Command">Send</string>
+    <string name="TextCommand">Command</string>
+    <string name="Temp">Temperature</string>
+    <string name="Light">Light</string>
+    <string name="Start">Start</string>
+    <string name="Auto">Auto</string>
+    <string name="Pre">Presentation</string>
+    <string name="Manual">Manual</string>
+    <string name="Off">Off</string>
+    <!-- Connect Screen - Start here -->
     <string name="ipadd">IP Address</string>
     <string name="port">Port Number</string>
-	<string name="Command">Send</string>    
-	<string name="TextCommand">Command</string>  
-	<string name="Temp">Temperature</string>
-	<string name="Light">Light</string>
-	<string name="Start">Start</string>
-	<string name="Auto">Auto</string>
-	<string name="Pre">Presentation</string>
-	<string name="Manual">Manual</string>
-	<string name="Off">Off</string>
-	<string name="R1">Room 1</string>
-	<string name="R2">Room 2</string>
-	<string name="R3">Room 3</string>
-	<string name="ProButPower">Power</string>
-	<string name="ProButMenu">Menu</string>
-	<string name="ProButUp">Up</string>
-	<string name="ProButDown">Down</string>
-	<string name="Equipment1">Light1</string>
-	<string name="Equipment2">Light2</string>
+    <string name="R1">Room 1</string>
+    <string name="R2">Room 2</string>
+    <string name="R3">Room 3</string>
+    <string name="Connect">Connect</string>
+    <!-- Connect Screen - End here -->
+    <string name="ProButPower">Power</string>
+    <string name="ProButMenu">Menu</string>
+    <string name="ProButUp">Up</string>
+    <string name="ProButDown">Down</string>
+    <string name="Equipment1">Light1</string>
+    <string name="Equipment2">Light2</string>
+
 </resources>
