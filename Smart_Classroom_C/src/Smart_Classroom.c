@@ -208,7 +208,7 @@ void mode_start() {
 	gpio_set_value(48, ON);
 	usleep(10000);
 	bzero(buf, sizeof buf);
-	stream();
+//	stream();
 
 }
 
@@ -449,7 +449,7 @@ void mode_off() {
 	gpio_set_value(117, OFFF);
 	usleep(10000);
 	bzero(buf, sizeof buf);
-	kill_stream();
+//	kill_stream();
 }
 
 void getSensorValue() {
