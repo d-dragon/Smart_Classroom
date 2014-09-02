@@ -19,30 +19,28 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.smartclassroom.common.Logger;
-import com.smartclassroom.common.Settings;
 import com.smartclassroom.listener.OnEventControlListener;
 
 /**
- * @author Duy
- * 
+ * @author DuyPT
  */
-public class Socket_UDP {
+public class SocketUDP {
 
 	private static final int BCAST_PORT = 1992;
 	InetAddress myBcastIP, myLocalIP;
 	DatagramSocket mSocket;
 	// Debugging
 	private static final String TAG = "BroadcastService";
-	// private static final boolean D = true;
-
-	// Member fields
-	// private final Handler mHandler;
-	private ComThread mConnectedThread;
+	private ReceiveThread receiveThread;
+	private SendThread sendThread;
 	private OnEventControlListener onEventControlListener;
+	/*
+	 * Thread status flag
+	 */
+	private boolean isRunning;
 
-	public void setOnEventControlListener(
-			OnEventControlListener onEventControlListener) {
-		this.onEventControlListener = onEventControlListener;
+	public void setOnEventControlListener(OnEventControlListener listener) {
+		this.onEventControlListener = listener;
 	}
 
 	Context mContext;
@@ -55,9 +53,11 @@ public class Socket_UDP {
 	 * @param handler
 	 *            A Handler to send messages back to the UI Activity
 	 */
-	public Socket_UDP(Context context, Handler handler) {
+	public SocketUDP(Context context, Handler handler) {
 		mContext = context;
-		// mHandler = handler;
+		receiveThread = null;
+		sendThread = null;
+		isRunning = true;
 	}
 
 	/**
@@ -65,33 +65,22 @@ public class Socket_UDP {
 	 * incoming broadcast packets.
 	 */
 	public synchronized void start() {
-		if (Settings.DEBUGGABLE)
-			Log.d(TAG, "start");
-
-		mConnectedThread = new ComThread();
-		mConnectedThread.start();
+		Logger.show(TAG, "start");
+		receiveThread = new ReceiveThread();
+		receiveThread.start();
 	}
 
 	/**
 	 * Stop thread
 	 */
 	public synchronized void stop() {
-		if (Settings.DEBUGGABLE)
-			Log.d(TAG, "stop");
-		if (mConnectedThread != null) {
-			mConnectedThread.cancel();
-			mConnectedThread = null;
-		}
+		Logger.show(TAG, "stop");
+		closeSocket();
+		stopThread();
 	}
 
-	public ComThread getmConnectedThread() {
-		return mConnectedThread;
-	}
-
-	public void write(byte[] out) {
-
-		// mConnectedThread.write(out);
-		SendThread sendThread = new SendThread(out);
+	public void sendMessage(byte[] out) {
+		sendThread = new SendThread(out);
 		sendThread.start();
 	}
 
@@ -101,129 +90,68 @@ public class Socket_UDP {
 
 		public SendThread(byte[] out) {
 			this.buffer = out;
-
-			// try {
-			// myBcastIP = getBroadcastAddress();
-			// if (Settings.DEBUGGABLE)
-			// Log.d(TAG, "my bcast ip : " + myBcastIP);
-
-			// myLocalIP = getLocalAddress();
-			// if (Settings.DEBUGGABLE)
-			// Log.d(TAG, "my local ip : " + myLocalIP);
-
-			// mSocket = new DatagramSocket(BCAST_PORT);
-			// mSocket.setBroadcast(true);
-			//
-			// } catch (IOException e) {
-			// Log.e(TAG, "Could not make socket", e);
-			// }
-
 		}
 
 		@Override
 		public void run() {
-
 			if (buffer == null || buffer.length == 0) {
 				return;
 			}
 			String data = null;
 			try {
 				data = new String(buffer);
-
 				DatagramPacket packet = new DatagramPacket(data.getBytes(),
 						data.length(), myBcastIP, BCAST_PORT);
-
 				Logger.show("UDP send:" + data);
 				mSocket.send(packet);
 			} catch (Exception e) {
-				Log.e(TAG, "Exception during write", e);
+				Logger.show(TAG, "Exception during write", e);
 			}
-
 		}
-
 	}
 
-	private class ComThread extends Thread {
-
-		// private static final int BCAST_PORT = 1992;
-		// DatagramSocket mSocket;
-		// InetAddress myBcastIP, myLocalIP;
-
-		public ComThread() {
-
+	private class ReceiveThread extends Thread {
+		public ReceiveThread() {
 			try {
 				myBcastIP = getBroadcastAddress();
-				if (Settings.DEBUGGABLE) {
-					Log.d(TAG, "my bcast ip : " + myBcastIP);
-				}
+				Logger.show(TAG, "my bcast ip : " + myBcastIP);
 
 				myLocalIP = getLocalAddress();
-				if (Settings.DEBUGGABLE) {
-					Log.d(TAG, "my local ip : " + myLocalIP);
-				}
+				Logger.show(TAG, "my local ip : " + myLocalIP);
 
 				mSocket = new DatagramSocket(BCAST_PORT);
 				mSocket.setBroadcast(true);
 
 			} catch (IOException e) {
-				Log.e(TAG, "Could not make socket", e);
+				Logger.show(TAG, "Could not make socket", e);
 			}
 		}
 
 		public void run() {
 			DatagramPacket packet = null;
 			InetAddress remoteIP = null;
-			String s = null;
-
+			String msg = null;
+			byte[] buf = null;
 			try {
-
-				byte[] buf = new byte[1024];
-
+				
 				// Listen on socket to receive messages
-				while (true) {
+				while (isRunning()) {
+					buf = new byte[1024];
 					packet = new DatagramPacket(buf, buf.length);
 					mSocket.receive(packet);
-					Log.i(TAG, "Broadcast state:" + mSocket.getBroadcast());
-
+					Logger.show(TAG,
+							"Broadcast state:" + mSocket.getBroadcast());
 					remoteIP = packet.getAddress();
 					if (remoteIP.equals(myLocalIP)) {
 						continue;
 					}
-
-					s = new String(packet.getData(), 0, packet.getLength());
-					if (Settings.DEBUGGABLE)
-						Log.d(TAG, "Received response " + s);
-
-					// Send the obtained bytes to the UI Activity
+					msg = new String(packet.getData(), 0, packet.getLength());
+					Logger.show(TAG, "Received response " + msg);
 					onEventControlListener.onEvent(null,
-							OnEventControlListener.EVENT_UDP_MESSAGE, s);
-					// mHandler.obtainMessage(Splashctivity.MESSAGE_READ, -1,
-					// -1,
-					// s).sendToTarget();
+							OnEventControlListener.EVENT_UDP_MESSAGE, msg);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-		}
-
-		/**
-		 * Write broadcast packet.
-		 */
-		public void write(byte[] buffer) {
-			if (buffer == null || buffer.length == 0) {
-				return;
-			}
-			String data = null;
-			try {
-				data = new String(buffer);
-
-				DatagramPacket packet = new DatagramPacket(data.getBytes(),
-						data.length(), myBcastIP, BCAST_PORT);
-
-				Logger.show("UDP send:" + data);
-				mSocket.send(packet);
-			} catch (Exception e) {
-				Log.e(TAG, "Exception during write", e);
 			}
 		}
 
@@ -233,31 +161,25 @@ public class Socket_UDP {
 		private InetAddress getBroadcastAddress() throws IOException {
 			WifiManager mWifi = (WifiManager) mContext
 					.getSystemService(Context.WIFI_SERVICE);
-
 			WifiInfo info = mWifi.getConnectionInfo();
-			if (Settings.DEBUGGABLE)
-				Log.d(TAG, "\n\nWiFi Status: " + info.toString());
-
+			Logger.show(TAG, "\n\nWiFi Status: " + info.toString());
 			// DhcpInfo is a simple object for retrieving the results of a DHCP
 			// request
 			DhcpInfo dhcp = mWifi.getDhcpInfo();
 			if (dhcp == null) {
-				Log.d(TAG, "Could not get dhcp info");
+				Logger.show(TAG, "Could not get dhcp info");
 				return null;
 			}
-
 			int broadcast = (dhcp.ipAddress & dhcp.netmask) | ~dhcp.netmask;
 			byte[] quads = new byte[4];
 			for (int k = 0; k < 4; k++)
 				quads[k] = (byte) ((broadcast >> k * 8) & 0xFF);
-
 			// Returns the InetAddress corresponding to the array of bytes.
 			return InetAddress.getByAddress(quads); // The high order byte is
 													// quads[0].
 		}
 
 		private InetAddress getLocalAddress() throws IOException {
-
 			try {
 				for (Enumeration<NetworkInterface> en = NetworkInterface
 						.getNetworkInterfaces(); en.hasMoreElements();) {
@@ -277,12 +199,31 @@ public class Socket_UDP {
 			return null;
 		}
 
-		public void cancel() {
-			try {
-				mSocket.close();
-			} catch (Exception e) {
-				Log.e(TAG, "close() of connect socket failed", e);
-			}
+	}
+
+	public void closeSocket() {
+		if (mSocket == null) {
+			return;
 		}
+		try {
+			mSocket.close();
+		} catch (Exception e) {
+			Log.e(TAG, "close() of connect socket failed", e);
+		}
+	}
+
+	public void stopThread() {
+		if (receiveThread == null) {
+			return;
+		}
+		setRunning(false);
+	}
+
+	public boolean isRunning() {
+		return isRunning;
+	}
+
+	public void setRunning(boolean isRunning) {
+		this.isRunning = isRunning;
 	}
 }

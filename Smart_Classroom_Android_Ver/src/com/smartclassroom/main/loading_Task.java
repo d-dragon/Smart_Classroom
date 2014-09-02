@@ -8,8 +8,8 @@ import android.util.Log;
 
 public class loading_Task extends AsyncTask<String, Integer, Integer> {
 	
-	private Socket_ini connector;
-	private Socket_UDP conSocket_UDP;
+	private SocketTCP connector;
+	private SocketUDP conSocket_UDP;
     private SmartClassroomApplication shared;
 	public interface LoadingTaskFinishedListener {
 		void onTaskFinished(); // If you want to pass something back to the listener add a param to this method

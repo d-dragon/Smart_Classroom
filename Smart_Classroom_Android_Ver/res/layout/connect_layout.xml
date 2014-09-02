@@ -5,6 +5,12 @@
     android:gravity="top"
     android:orientation="vertical" 
     >
+    
+    <include 
+        android:id="@+id/titleBar"
+        layout="@layout/title_bar"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"/>
 
     <EditText
         android:id="@+id/etIP"
@@ -26,9 +32,8 @@
     <Button
         android:id="@+id/btP1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:text="@string/R1"
-        android:layout_weight="1"
         android:textSize="16sp" >
     </Button>
 
@@ -51,13 +56,19 @@
         android:textSize="16sp"
         android:visibility="gone" >
     </Button>
+    
+    <ListView 
+        android:id="@+id/lstvRoom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        
+    </ListView>
 
     <Button
         android:id="@+id/btnC"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:text="@string/Connect"
-        android:layout_weight="1"
         android:visibility="gone" />
 
 </LinearLayout>

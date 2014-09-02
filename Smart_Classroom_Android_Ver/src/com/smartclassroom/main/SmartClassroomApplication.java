@@ -6,8 +6,8 @@ import android.os.Handler;
 
 public class SmartClassroomApplication extends Application {
 
-	private Socket_ini new_soc;
-	private Socket_UDP new_socUDP;
+	private SocketTCP new_soc;
+	private SocketUDP new_socUDP;
 	Handler mHandler;
 	static SmartClassroomApplication instance;
 
@@ -16,9 +16,9 @@ public class SmartClassroomApplication extends Application {
 		super.onCreate();
 		instance = this;
 		
-		new_soc = new Socket_ini(getApplicationContext());
+		new_soc = new SocketTCP(getApplicationContext());
 		
-		new_socUDP = new Socket_UDP(getApplicationContext(), mHandler);
+		new_socUDP = new SocketUDP(getApplicationContext(), mHandler);
 	}
 	
 	public static SmartClassroomApplication getInstance(){
@@ -28,11 +28,11 @@ public class SmartClassroomApplication extends Application {
 		return instance;
 	}
 
-	public Socket_ini getNetworkSocket_TCP() {
+	public SocketTCP getNetworkSocket_TCP() {
 		return new_soc;
 		
 	}
-	public Socket_UDP getNetworkInSocket_UDP(){
+	public SocketUDP getNetworkInSocket_UDP(){
 		return new_socUDP;
 	}
 	

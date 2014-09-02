@@ -14,15 +14,15 @@ import android.widget.Button;
 public class loading_Activity extends Activity implements OnClickListener {
 
     private final int WAIT_TIME = 1000;
-    private Socket_ini connector;
-    private Socket_UDP conSocket_UDP;
+    private SocketTCP connector;
+    private SocketUDP conSocket_UDP;
 //    private SmartClassroomApplication shared;
     private Button btnConnect;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.loading);
+		setContentView(R.layout.connect_layout);
 		
 		btnConnect = (Button) findViewById(R.id.btnC);
 		btnConnect.setOnClickListener(this);
@@ -36,7 +36,7 @@ public class loading_Activity extends Activity implements OnClickListener {
 //		conSocket_UDP = shared.getNetworkInSocket_UDP();
 		conSocket_UDP = SmartClassroomApplication.getInstance().getNetworkInSocket_UDP();
 		conSocket_UDP.start();
-		connector.connectToNetwork();
+		connector.start();
 	
 		new Handler().postDelayed(new Runnable(){ 
 		@Override 
@@ -53,7 +53,7 @@ public class loading_Activity extends Activity implements OnClickListener {
 		     
 		     /* Create an Intent that will start the ProfileData-Activity. */
 		    if(connector.ismIsConnected()) {
-		    	Intent mainIntent = new Intent(loading_Activity.this, Main.class);
+		    	Intent mainIntent = new Intent(loading_Activity.this, ControlActivity.class);
 			    loading_Activity.this.startActivity(mainIntent); 
 			    loading_Activity.this.finish();
 		    }
@@ -85,7 +85,7 @@ public class loading_Activity extends Activity implements OnClickListener {
 				     
 				     /* Create an Intent that will start the ProfileData-Activity. */
 				    if(connector.ismIsConnected()) {
-				    	Intent mainIntent = new Intent(loading_Activity.this, Main.class);
+				    	Intent mainIntent = new Intent(loading_Activity.this, ControlActivity.class);
 					    loading_Activity.this.startActivity(mainIntent); 
 					    loading_Activity.this.finish();
 				    }

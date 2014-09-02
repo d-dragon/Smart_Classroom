@@ -1,35 +1,40 @@
 package com.smartclassroom.main;
 
+import java.util.ArrayList;
+
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.StrictMode;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Toast;
 import client.smart_classroom.R;
 
+import com.smartclassroom.adapter.ListAdapter;
+import com.smartclassroom.common.CommonUtils;
 import com.smartclassroom.common.Logger;
 import com.smartclassroom.common.Settings;
 import com.smartclassroom.listener.OnEventControlListener;
-import com.smartclassroom.network.Socket_UDP;
-import com.smartclassroom.network.Socket_ini;
+import com.smartclassroom.network.SocketTCP;
+import com.smartclassroom.network.SocketUDP;
 
-public class Splashctivity extends BaseActivity implements OnClickListener {
+public class ConnectActivity extends BaseActivity implements OnClickListener {
 
-	private Socket_ini socket_tcp;
-	private Socket_UDP conSocket_UDP = null;
+	private SocketTCP socketTCP;
+	private SocketUDP socketUDP = null;
 	// private SmartClassroomApplication shared;
-	private Button btnConnect, btP1;
+	private Button btnConnect, btP1, btnMenu;
+	private ListView listView;
+	private ListAdapter listRoomAdapter;
 	// private ProgressBar pb;
 	// private TextView tv;
 
+	private ArrayList<Room> roomList;
 	final String P1 = "P1";
 
-	public EditText etIP, etPort;
+	public EditText edtIP, edtPort;
 	public String IP = "", readBuf;
 	public int Port = 1991, temp;
 
@@ -74,84 +79,70 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		if (Settings.DEBUGGABLE)
-
-			Log.e(TAG, "+++ ON CREATE +++");
+		roomList = new ArrayList<Room>();
+		Logger.show(TAG, "+++ ON CREATE +++");
 		// Show the splash screen
-		setContentView(R.layout.loading);
+		setContentView(R.layout.connect_layout);
+		View view = findViewById(R.id.titleBar);
+		btnMenu = (Button) view.findViewById(R.id.btnMenu);
+		btnMenu.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				btnMenuClick();
+			}
+		});
 
-		// shared = (SmartClassroomApplication) getApplicationContext();
-		// connector = shared.getNetworkSocket_TCP();
-		// conSocket_UDP = shared.getNetworkInSocket_UDP();
-		socket_tcp = SmartClassroomApplication.getInstance()
+		socketTCP = SmartClassroomApplication.getInstance()
 				.getNetworkSocket_TCP();
-		socket_tcp.setOnEventControlListener(this);
-		conSocket_UDP = SmartClassroomApplication.getInstance()
+		socketTCP.setOnEventControlListener(this);
+		socketUDP = SmartClassroomApplication.getInstance()
 				.getNetworkInSocket_UDP();
-		conSocket_UDP.setOnEventControlListener(this);
+		socketUDP.setOnEventControlListener(this);
 
-		etIP = (EditText) findViewById(R.id.etIP);
-		etPort = (EditText) findViewById(R.id.etPort);
+		edtIP = (EditText) findViewById(R.id.etIP);
+		edtPort = (EditText) findViewById(R.id.etPort);
 		btP1 = (Button) findViewById(R.id.btP1);
 		btP1.setOnClickListener(this);
 
 		btnConnect = (Button) findViewById(R.id.btnC);
 		btnConnect.setOnClickListener(this);
 		btnConnect.setVisibility(View.VISIBLE);
-		/**
-		 * Disable StrictMode
-		 */
-		// if (android.os.Build.VERSION.SDK_INT > 9) {
-		// StrictMode.ThreadPolicy policy = new
-		// StrictMode.ThreadPolicy.Builder()
-		// .permitAll().build();
-		// StrictMode.setThreadPolicy(policy);
-		// }
-
-		// pb = (ProgressBar) findViewById(R.id.pbLoading);
-
-		// tv = (TextView) findViewById(R.id.tvSplash);
-		// new loading_Task(this, getApplicationContext()).execute("abc");
-
-		// Pass in whatever you need a url is just an example we don't use it in
-		// this tutorial
-
+		
+		listView = (ListView) findViewById(R.id.lstvRoom);
+		
 	}
 
 	public void onStart() {
 		super.onStart();
-		if (Settings.DEBUGGABLE)
-			Log.e(TAG, "++ ON START ++");
-
+		Logger.show(TAG, "++ ON START ++");
 		// setup();
-
 	}
 
 	@Override
 	public synchronized void onResume() {
 		super.onResume();
-		if (Settings.DEBUGGABLE)
-			Log.e(TAG, "+ ON RESUME +");
-		conSocket_UDP.start();
-
+		Logger.show(TAG, "+ ON RESUME +");
+		socketUDP.start();
 		// connector_UDP.start();
 	}
 
 	public void onStop() {
 		super.onStop();
-		if (conSocket_UDP != null)
-			conSocket_UDP.stop();
-		if (Settings.DEBUGGABLE)
-			Log.e(TAG, "-- ON STOP --");
+		if (socketUDP == null) {
+			return;
+		}
+		socketUDP.stop();
+		Logger.show(TAG, "-- ON STOP --");
 	}
 
 	public void onDestroy() {
 		super.onDestroy();
 		// Stop the Broadcast chat services
-		if (conSocket_UDP != null)
-			conSocket_UDP.stop();
-		if (Settings.DEBUGGABLE)
-			Log.e(TAG, "--- ON DESTROY ---");
+		if (socketUDP == null) {
+			return;
+		}
+		socketUDP.stop();
+		Logger.show(TAG, "--- ON DESTROY ---");
 	}
 
 	// This is the callback for when your async task has finished
@@ -173,57 +164,42 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 	 * Main.class);// MainActivity.class startActivity(intent); }
 	 */
 
+	public void btnMenuClick() {
+		if (edtIP.getVisibility() == View.VISIBLE
+				|| edtPort.getVisibility() == View.VISIBLE) {
+			edtIP.setVisibility(View.GONE);
+			edtPort.setVisibility(View.GONE);
+		} else {
+			edtIP.setVisibility(View.VISIBLE);
+			edtPort.setVisibility(View.VISIBLE);
+		}
+	}
+
 	@Override
 	public void onClick(View v) {
 
 		switch (v.getId()) {
 		case R.id.btnC:
 			if (Settings.DEBUGGABLE) {
-				IP = etIP.getText().toString();
+				IP = CommonUtils.toString(edtIP.getText());
 				try {
-					Port = Integer.parseInt(etPort.getText().toString());
+					Port = Integer.parseInt(CommonUtils.toString(edtPort
+							.getText()));
 				} catch (NumberFormatException e) {
-					// TODO: handle exception
-					Toast.makeText(getApplicationContext(),
+					Toast.makeText(this,
 							"Please Enter only interger type in Port Section",
 							Toast.LENGTH_SHORT).show();
 				}
 			}
-			socket_tcp.setIp(IP);
-			socket_tcp.setPort(Port);
-			// pb.setVisibility(View.VISIBLE);
-			// tv.setVisibility(View.VISIBLE);
-			// btnConnect.setVisibility(View.INVISIBLE);
-			socket_tcp.connectToNetwork();
-//			try {
-//				Thread.sleep(800);
-//			} catch (InterruptedException e1) {
-//				e1.printStackTrace();
-//			}
-//			if (socket_tcp.ismIsConnected() == true) {
-//				Intent mainIntent = new Intent(Splashctivity.this, Main.class);
-//				Splashctivity.this.startActivity(mainIntent);
-//				Splashctivity.this.finish();
-//			} else {
-//				// btnConnect.setVisibility(View.VISIBLE);
-//				Toast.makeText(getApplicationContext(),
-//						"Connecting Fail! Try again", Toast.LENGTH_SHORT)
-//						.show();
-//			}
-
+			socketTCP.setIp(IP);
+			socketTCP.setPort(Port);
+			socketTCP.start();
 			break;
 		case R.id.btP1:
-
+			roomList = new ArrayList<Room>();
+			listRoomAdapter = new ListAdapter(roomList, this);
+			listView.setAdapter(listRoomAdapter);
 			try {
-				// Handler m = new Handler();
-				// m.post(new Runnable() {
-				//
-				// @Override
-				// public void run() {
-				// // TODO Auto-generated method stub
-				// sendMessage(P1);
-				// }
-				// });
 				sendMessage(P1);
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -240,43 +216,44 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 	/**
 	 * Sends a message.
 	 * 
-	 * @param message
+	 * @param msg
 	 *            A string of text to send.
 	 */
-	private void sendMessage(String message) {
-
-		if (Settings.DEBUGGABLE)
-			Log.e(TAG, "[sendMessage]");
-
-		// Check that there's actually something to send
-		if (message.length() > 0) {
-			// Get the message bytes and tell the BluetoothChatService to write
-			byte[] send = message.getBytes();
-			Logger.show("btn R1 send:" + message);
-			conSocket_UDP.write(send);
-			// conSocket_UDP.getmConnectedThread().write(send);
+	private void sendMessage(String msg) {
+		if (msg.isEmpty()) {
+			return;
 		}
+		Logger.show(TAG, "[sendMessage]");
+		// Get the message bytes and tell the BluetoothChatService to write
+		byte[] sendingBytes = msg.getBytes();
+		Logger.show("btn R1 send:" + msg);
+		socketUDP.sendMessage(sendingBytes);
 	}
 
 	@Override
 	public void onEvent(View view, int type, Object data) {
 		String msg = null;
+		Room room = null;
 		switch (type) {
 		case OnEventControlListener.EVENT_UDP_MESSAGE:
+			room = new Room();
 			msg = (String) data;
 			// readBuf = (String) msg.obj.toString();
 			IP = msg.trim();
-
+			room.setIp(IP);
+			room.setPort(Port);
+			room.setName(P1);
+			roomList.add(room);
+			
 			Logger.show(IP + Port);
-
 			// Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
 			// temp = IP.length();
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Logger.show(IP + Port);
-					etIP.setText(IP);
-					etPort.setText("1991");
+					edtIP.setText(IP);
+					edtPort.setText("1991");
+					listRoomAdapter.notifyDataSetChanged();
 					// btnConnect.setVisibility(View.VISIBLE);
 				}
 			});
@@ -289,12 +266,13 @@ public class Splashctivity extends BaseActivity implements OnClickListener {
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						Intent mainIntent = new Intent(Splashctivity.this, Main.class);
-						Splashctivity.this.startActivity(mainIntent);
-						Splashctivity.this.finish();
+						Intent mainIntent = new Intent(ConnectActivity.this,
+								ControlActivity.class);
+						ConnectActivity.this.startActivity(mainIntent);
+						ConnectActivity.this.finish();
 					}
 				});
-				
+
 			} else {
 				// btnConnect.setVisibility(View.VISIBLE);
 				Toast.makeText(getApplicationContext(),

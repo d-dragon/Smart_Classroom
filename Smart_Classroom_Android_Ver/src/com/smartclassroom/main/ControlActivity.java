@@ -13,11 +13,11 @@ import android.widget.Toast;
 import client.smart_classroom.R;
 
 import com.smartclassroom.listener.OnEventControlListener;
-import com.smartclassroom.network.Socket_ini;
+import com.smartclassroom.network.SocketTCP;
 
-public class Main extends BaseActivity implements OnClickListener {
+public class ControlActivity extends BaseActivity implements OnClickListener {
 
-	private Socket_ini connector;
+	private SocketTCP connector;
 	// private SmartClassroomApplication shared;
 	Button btStart, btAuto, btPre, btMan, btOff, btEqu1, btEqu2, btPro1,
 			btPro2, btPro3, btPro4;
@@ -29,7 +29,7 @@ public class Main extends BaseActivity implements OnClickListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		setContentView(R.layout.control_layout);
 
 		// shared = (SmartClassroomApplication) getApplicationContext();
 		// connector = shared.getNetworkSocket_TCP();
@@ -87,7 +87,8 @@ public class Main extends BaseActivity implements OnClickListener {
 		super.onStop();
 		// connector.SendCommand("exit");
 //		 connector.closeSocket();
-		connector.networkDestroy(0);
+//		connector.networkDestroy(0);
+		connector.stop();
 
 	}
 
