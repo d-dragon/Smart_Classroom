@@ -4,7 +4,7 @@
  *  Created on: Nov 13, 2013
  *      Author: d-dragon
  */
-/*
+
 
 #include "GPIO.h"
 #include "Socket.h"
@@ -52,7 +52,7 @@ int main(void) {
 	get_Hostname();
 	get_ifaddress();
 //Init UART
-	init_UART();
+//	init_UART();
 	while (1) { // main accept() loop
 		printf("SERVER_UDP: waiting for data from client\n");
 		printf("IP Address: %s\n", host);
@@ -83,13 +83,13 @@ int main(void) {
 		printf("server: got connection from %s\n",
 				inet_ntoa(their_addr.sin_addr));
 		send(new_fd, "Hello Client\n", 14, 0);
-		gpio_export(60); //pin 12
-		gpio_export(48); //pin 15
+	//	gpio_export(60); //pin 12
+	//	gpio_export(48); //pin 15
 
-		gpio_set_dir(60, OUTPUT_PIN);
-		gpio_set_value(60, OFFF);
-		gpio_set_dir(48, OUTPUT_PIN);
-		gpio_set_value(48, OFFF);
+	//	gpio_set_dir(60, OUTPUT_PIN);
+	//	gpio_set_value(60, OFFF);
+	//	gpio_set_dir(48, OUTPUT_PIN);
+	//	gpio_set_value(48, OFFF);
 
 
 		if (!fork()) { // this is the child process
@@ -203,9 +203,9 @@ void mode_start() {
 	send(new_fd, "START\n", sizeof "START", 0);
 	printf("START\n");
 
-	gpio_set_value(60, ON);
+//	gpio_set_value(60, ON);
 	usleep(10000);
-	gpio_set_value(48, ON);
+//	gpio_set_value(48, ON);
 	usleep(10000);
 	bzero(buf, sizeof buf);
 //	stream();
@@ -215,9 +215,9 @@ void mode_start() {
 void mode_auto() {
 	send(new_fd, "AUTO\n", sizeof "AUTO", 0);
 	printf("AUTO\n");
-	 gpio_set_value(60, HIGH);
+//	 gpio_set_value(60, OFF);
 	 usleep(10000);
-	 gpio_set_value(48, LOW);
+//	 gpio_set_value(48, ON);
 	 usleep(10000);
 	 bzero(buf, sizeof buf);
 	 stop = 0;
@@ -245,20 +245,20 @@ void mode_auto() {
 			}
 			printf("light: %d [lx]", light);
 			if (light < 10) {
-				gpio_set_value(60, ON);
+			//	gpio_set_value(60, ON);
 				usleep(10000);
-				gpio_set_value(48, ON);
+			//	gpio_set_value(48, ON);
 				usleep(10000);
 			} else {
 				if (light < 50) {
-					gpio_set_value(60, ON);
+			//		gpio_set_value(60, ON);
 					usleep(10000);
-					gpio_set_value(48, OFFF);
+			//		gpio_set_value(48, OFFF);
 					usleep(10000);
 				} else {
-					gpio_set_value(60, OFFF);
+			//		gpio_set_value(60, OFFF);
 					usleep(10000);
-					gpio_set_value(48,OFFF);
+			//		gpio_set_value(48,OFFF);
 					usleep(10000);
 				}
 
@@ -334,9 +334,9 @@ void mode_auto() {
 void mode_presentation() {
 	send(new_fd, "PRESENTATION\n", sizeof "PRESENTATION", 0);
 	printf("PRESENTATION\n");
-	gpio_set_value(60, ON);
+//	gpio_set_value(60, ON);
 	usleep(10000);
-	gpio_set_value(48, OFFF);
+//	gpio_set_value(48, OFFF);
 	usleep(10000);
 	bzero(buf, sizeof buf);
 	write_UART("w");
@@ -440,13 +440,13 @@ void mode_manual() {
 void mode_off() {
 	send(new_fd, "OFF\n", sizeof "OFF", 0);
 	printf("OFF\n");
-	gpio_set_value(60, OFFF);
+//	gpio_set_value(60, OFFF);
 	usleep(10000);
-	gpio_set_value(48, OFFF);
+//	gpio_set_value(48, OFFF);
 	usleep(10000);
-	gpio_set_value(115, OFFF);
+//	gpio_set_value(115, OFFF);
 	usleep(10000);
-	gpio_set_value(117, OFFF);
+//	gpio_set_value(117, OFFF);
 	usleep(10000);
 	bzero(buf, sizeof buf);
 //	kill_stream();
@@ -491,5 +491,5 @@ void kill_stream() {
 	}
 
 }
-*/
+
 
