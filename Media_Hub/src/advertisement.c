@@ -8,7 +8,7 @@
 #include "sock_infra.h"
 #include "logger.h"
 
-void *advertise_server_info() {
+void *advertiseServerInfo() {
 
 	sem_wait(&sem_sock);
 	syslog(LOG_DEBUG, "enter advertise server info thread......");
@@ -34,7 +34,7 @@ void *advertise_server_info() {
 
 	while (1) {
 		syslog(LOG_DEBUG, "server advertise its info......");
-		send_recv_buff = "server_info";
+		send_recv_buff = AdvPackageWrapper(TCP_PORT, interface_addr);
 		num_bytes = sendto(datagram_sock_fd, send_recv_buff,
 				(strlen(send_recv_buff)), 0,
 				(struct sockaddr *) &udp_client_address,
@@ -50,3 +50,40 @@ void *advertise_server_info() {
 
 }
 
+/* wrapping advertise package for broadcast device TCP Socket - IP, port
+ * package format:
+ * 1 byte flag
+ * 4 bytes length of the package content
+ * 4 bytes for port
+ * 4 bytes length of ip address
+ * remain byte is ip address
+ */
+
+char *AdvPackageWrapper(int port,char *serv_addr){
+
+	syslog(LOG_DEBUG, "call AdvPackageWrapper........");
+//	int package_len;
+	char *tmp;
+	char *tmp_package;
+
+	tmp = calloc(8, sizeof(char));
+	tmp_package = calloc(128, sizeof(char));
+	memset(tmp_package, 0, sizeof(tmp_package));
+
+	/*start with flag byte set to 1*/
+	strcat(tmp_package, "1");
+
+	/*append port number*/
+	sprintf(tmp, "%d", port);
+	strcat(tmp_package, tmp);
+	bzero(tmp,sizeof(tmp));
+
+	/*append length of ip addr and IP*/
+	sprintf(tmp, "%d", (int)strlen(serv_addr));
+	strcat(tmp_package, tmp);
+	strcat(tmp_package, serv_addr);
+	syslog(LOG_DEBUG, "Package content: %s length %d", tmp_package, (int)strlen(tmp_package));
+
+	free(tmp);
+	return tmp_package;
+}

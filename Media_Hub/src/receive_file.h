@@ -13,7 +13,7 @@
 #include <signal.h>
 #include <string.h>
 
-#define DEFAULT_PATH "/home/d-dragon/"
+#define DEFAULT_PATH "/home/"
 #define FILE_ERROR -1
 #define FILE_SUCCESS 0
 

@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
 
 	//create advertise server info thread
 	syslog(LOG_DEBUG, "create adv thread");
-	ret = pthread_create(&adv_info_thread, NULL, &advertise_server_info,
+	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfo,
 			NULL);
 	if (ret) {
 		syslog(LOG_ERR, "pthread_create %d (failed) while create adv thread\n",

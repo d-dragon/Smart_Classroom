@@ -85,7 +85,7 @@ void writetoFileStream() {
 			if (szwrite < num_byte_read) {
 				syslog(LOG_ERR, "write data to stream file failed!");
 			} else if (szwrite == num_byte_read) {
-				syslog(LOG_DEBUG,"Finish receive file session! %d\n", num_byte_read);
+				syslog(LOG_DEBUG,"Finish receive file session! %d\n", (int) num_byte_read);
 				bzero(file_buff, sizeof file_buff);
 			}
 
@@ -102,7 +102,7 @@ void writetoFileStream() {
 void *recvFileThread() {
 
 	path_to_file = calloc(256, sizeof(char));
-
+	getInterfaceAddress();
 	int ret = openStreamSocket();
 	if(ret == SOCK_SUCCESS){
 		syslog(LOG_DEBUG,"TCP socket successfully opened--------\n");

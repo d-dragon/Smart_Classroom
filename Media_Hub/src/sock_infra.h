@@ -33,6 +33,10 @@
 #define SOCK_ERROR -1
 #define SOCK_SUCCESS 0
 
+//interface address info
+struct ifaddrs *ifaddr, *ifa;
+char *interface_addr;
+
 //Declare Stream socket variable
 int stream_sock_fd, child_stream_sock_fd;
 int ret;
@@ -57,6 +61,9 @@ sem_t sem_sock;
 //Declare sock function
 int openStreamSocket();
 int openDatagramSocket();
+char *getInterfaceAddress();
+
+
 
 
 #endif /* SOCK_INFRA_H_ */

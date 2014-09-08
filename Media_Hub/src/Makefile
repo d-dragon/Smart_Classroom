@@ -1,5 +1,5 @@
-CC=arm-linux-gnueabihf-gcc
-#CC=gcc
+#CC=arm-linux-gnueabihf-gcc
+CC=gcc
 CFLAGS=-I.
 DEPS = receive_file.h sock_infra.h advertisement.h
 OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o 
@@ -11,7 +11,7 @@ OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o
 audio_app: $(OBJS)
 			$(CC) -o $@ $^ $(CFLAGS) -pthread
 			rm *.o
-			cp audio_app /home/duyphan/ftpserver/
+#			cp audio_app /home/duyphan/ftpserver/
 			
 .PHONY: clean
 

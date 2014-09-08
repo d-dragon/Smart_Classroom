@@ -47,7 +47,7 @@ int openStreamSocket() {
 		syslog(LOG_ERR, "call listen() error");
 		return SOCK_ERROR;
 	} else {
-		syslog(LOG_DEBUG, "TCP socket is listening incoming connection...\n");
+		syslog(LOG_DEBUG, "TCP socket is listening incoming connection at %s", interface_addr);
 	}
 	return SOCK_SUCCESS;
 }
@@ -71,19 +71,49 @@ int openDatagramSocket() {
 
 	//Config UDP Server sock address
 	udp_server_address.sin_family = AF_INET;
-	udp_server_address.sin_addr.s_addr = htonl(INADDR_ANY );
+	udp_server_address.sin_addr.s_addr = htonl(INADDR_ANY);
 	udp_server_address.sin_port = htons(atoi(UDP_PORT));
 	syslog(LOG_DEBUG, "Config UDP Server sock address success");
 
 	//Bind address to UDP server and listen for incoming client connection
 	ret = bind(datagram_sock_fd, (struct sockaddr *) &udp_server_address,
 			sizeof(struct sockaddr));
-	if(ret < 0 ){
+	if (ret < 0) {
 		syslog(LOG_ERR, "bind address to UDP server socket failed!");
 		return SOCK_ERROR;
-	}else {
+	} else {
 		syslog(LOG_DEBUG, "bind address to UDP server socket success!");
 	}
 	return SOCK_SUCCESS;
+}
+
+char *getInterfaceAddress() {
+
+	int ret;
+	interface_addr = calloc(32, sizeof(char));
+
+	/*get all interface info*/
+	if (getifaddrs(&ifaddr) == -1) {
+		syslog(LOG_ERR, "get interface address failed");
+		return NULL;
+	}
+	/* Walk through linked list, maintaining head pointer so we
+	 can free list later */
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		/*just only get AF_NET interface address*/
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			ret = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+					interface_addr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+			if(ret == 0){
+				syslog(LOG_DEBUG, "address of %s: %s", ifa->ifa_name, interface_addr);
+				if(strncmp("192.168.", interface_addr, sizeof("192.168.")) == 0)
+				return interface_addr;
+			}
+		}
+
+	}
+	return NULL;
 }
 

@@ -10,6 +10,8 @@
 
 char *send_recv_buff;
 
-void *advertise_server_info();
+
+void *advertiseServerInfo();
+char *AdvPackageWrapper(int ,char *);
 
 #endif /* ADVERTISEMENT_H_ */
