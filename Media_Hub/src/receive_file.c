@@ -17,19 +17,19 @@ FILE *createFileStream(char *str_file_name) {
 	file_name = calloc(50, sizeof(char));
 	file_name = str_file_name;
 
-	syslog(LOG_INFO, "FileName: %s\n", file_name);
-	syslog(LOG_INFO,"create path to file:%s\n", path_to_file);
+	appLog(LOG_INFO, "FileName: %s\n", file_name);
+	appLog(LOG_INFO,"create path to file:%s\n", path_to_file);
 	strcat(path_to_file, DEFAULT_PATH);
 	strcat(path_to_file, file_name);
-	syslog(LOG_INFO, "path: %s\n", path_to_file);
+	appLog(LOG_INFO, "path: %s\n", path_to_file);
 
-	syslog(LOG_DEBUG, "create file\n");
+	appLog(LOG_DEBUG, "create file\n");
 	tmp_file = fopen(path_to_file, "w");
 	if (tmp_file == NULL) {
-		syslog(LOG_ERR, "fopen failed");
+		appLog(LOG_ERR, "fopen failed\n");
 		return NULL;
 	}
-	syslog(LOG_DEBUG,"File stream was created successfully\n");
+	appLog(LOG_DEBUG,"File stream was created successfully\n");
 	return tmp_file;
 }
 
@@ -43,9 +43,9 @@ void writetoFileStream() {
 
 		num_byte_read = read(child_stream_sock_fd, file_buff, sizeof file_buff);
 		if (num_byte_read < 0) {
-			syslog(LOG_ERR,"read() call receive failed!");
+			appLog(LOG_ERR,"read() call receive failed!\n");
 		} else if (num_byte_read == 0) {
-			syslog(LOG_DEBUG,"client connection closed!");
+			appLog(LOG_DEBUG,"client connection closed!\n");
 			flag_check_mod = 0;
 			close(child_stream_sock_fd);
 			exit(0);
@@ -53,13 +53,13 @@ void writetoFileStream() {
 			//					printf("%d bytes received\n", numRead);
 		}
 		if (!flag_check_mod) {
-			syslog(LOG_INFO,"File Info: %s\n", file_buff);
+			appLog(LOG_INFO,"File Info: %s\n", file_buff);
 
 			if ((file_store_audio = createFileStream((char*) file_buff)) != NULL) {
 				if (send(child_stream_sock_fd, "OK", sizeof("OK"), 0) <= 0) {
-					syslog(LOG_ERR,"sending respond to client failed!");
+					appLog(LOG_ERR,"sending respond to client failed!\n");
 				} else {
-					syslog(LOG_DEBUG,"Starting receive file>>>>>>>>>>>");
+					appLog(LOG_DEBUG,"Starting receive file>>>>>>>>>>>\n");
 					flag_check_mod = 1;
 				}
 			} else {
@@ -67,15 +67,15 @@ void writetoFileStream() {
 			}
 		} else {
 			if (num_byte_read == 3) {
-				syslog(LOG_DEBUG,"Close stream file!");
+				appLog(LOG_DEBUG,"Close stream file!\n");
 				if (strcmp(file_buff, "end") == 0) {
-					syslog(LOG_DEBUG, "EOF-File Stream closed!\n");
+					appLog(LOG_DEBUG, "EOF-File Stream closed!\n");
 					bzero(file_buff, sizeof file_buff);
 					memset(path_to_file, 0, sizeof(char));
 					flag_check_mod = 0;
 					fclose(file_store_audio);
 				} else {
-					syslog(LOG_DEBUG, "File not closed\n");
+					appLog(LOG_DEBUG, "File not closed\n");
 				}
 			}
 		}
@@ -83,14 +83,14 @@ void writetoFileStream() {
 			int szwrite = fwrite(file_buff, 1, num_byte_read, file_store_audio);
 			//				printf("%d bytes was written\n", szwrite);
 			if (szwrite < num_byte_read) {
-				syslog(LOG_ERR, "write data to stream file failed!");
+				appLog(LOG_ERR, "write data to stream file failed!\n");
 			} else if (szwrite == num_byte_read) {
-				syslog(LOG_DEBUG,"Finish receive file session! %d\n", (int) num_byte_read);
+				appLog(LOG_DEBUG,"Finish receive file session! %d\n", (int) num_byte_read);
 				bzero(file_buff, sizeof file_buff);
 			}
 
 			if ((num_byte_read == 0)) {
-				syslog(LOG_DEBUG, "File transfer complete\n");
+				appLog(LOG_DEBUG, "File transfer complete\n");
 				flag_check_mod = 0;
 				fclose(file_store_audio);
 			}
@@ -105,23 +105,23 @@ void *recvFileThread() {
 	getInterfaceAddress();
 	int ret = openStreamSocket();
 	if(ret == SOCK_SUCCESS){
-		syslog(LOG_DEBUG,"TCP socket successfully opened--------\n");
-		syslog(LOG_DEBUG,"waiting for new connection!\n");
+		appLog(LOG_DEBUG,"TCP socket successfully opened--------\n");
+		appLog(LOG_DEBUG,"waiting for new connection!\n");
 	}else{
-		syslog(LOG_DEBUG,"TCP socket open failed\n");
+		appLog(LOG_DEBUG,"TCP socket open failed\n");
 	}
 	/*start UDP socket for advertise server info*/
-	syslog(LOG_DEBUG,"<call sem_post> to active init UDP sock");
+	appLog(LOG_DEBUG,"<call sem_post> to active init UDP sock\n");
 	sem_post(&sem_sock);
 
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
 		if (child_stream_sock_fd < 0) {
-			syslog(LOG_ERR, "accept call error");
+			appLog(LOG_ERR, "accept call error\n");
 			continue;
 		}
-		syslog(LOG_INFO, "server: got connection from %s\n",
+		appLog(LOG_INFO, "server: got connection from %s\n",
 				inet_ntoa(remote_addr.sin_addr));
 		pid_t pid = fork();
 		switch (pid) {
@@ -129,7 +129,7 @@ void *recvFileThread() {
 			writetoFileStream();
 			break;
 		default:
-			syslog(LOG_DEBUG,"parent process runing from here\n");
+			appLog(LOG_DEBUG,"parent process runing from here\n");
 			break;
 		}
 	}

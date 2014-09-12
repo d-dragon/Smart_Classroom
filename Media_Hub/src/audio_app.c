@@ -172,34 +172,37 @@ int main(int argc, char *argv[]) {
 	pthread_t adv_info_thread;
 	int ret;
 
+	/*call for init Logger*/
+	initLogger();
+
 	/*init socket semaphore*/
 	ret=sem_init(&sem_sock, 0, 0);
 	if(ret != 0){
-		syslog(LOG_ERR,"sock semaphore init failed");
+		appLog(LOG_ERR,"sock semaphore init failed\n");
 	}else {
-		syslog(LOG_DEBUG, "sock semaphore was inittialized success");
+		appLog(LOG_DEBUG, "sock semaphore was inittialized success\n");
 	}
 
 	//create receive file thread
-	syslog(LOG_DEBUG, "create recv file thread");
+	appLog(LOG_DEBUG, "create recv file thread\n");
 	ret = pthread_create(&recv_file_thread, NULL, &recvFileThread,
-			(void *) "receive file thread!");
+			(void *) "receive file thread!\n");
 	if (ret) {
-		syslog(LOG_ERR,
-				"pthread_create %d (failed) while create recv file thread",
+		appLog(LOG_ERR,
+				"pthread_create %d (failed) while create recv file thread\n",
 				ret);
 		exit(EXIT_FAILURE);
 	}else{
-		syslog(LOG_DEBUG, "receive file thread created success");
+		appLog(LOG_DEBUG, "receive file thread created success\n");
 	}
 
 
 	//create advertise server info thread
-	syslog(LOG_DEBUG, "create adv thread");
+	appLog(LOG_DEBUG, "create adv thread\n");
 	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfo,
 			NULL);
 	if (ret) {
-		syslog(LOG_ERR, "pthread_create %d (failed) while create adv thread\n",
+		appLog(LOG_ERR, "pthread_create %d (failed) while create adv thread\n",
 				ret);
 		exit(EXIT_FAILURE);
 	}

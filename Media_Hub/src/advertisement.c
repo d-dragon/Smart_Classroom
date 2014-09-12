@@ -11,7 +11,7 @@
 void *advertiseServerInfo() {
 
 	sem_wait(&sem_sock);
-	syslog(LOG_DEBUG, "enter advertise server info thread......");
+	appLog(LOG_DEBUG, "enter advertise server info thread......\n");
 	int ret;
 	int num_bytes;
 	send_recv_buff = calloc(256, sizeof(char));
@@ -24,25 +24,25 @@ void *advertiseServerInfo() {
 
 	ret = openDatagramSocket();
 	if (ret < 0) {
-		syslog(LOG_ERR, "openDatagramSocket failed!");
+		appLog(LOG_ERR, "openDatagramSocket failed!\n");
 		return NULL ;
 	} else {
-		syslog(LOG_DEBUG, "openDatagramSocket success!");
+		appLog(LOG_DEBUG, "openDatagramSocket success!\n");
 		sem_destroy(&sem_sock);
-		syslog(LOG_DEBUG, "sem_sock was detroyed");
+		appLog(LOG_DEBUG, "sem_sock was detroyed\n");
 	}
 
 	while (1) {
-		syslog(LOG_DEBUG, "server advertise its info......");
+		appLog(LOG_DEBUG, "server advertise its info......\n");
 		send_recv_buff = AdvPackageWrapper(TCP_PORT, interface_addr);
 		num_bytes = sendto(datagram_sock_fd, send_recv_buff,
 				(strlen(send_recv_buff)), 0,
 				(struct sockaddr *) &udp_client_address,
 				sizeof(udp_client_address));
 		if(num_bytes < 0 ){
-			syslog(LOG_ERR, "sendto call failed");
+			appLog(LOG_ERR, "sendto call failed\n");
 		}else{
-			syslog(LOG_DEBUG, "In advertisement thread sent data success");
+			appLog(LOG_DEBUG, "In advertisement thread sent data success\n");
 			sleep(2);
 		}
 
@@ -61,7 +61,7 @@ void *advertiseServerInfo() {
 
 char *AdvPackageWrapper(int port,char *serv_addr){
 
-	syslog(LOG_DEBUG, "call AdvPackageWrapper........");
+	appLog(LOG_DEBUG, "call AdvPackageWrapper........\n");
 //	int package_len;
 	char *tmp;
 	char *tmp_package;
@@ -82,7 +82,7 @@ char *AdvPackageWrapper(int port,char *serv_addr){
 	sprintf(tmp, "%d", (int)strlen(serv_addr));
 	strcat(tmp_package, tmp);
 	strcat(tmp_package, serv_addr);
-	syslog(LOG_DEBUG, "Package content: %s length %d", tmp_package, (int)strlen(tmp_package));
+	appLog(LOG_DEBUG, "Package content: %s length %d\n", tmp_package, (int)strlen(tmp_package));
 
 	free(tmp);
 	return tmp_package;
