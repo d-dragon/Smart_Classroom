@@ -25,6 +25,8 @@
 
  int main() {
 
+ 
+
  printf("Init Inet socket\n");
  init_TCPNetwork();
  if (openStreamSocket() == SOCK_SUCCESS){
@@ -161,12 +163,17 @@
 #include "logger.h"
 #include <pthread.h>
 #include <syslog.h>
+#include "playAudio.h"
+
 
 #define APP_SUCCESS 1
 #define APP_ERROR 0
 
 
 int main(int argc, char *argv[]) {
+
+	int status;
+ 	status = mp3Play("/home/pi/Audio/Test1.mp3");
 
 	pthread_t recv_file_thread;
 	pthread_t adv_info_thread;
