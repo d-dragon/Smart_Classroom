@@ -163,7 +163,10 @@
 #include "logger.h"
 #include <pthread.h>
 #include <syslog.h>
+
+#ifdef PLAY_AUDIO
 #include "playAudio.h"
+#endif
 
 
 #define APP_SUCCESS 1
@@ -172,8 +175,10 @@
 
 int main(int argc, char *argv[]) {
 
+#ifdef PLAY_AUDIO
 	int status;
  	status = mp3Play("/home/pi/Audio/Test1.mp3");
+#endif
 
 	pthread_t recv_file_thread;
 	pthread_t adv_info_thread;

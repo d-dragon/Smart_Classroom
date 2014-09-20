@@ -9,7 +9,8 @@ OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o logger.o playAudi
 			$(CC) -c -Wall -o $@  $< $(CFLAGS)
 			
 audio_app: $(OBJS)
-			$(CC) -o $@ $^ $(CFLAGS) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123
+#			$(CC) -o $@ $^ $(CFLAGS) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123
+			$(CC) -o $@ $^ $(CFLAGS) -pthread
 			rm *.o
 #			cp audio_app /home/duyphan/ftpserver/
 			

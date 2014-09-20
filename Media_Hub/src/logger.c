@@ -24,6 +24,7 @@ void closeLogger(){
  * 		Interface to be used to write app log to syslog.
  * 	Parameters:
  * 		logLevel - log Level
+ * 		pLogStr - string to written to syslog
  * 		... - list variables
  ************************************************************************/
 void writeLog(int logLevel, const char *pLogStr, ...){

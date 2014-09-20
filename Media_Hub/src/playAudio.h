@@ -1,3 +1,4 @@
+#ifdef PLAY_AUDIO
 #include <portaudio.h>
 #include <mpg123.h>
 #include <stdio.h>
@@ -13,3 +14,4 @@
     } while (0)
 
 int mp3Play(char* filePath);
+#endif

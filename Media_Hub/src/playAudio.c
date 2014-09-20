@@ -1,3 +1,4 @@
+#ifdef PLAY_AUDIO
 #include "playAudio.h"
 
 
@@ -106,4 +107,4 @@ int mp3Play(char* filePath)
 
     return 0;
 }
-
+#endif
