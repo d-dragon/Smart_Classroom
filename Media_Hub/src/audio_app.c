@@ -163,10 +163,11 @@
 #include "logger.h"
 #include <pthread.h>
 #include <syslog.h>
+#include <string.h>
 
-#ifdef PLAY_AUDIO
+//#ifdef PLAY_AUDIO
 #include "playAudio.h"
-#endif
+//#endif
 
 
 #define APP_SUCCESS 1
@@ -175,10 +176,22 @@
 
 int main(int argc, char *argv[]) {
 
-#ifdef PLAY_AUDIO
-	int status;
- 	status = mp3Play("/home/pi/Audio/Test1.mp3");
-#endif
+//#ifdef PLAY_AUDIO
+	/*int status;
+	mp3Player* player = malloc(sizeof(mp3Player));
+	
+	//player->fileName = malloc(strlen(argv[1]) * sizeof(char));
+	player->fileName = malloc(1024 * sizeof(char));
+	
+	player->fileName = ("/home/pi/Audio/Test1.mp3");
+	
+	//player->fileName = argv[1];
+	
+	status = play(player);
+	free(player);*/
+	
+ 	
+//#endif
 
 	pthread_t recv_file_thread;
 	pthread_t adv_info_thread;

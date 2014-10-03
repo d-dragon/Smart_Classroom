@@ -2,7 +2,7 @@
 CC=gcc
 CFLAGS=-I.
 DEPS = receive_file.h sock_infra.h advertisement.h logger.h playAudio.h
-OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o logger.o playAudio.c
+OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o logger.o playAudio.o
 
 		
 %.o: %.c $(DEPS)
@@ -10,7 +10,8 @@ OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o logger.o playAudi
 			
 audio_app: $(OBJS)
 #			$(CC) -o $@ $^ $(CFLAGS) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123
-			$(CC) -o $@ $^ $(CFLAGS) -pthread
+		 	$(CC) -o $@ $^ $(CFLAGS) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123 -D PLAY_AUDIO
+#			$(CC) -o $@ $^ $(CFLAGS) -pthread
 			rm *.o
 #			cp audio_app /home/duyphan/ftpserver/
 			
