@@ -1,11 +1,18 @@
 
 #include "playAudio.h"
+#include "logger.h"
 
-
+// Play function use to play a mp3Player instance
+// To use this function, must have one mp3Player to call play
+// In this function, create a stream to write and play mp3 file
+// How to use: 
+// Ex: 	
+//		mp3Player* player;
+//		play(player);
 int play(mp3Player* player)
 {
 		player->play = true;
-		int i = 0;
+		
 		player->mherr=0;
 		printf("\n Open:%s\n",player->fileName);
 	   
@@ -19,7 +26,7 @@ int play(mp3Player* player)
 		mpg123_open(player->mh, player->fileName);
 		mpg123_getformat(player->mh, &(player->rate), &(player->channels), &(player->encoding));
 
-		printf("%d encoding %d samplerate %d channels\n", player->encoding,
+		printf("\n%d encoding %d samplerate %d channels\n", player->encoding,
 				player->rate, player->channels);
 
 
@@ -65,13 +72,6 @@ int play(mp3Player* player)
 			if(mpg123_read(player->mh, player->buffer, player->buffer_size, &player->done) == MPG123_OK)
 			{
 				Pa_WriteStream(player->stream, player->buffer,(player->done)/4);
-				i++;
-				if(i == 50)
-				{
-					printf("\n End of playing time \n");
-					stop(player);
-					
-				}
 			}
 		   
 		}
@@ -98,8 +98,17 @@ int play(mp3Player* player)
 		Pa_Terminate();
 		return 0;
 }
+
+// stop function will end stream and close portaudio and mpg123 
+// when mp3 is playing, call stop() and as play(), its only argument is a mp3Player object
+// How to use:
+// Ex:
+// mp3Player* player;
+// play(player);
+// stop(player);
 int stop(mp3Player* player)
 {
+	printf("\n End of playing \n");
 	player->play = false;
 	player->err = Pa_StopStream(player->stream);
 	error_check(player->err);
