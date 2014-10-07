@@ -161,6 +161,7 @@
 #include "receive_file.h"
 #include "advertisement.h"
 #include "logger.h"
+#include "acpHandler.h"
 #include <pthread.h>
 #include <syslog.h>
 
@@ -179,8 +180,7 @@ int main(int argc, char *argv[]) {
 	int status;
  	status = mp3Play("/home/pi/Audio/Test1.mp3");
 #endif
-
-	pthread_t recv_file_thread;
+	pthread_t acp_thread;
 	pthread_t adv_info_thread;
 	int ret;
 
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 
 	//create receive file thread
 	appLog(LOG_DEBUG, "create recv file thread\n");
-	ret = pthread_create(&recv_file_thread, NULL, &recvFileThread,
+	ret = pthread_create(&acp_thread, NULL, &waitingConnectionThread,
 			(void *) "receive file thread!\n");
 	if (ret) {
 		appLog(LOG_ERR,
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	pthread_join(recv_file_thread, NULL );
+	pthread_join(acp_thread, NULL );
 	pthread_join(adv_info_thread, NULL );
 	return APP_SUCCESS;
 }
