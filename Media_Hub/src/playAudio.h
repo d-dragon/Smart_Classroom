@@ -1,4 +1,8 @@
 #ifdef PLAY_AUDIO
+#ifndef __PLAY_AUDIO_H__
+#define __PLAY_AUDIO_H__
+
+
 #include <portaudio.h>
 #include <mpg123.h>
 #include <stdio.h>
@@ -13,5 +17,39 @@
         } \
     } while (0)
 
-int mp3Play(char* filePath);
+typedef int bool;
+#define true 1
+#define false 0
+
+typedef struct player
+{
+	PaStreamParameters out_param;
+    PaStream * stream;
+    PaError err;
+   
+    mpg123_handle *mh;
+    unsigned char *buffer;
+    size_t buffer_size;
+    size_t done;
+    int mherr;
+   
+    int channels, encoding;
+    long rate;
+	char* fileName;
+	
+	bool play;
+	
+	
+	
+	
+
+	
+
+}mp3Player;
+
+int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
+int stop(mp3Player* player);//
+
+#endif
+
 #endif

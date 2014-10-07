@@ -1,110 +1,128 @@
 #ifdef PLAY_AUDIO
 #include "playAudio.h"
+#include "logger.h"
 
-
-int mp3Play(char* filePath)
+// Play function use to play a mp3Player instance
+// To use this function, must have one mp3Player to call play
+// In this function, create a stream to write and play mp3 file
+// How to use: 
+// Ex: 	
+//		mp3Player* player;
+//		play(player);
+int play(mp3Player* player)
 {
-    PaStreamParameters out_param;
-    PaStream * stream;
-    PaError err;
-   
-    mpg123_handle *mh;
-    unsigned char *buffer;
-    size_t buffer_size;
-    size_t done;
-    int mherr;
-    
-   
+		player->play = true;
+		
+		player->mherr=0;
+		printf("\n Open:%s\n",player->fileName);
+	   
 
-    int channels, encoding;
-    long rate;
+		mpg123_init();
+		player->mh = mpg123_new(NULL, &(player->mherr));
+		player->buffer_size = mpg123_outblock(player->mh);
+		player->buffer = (unsigned char*) malloc((player->buffer_size) * sizeof(unsigned char));
+		
+		/* open the file and get the decoding format */
+		mpg123_open(player->mh, player->fileName);
+		mpg123_getformat(player->mh, &(player->rate), &(player->channels), &(player->encoding));
+
+		printf("\n%d encoding %d samplerate %d channels\n", player->encoding,
+				player->rate, player->channels);
 
 
 
-    if (filePath==NULL)
-    {
-        printf(stderr, "Can not find the path of %s \n", filePath);
-        return 1;
-    }
-    
-/* intit mpg123 */
+		/* init portaudio */
+		player->err = Pa_Initialize();
+		error_check(player->err);
 
-    mherr=0;
-    printf("\n Open: %s\n",filePath);
-   
+		/* we are using the default device */
+		player->out_param.device = Pa_GetDefaultOutputDevice();
+		if (player->out_param.device == paNoDevice)
+		{
+			fprintf(stderr, "Haven't found an audio device!\n");
+			return -1;
+		}
 
-    mpg123_init();
-    mh = mpg123_new(NULL, &mherr);
-    buffer_size = mpg123_outblock(mh);
-    buffer = (unsigned char*) malloc(buffer_size * sizeof(unsigned char));
+		/* stero or mono */
+		player->out_param.channelCount = player->channels;
+		player->out_param.sampleFormat = paInt16;
+		player->out_param.suggestedLatency = Pa_GetDeviceInfo(player->out_param.device)->defaultHighOutputLatency;
+		player->out_param.hostApiSpecificStreamInfo = NULL;
+
+		player->err = Pa_OpenStream(&(player->stream), NULL, &(player->out_param), player->rate,
+				paFramesPerBufferUnspecified, paClipOff,NULL, NULL);
+		error_check(player->err);
+
+		printf("\n Playing %s .....",player->fileName);
+
+		player->err = Pa_StartStream(player->stream);
+		error_check(player->err);
+
+	 
+			
+
+		//err = Pa_SetStreamFinishedCallback(stream, &end_cb);
+		//error_check(err);
+
+		/* decode and play */
+
+		printf("\n Playing %s .....",player->fileName);
+		while (player->play)
+		{
+			if(mpg123_read(player->mh, player->buffer, player->buffer_size, &player->done) == MPG123_OK)
+			{
+				Pa_WriteStream(player->stream, player->buffer,(player->done)/4);
+			}
+		   
+		}
+		if(!player->play)
+			return 1;
+
+		printf("\n Finish playing !!!!!!\n");
+
+		
+		
+
+	   
+		
+
+		player->err = Pa_CloseStream(player->stream);
+		error_check(player->err);
+
+		free(player->buffer);
+		//ao_close(dev);
+		mpg123_close(player->mh);
+		mpg123_delete(player->mh);
+		mpg123_exit();
+
+		Pa_Terminate();
+		return 0;
+}
+
+// stop function will end stream and close portaudio and mpg123 
+// when mp3 is playing, call stop() and as play(), its only argument is a mp3Player object
+// How to use:
+// Ex:
+// mp3Player* player;
+// play(player);
+// stop(player);
+int stop(mp3Player* player)
+{
+	printf("\n End of playing \n");
+	player->play = false;
+	player->err = Pa_StopStream(player->stream);
+	error_check(player->err);
+	player->err = Pa_CloseStream(player->stream);
+	error_check(player->err);
+
+	free(player->buffer);
+		
+	mpg123_close(player->mh);
+	mpg123_delete(player->mh);
+	mpg123_exit();
+
+	Pa_Terminate();
 	
-    /* open the file and get the decoding format */
-    mpg123_open(mh, filePath);
-    mpg123_getformat(mh, &rate, &channels, &encoding);
-
-    printf("%d encoding %d samplerate %d channels\n", encoding,
-            rate, channels);
-
-
-
-    /* init portaudio */
-    err = Pa_Initialize();
-    error_check(err);
-
-    /* we are using the default device */
-    out_param.device = Pa_GetDefaultOutputDevice();
-    if (out_param.device == paNoDevice)
-    {
-        fprintf(stderr, "Haven't found an audio device!\n");
-        return -1;
-    }
-
-    /* stero or mono */
-    out_param.channelCount = channels;
-    out_param.sampleFormat = paInt16;
-    out_param.suggestedLatency = Pa_GetDeviceInfo(out_param.device)->defaultHighOutputLatency;
-    out_param.hostApiSpecificStreamInfo = NULL;
-
-    err = Pa_OpenStream(&stream, NULL, &out_param, rate,
-         	paFramesPerBufferUnspecified, paClipOff,NULL, NULL);
-    error_check(err);
-
-    printf("\n Playing %s .....",filePath);
-
-    err = Pa_StartStream(stream);
-    error_check(err);
-
- 
-        
-
-    /* decode and play */
-
-    while (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
-    {
-        Pa_WriteStream(stream, buffer,done/4);
-       
-    }
-
-    printf("\n Finish playing !!!!!!\n");
-
-    
-    error_check(err);
-
-   
-   err = Pa_StopStream(stream);
-   error_check(err);
-
-    err = Pa_CloseStream(stream);
-    error_check(err);
-
-    free(buffer);
-    
-    mpg123_close(mh);
-    mpg123_delete(mh);
-    mpg123_exit();
-
-    Pa_Terminate();
-
-    return 0;
+	return 0;
 }
 #endif

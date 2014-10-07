@@ -9,6 +9,13 @@
 #include "receive_file.h"
 #include "sock_infra.h"
 #include "logger.h"
+#include "acpHandler.h"
+
+char *initFileInfra(char *FileName){
+
+	char *tmp_file_path;
+
+}
 
 FILE *createFileStream(char *str_file_name) {
 
@@ -33,15 +40,20 @@ FILE *createFileStream(char *str_file_name) {
 	return tmp_file;
 }
 
+
+
 void writetoFileStream() {
 
 	int flag_check_mod = 0;
 	FILE *file_store_audio;
-
+	char *buff;
+	buff = malloc(32);
 
 	while (1) {
 
-		num_byte_read = read(child_stream_sock_fd, file_buff, sizeof file_buff);
+		num_byte_read = read(child_stream_sock_fd, buff, sizeof(buff));
+		parsePackageContent(buff);
+		//num_byte_read = read(child_stream_sock_fd, file_buff, sizeof file_buff);
 		if (num_byte_read < 0) {
 			appLog(LOG_ERR,"read() call receive failed!\n");
 		} else if (num_byte_read == 0) {
@@ -52,6 +64,7 @@ void writetoFileStream() {
 		} else {
 			//					printf("%d bytes received\n", numRead);
 		}
+		/*
 		if (!flag_check_mod) {
 			appLog(LOG_INFO,"File Info: %s\n", file_buff);
 
@@ -95,7 +108,7 @@ void writetoFileStream() {
 				fclose(file_store_audio);
 			}
 
-		}
+		}*/
 	}
 
 }
@@ -119,6 +132,7 @@ void *recvFileThread() {
 				(struct sockaddr *) &remote_addr, &socklen);
 		if (child_stream_sock_fd < 0) {
 			appLog(LOG_ERR, "accept call error\n");
+			exit(0);
 			continue;
 		}
 		appLog(LOG_INFO, "server: got connection from %s\n",

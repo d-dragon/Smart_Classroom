@@ -32,7 +32,7 @@ void *advertiseServerInfo() {
 		appLog(LOG_DEBUG, "sem_sock was detroyed\n");
 	}
 
-	while (1) {
+	/*while (1) {
 		appLog(LOG_DEBUG, "server advertise its info......\n");
 		send_recv_buff = AdvPackageWrapper(TCP_PORT, interface_addr);
 		num_bytes = sendto(datagram_sock_fd, send_recv_buff,
@@ -46,7 +46,7 @@ void *advertiseServerInfo() {
 			sleep(2);
 		}
 
-	}
+	}*/
 
 }
 

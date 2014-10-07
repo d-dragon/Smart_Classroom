@@ -29,6 +29,7 @@
 #define TCP_PORT 1991
 #define UDP_PORT "1992"
 #define BROADCAST_DEST_ADDR "255.255.255.255"
+#define LOOPBACK_DEFAULT "127.0.0.1"
 #define BACKLOG	10
 #define SOCK_ERROR -1
 #define SOCK_SUCCESS 0
@@ -62,8 +63,6 @@ sem_t sem_sock;
 int openStreamSocket();
 int openDatagramSocket();
 char *getInterfaceAddress();
-
-
 
 
 #endif /* SOCK_INFRA_H_ */

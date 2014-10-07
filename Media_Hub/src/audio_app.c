@@ -164,22 +164,37 @@
 #include "acpHandler.h"
 #include <pthread.h>
 #include <syslog.h>
+#include <string.h>
 
-#ifdef PLAY_AUDIO
+//#ifdef PLAY_AUDIO
 #include "playAudio.h"
-#endif
-
+//#endif
 
 #define APP_SUCCESS 1
 #define APP_ERROR 0
-
 
 int main(int argc, char *argv[]) {
 
 #ifdef PLAY_AUDIO
 	int status;
- 	status = mp3Play("/home/pi/Audio/Test1.mp3");
+	status = mp3Play("/home/pi/Audio/Test1.mp3");
 #endif
+
+//#ifdef PLAY_AUDIO
+	/*int status;
+	 mp3Player* player = malloc(sizeof(mp3Player));
+
+	 //player->fileName = malloc(strlen(argv[1]) * sizeof(char));
+	 player->fileName = malloc(1024 * sizeof(char));
+
+	 player->fileName = ("/home/pi/Audio/Test1.mp3");
+
+	 //player->fileName = argv[1];
+
+	 status = play(player);
+	 free(player);*/
+
+//#endif
 	pthread_t acp_thread;
 	pthread_t adv_info_thread;
 	int ret;
@@ -188,10 +203,10 @@ int main(int argc, char *argv[]) {
 	initLogger();
 
 	/*init socket semaphore*/
-	ret=sem_init(&sem_sock, 0, 0);
-	if(ret != 0){
-		appLog(LOG_ERR,"sock semaphore init failed\n");
-	}else {
+	ret = sem_init(&sem_sock, 0, 0);
+	if (ret != 0) {
+		appLog(LOG_ERR, "sock semaphore init failed\n");
+	} else {
 		appLog(LOG_DEBUG, "sock semaphore was inittialized success\n");
 	}
 
@@ -204,22 +219,20 @@ int main(int argc, char *argv[]) {
 				"pthread_create %d (failed) while create recv file thread\n",
 				ret);
 		exit(EXIT_FAILURE);
-	}else{
+	} else {
 		appLog(LOG_DEBUG, "receive file thread created success\n");
 	}
 
-
 	//create advertise server info thread
 	appLog(LOG_DEBUG, "create adv thread\n");
-	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfo,
-			NULL);
+	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfo, NULL);
 	if (ret) {
 		appLog(LOG_ERR, "pthread_create %d (failed) while create adv thread\n",
 				ret);
 		exit(EXIT_FAILURE);
 	}
 
-	pthread_join(acp_thread, NULL );
-	pthread_join(adv_info_thread, NULL );
+	pthread_join(acp_thread, NULL);
+	pthread_join(adv_info_thread, NULL);
 	return APP_SUCCESS;
 }

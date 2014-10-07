@@ -7,10 +7,10 @@
 #include "sock_infra.h"
 #include "logger.h"
 
-/*
+/*************************************************
  * open stream socket just for listen connection,
  * not include accept() and communication task
- */
+ *************************************************/
 int openStreamSocket() {
 
 	/*Open server socket*/
@@ -108,7 +108,9 @@ char *getInterfaceAddress() {
 					interface_addr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
 			if(ret == 0){
 				appLog(LOG_DEBUG, "address of %s: %s\n", ifa->ifa_name, interface_addr);
-				if(strncmp("192.168.", interface_addr, sizeof("192.168.")) == 0)
+				if(strncmp(LOOPBACK_DEFAULT, interface_addr, sizeof(LOOPBACK_DEFAULT)) == 0){
+					continue;
+				}
 				return interface_addr;
 			}
 		}
@@ -116,4 +118,5 @@ char *getInterfaceAddress() {
 	}
 	return NULL;
 }
+
 

@@ -20,6 +20,7 @@
 char *path_to_file;
 FILE *file_recv;
 
+char *initFileInfra(char *);
 FILE *createFileStream(char *str_file_name);
 void writetoFileStream();
 void *recvFileThread();
