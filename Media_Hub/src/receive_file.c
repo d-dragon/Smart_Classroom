@@ -22,16 +22,18 @@ FILE *createFileStream(char *str_file_name) {
 	FILE *tmp_file;
 	char *file_name;
 	file_name = calloc(50, sizeof(char));
+	g_path_to_file = calloc(100, sizeof(char));
+
 	file_name = str_file_name;
 
 	appLog(LOG_INFO, "FileName: %s\n", file_name);
-	appLog(LOG_INFO,"create path to file:%s\n", path_to_file);
-	strcat(path_to_file, DEFAULT_PATH);
-	strcat(path_to_file, file_name);
-	appLog(LOG_INFO, "path: %s\n", path_to_file);
+	appLog(LOG_INFO,"created file path:%s\n", g_path_to_file);
+	strcat(g_path_to_file, DEFAULT_PATH);
+	strcat(g_path_to_file, file_name);
+	appLog(LOG_INFO, "path: %s\n", g_path_to_file);
 
 	appLog(LOG_DEBUG, "create file\n");
-	tmp_file = fopen(path_to_file, "w");
+	tmp_file = fopen(g_path_to_file, "w");
 	if (tmp_file == NULL) {
 		appLog(LOG_ERR, "fopen failed\n");
 		return NULL;
@@ -114,7 +116,7 @@ void writetoFileStream() {
 }
 void *recvFileThread() {
 
-	path_to_file = calloc(256, sizeof(char));
+	g_path_to_file = calloc(256, sizeof(char));
 	getInterfaceAddress();
 	int ret = openStreamSocket();
 	if(ret == SOCK_SUCCESS){
@@ -149,4 +151,13 @@ void *recvFileThread() {
 	}
 
 }
+void *FileStreamHandlerThread(char *FileInfo){
 
+	while (1){
+		appLog(LOG_DEBUG, "inside FileStreamHandlerThread--------\n");
+		sleep(2);
+/*		pthread_mutex_lock(g_file_buff_mutex);
+		pthread_cond_wait(g_file_thread_cond, g_file_buff_mutex);
+		pthread_mutex_unlock(g_file_buff_mutex);*/
+	}
+}

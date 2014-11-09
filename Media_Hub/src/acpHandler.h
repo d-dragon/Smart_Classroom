@@ -11,7 +11,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
+#define ACP_SUCCESS		1
+#define ACP_FAILED		0
 #define MAX_FILE_BUFF_LEN	10*1024
 #define RECV_FILE_ENABLED	1
 #define RECV_FILE_DISABLED 0
@@ -38,20 +41,24 @@
 #define CMD_REQ_GET_LIST_FILE		0x01
 
 //define control response
-#define CTRL_SUCCESS		0x01
-#define CTRL_FAILED			0x00
+#define CTRL_RESP_SUCCESS			0x01
+#define CTRL_RESP_FAILED			0x00
 /******************************************************/
 
 int g_RecvFileFlag;
+
+
+
 //Package function declaration
 void parsePackageContent(char *packageBuff);
-char *wrapperControlResp(int resp);
+int wrapperControlResp(char resp);
 char *wrapperRequestResp(char *resp);
 int ControlHandler(char *ctrlBuff, short int length);
 
 void *waitingConnectionThread();
 void recvnhandlePackageLoop();
 int isEOFPackage(char *);
+int initFileHandlerThread(char *);
 
 #endif /* ACP_H_ */
 
