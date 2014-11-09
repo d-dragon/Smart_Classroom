@@ -61,7 +61,7 @@ void *waitingConnectionThread() {
 }
 
 /*******************************************************
- * Function used to waiting - receiving and handling
+ * Process function used to waiting - receiving and handling
  * the received package
  *******************************************************/
 void recvnhandlePackageLoop() {
@@ -75,14 +75,14 @@ void recvnhandlePackageLoop() {
 	PackBuff = calloc(MAX_PACKAGE_LEN, sizeof(char));
 	FileBuff = calloc(MAX_FILE_BUFF_LEN, sizeof(char));
 
-	memset(PackBuff, 0x00, sizeof(PackBuff));
-	memset(FileBuff, 0x00, sizeof(FileBuff));
+	memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
+	memset(FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 
 	while (1) {
+		/*################ receive package #####################*/
 		if (g_RecvFileFlag != RECV_FILE_ENABLED) {
-			memset(PackBuff, 0x00, sizeof(PackBuff));
 			num_byte_read = read(child_stream_sock_fd, PackBuff,
-					sizeof(PackBuff));
+					MAX_PACKAGE_LEN);
 			if (num_byte_read < 0) {
 				appLog(LOG_ERR, "read() call receive failed!\n");
 			} else if (num_byte_read == 0) {
@@ -93,12 +93,13 @@ void recvnhandlePackageLoop() {
 			} else {
 				parsePackageContent(PackBuff);
 			}
+			memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
 
 		} else {
-			/*################ write data to file here #####################*/
-			memset(FileBuff, 0x00, sizeof(FileBuff));
+			/*################ receive data to file here #####################*/
+			memset(FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 			num_byte_read = read(child_stream_sock_fd, FileBuff,
-					sizeof(FileBuff));
+					MAX_FILE_BUFF_LEN);
 			if (num_byte_read < 0) {
 				appLog(LOG_ERR, "read() call receive failed!\n");
 			} else if (num_byte_read == 0) {
@@ -131,9 +132,9 @@ void parsePackageContent(char *packageBuff) {
 //	int cmd;
 //	int num_args;
 	int ret, i;
-	for (i = 0; i < sizeof(packageBuff); i++) {
+/*	for (i = 0; i < sizeof(packageBuff); i++) {
 		appLog(LOG_DEBUG, "%x|", packageBuff[i]);
-	}
+	}*/
 //check whether package header is valid or not (1st byte)
 	package_header = *packageBuff;
 	appLog(LOG_DEBUG, "package_header %x\n", package_header);
@@ -154,6 +155,14 @@ void parsePackageContent(char *packageBuff) {
 
 	appLog(LOG_DEBUG, "package_len %d\n", package_len);
 	packageBuff = packageBuff + 2;
+
+#ifdef DEBUG	//debug--open/
+	appLog(LOG_DEBUG, "package_content\n");
+	for(i = 0; i < package_len; i++){
+		appLog(LOG_DEBUG, "%x", packageBuff[i]);
+	}
+
+#endif 	//debug--close
 
 //parse package type, striped header and package type and length
 	switch (package_type) {
@@ -185,12 +194,12 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	int ret;
 
 	switch (*ctrlBuff) {
-	case CMD_SEND_FILE:
+	case CMD_CTRL_PLAY_AUDIO:
 
 		printf("play audio\n");
-		wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
-	case CMD_CTRL_PLAY_AUDIO:
+	case CMD_SEND_FILE:
 		ret = initFileHandlerThread(ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
@@ -246,7 +255,7 @@ int wrapperControlResp(char resp) {
 	char *buff;
 	int i, ret;
 	buff = calloc(8, sizeof(char));
-	memset(buff, 0x00, sizeof(buff));
+	memset(buff, 0x00, 8);
 
 	*buff = PACKAGE_HEADER; //header
 	*(++buff) = PACKAGE_CTRL_RESP; //package type
@@ -255,14 +264,15 @@ int wrapperControlResp(char resp) {
 	*buff = resp;
 
 //	memcpy(&buff, (char *)resp, sizeof(resp));
-	ret = send(child_stream_sock_fd, buff, sizeof(buff), 0);
+	buff = buff - 4;
+	ret = send(child_stream_sock_fd, buff, 8, 0);
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "send response package failed");
 		return ACP_FAILED;
 	}
-	buff = buff - 4;
+
 	//debug package response
-	for (i = 0; i < sizeof(buff); i++) {
+	for (i = 0; i < 8; i++) {
 		appLog(LOG_DEBUG, "%x", buff[i]);
 	}
 	free(buff);

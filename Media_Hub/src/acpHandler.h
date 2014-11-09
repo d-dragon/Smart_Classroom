@@ -24,6 +24,7 @@
  ********************************************************/
 #define MAX_PACKAGE_LEN		512
 #define PACKAGE_HEADER 		0x55 //package header
+
 //package type
 #define PACKAGE_CONTROL 	0x01
 #define PACKAGE_RESQUEST 	0x02
