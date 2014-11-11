@@ -11,7 +11,9 @@
 #include "receive_file.h"
 #include <endian.h>
 
-/*pthread_mutex_t g_file_buff_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t g_file_buff_mutex;
+
+/*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
  pthread_cond_t	g_file_thread_cond_2 = PTHREAD_COND_INITIALIZER;*/
@@ -38,6 +40,7 @@ void *waitingConnectionThread() {
 	appLog(LOG_DEBUG, "<call sem_post> to active init UDP sock\n");
 	sem_post(&sem_sock);
 
+	pthread_mutex_init(&g_file_buff_mutex, NULL);
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
@@ -68,15 +71,14 @@ void recvnhandlePackageLoop() {
 
 	int ret;
 	char *PackBuff;
-	char *FileBuff;
 
 	g_RecvFileFlag = 0;
 
 	PackBuff = calloc(MAX_PACKAGE_LEN, sizeof(char));
-	FileBuff = calloc(MAX_FILE_BUFF_LEN, sizeof(char));
+	g_FileBuff = calloc(MAX_FILE_BUFF_LEN, sizeof(char));
 
 	memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
-	memset(FileBuff, 0x00, MAX_FILE_BUFF_LEN);
+	memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 
 	while (1) {
 		/*################ receive package #####################*/
@@ -97,9 +99,11 @@ void recvnhandlePackageLoop() {
 
 		} else {
 			/*################ receive data to file here #####################*/
-			memset(FileBuff, 0x00, MAX_FILE_BUFF_LEN);
-			num_byte_read = read(child_stream_sock_fd, FileBuff,
-					MAX_FILE_BUFF_LEN);
+			appLog(LOG_DEBUG, "receiving file data-------");
+			pthread_mutex_lock(&g_file_buff_mutex);
+			memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
+			num_byte_read = read(child_stream_sock_fd, g_FileBuff,
+			MAX_FILE_BUFF_LEN);
 			if (num_byte_read < 0) {
 				appLog(LOG_ERR, "read() call receive failed!\n");
 			} else if (num_byte_read == 0) {
@@ -108,11 +112,21 @@ void recvnhandlePackageLoop() {
 				close(child_stream_sock_fd);
 				exit(0);
 			} else {
-				if (isEOFPackage(FileBuff)) {
+				if (isEOFPackage(g_FileBuff)) {
+					appLog(LOG_DEBUG, "reached EOF!!!");
 					//	closeFileStream();
 					g_RecvFileFlag = RECV_FILE_DISABLED;
+					g_writeDataFlag = DISABLED;
+					pthread_mutex_unlock(&g_file_buff_mutex);
 				} else {
+					pthread_mutex_unlock(&g_file_buff_mutex);
+					g_writeDataFlag = ENABLED;
+					while (g_writeDataFlag != DISABLED) {
+
+					}
+
 					//	writeDatatoFile(FileBuff);
+
 				}
 			}
 		}
@@ -132,9 +146,9 @@ void parsePackageContent(char *packageBuff) {
 //	int cmd;
 //	int num_args;
 	int ret, i;
-/*	for (i = 0; i < sizeof(packageBuff); i++) {
-		appLog(LOG_DEBUG, "%x|", packageBuff[i]);
-	}*/
+	/*	for (i = 0; i < sizeof(packageBuff); i++) {
+	 appLog(LOG_DEBUG, "%x|", packageBuff[i]);
+	 }*/
 //check whether package header is valid or not (1st byte)
 	package_header = *packageBuff;
 	appLog(LOG_DEBUG, "package_header %x\n", package_header);
@@ -158,12 +172,11 @@ void parsePackageContent(char *packageBuff) {
 
 #ifdef DEBUG	//debug--open/
 	appLog(LOG_DEBUG, "package_content\n");
-	for(i = 0; i < package_len; i++){
+	for(i = 0; i < package_len; i++) {
 		appLog(LOG_DEBUG, "%x", packageBuff[i]);
 	}
 
 #endif 	//debug--close
-
 //parse package type, striped header and package type and length
 	switch (package_type) {
 	case PACKAGE_CONTROL:
@@ -200,6 +213,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_SEND_FILE:
+		ctrlBuff++;
 		ret = initFileHandlerThread(ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
@@ -212,6 +226,9 @@ int ControlHandler(char *ctrlBuff, short int length) {
 				return ret;
 			}
 		}
+		break;
+	case CMD_START_TRANFER_FILE:
+		g_StartTransferFlag = 1;
 		break;
 	}
 
@@ -243,11 +260,15 @@ int isEOFPackage(char *packBuff) {
 }
 int initFileHandlerThread(char *FileInfo) {
 
+	g_StartTransferFlag = 0;
+	g_waitCount = 0;
+
 	if (pthread_create(&g_File_Handler_Thd, NULL, &FileStreamHandlerThread,
 			&FileInfo)) {
 		appLog(LOG_DEBUG, "FileHandlerThread init fail\n");
 		return ACP_FAILED;
 	}
+	pthread_join(&g_File_Handler_Thd, NULL);
 	return ACP_SUCCESS;
 }
 int wrapperControlResp(char resp) {
@@ -264,6 +285,34 @@ int wrapperControlResp(char resp) {
 	*buff = resp;
 
 //	memcpy(&buff, (char *)resp, sizeof(resp));
+	buff = buff - 4;
+	ret = send(child_stream_sock_fd, buff, 8, 0);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "send response package failed");
+		return ACP_FAILED;
+	}
+
+	//debug package response
+	for (i = 0; i < 8; i++) {
+		appLog(LOG_DEBUG, "%x", buff[i]);
+	}
+	free(buff);
+	appLog(LOG_DEBUG, "send response package success");
+	return ACP_SUCCESS;
+}
+int wrapperRequestResp(char *resp) {
+	char *buff;
+	int i, ret;
+	buff = calloc(8, sizeof(char));
+	memset(buff, 0x00, 8);
+
+	*buff = PACKAGE_HEADER; //header
+	*(++buff) = PACKAGE_CTRL_RESP; //package type
+	*(++buff) = 0x01; //length
+	buff = buff + 2;
+	*buff = *resp;
+
+	//	memcpy(&buff, (char *)resp, sizeof(resp));
 	buff = buff - 4;
 	ret = send(child_stream_sock_fd, buff, 8, 0);
 	if (ret < 0) {

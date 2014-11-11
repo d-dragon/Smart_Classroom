@@ -20,16 +20,17 @@
 
 char *g_path_to_file;
 FILE *g_file_stream;
+int g_file_size;
 pthread_t g_File_Handler_Thd;
 
-int g_recvFileEnabled;
-int g_writeDataEnabled;
+extern pthread_mutex_t g_file_buff_mutex;
 
 
 char *initFileInfra(char *);
-FILE *createFileStream(char *str_file_name);
+FILE *createFileStream(char *);
 void writetoFileStream();
 void *recvFileThread();
 void *FileStreamHandlerThread(char *);
+
 
 #endif /* RECEIVE_FILE_H_ */
