@@ -40,7 +40,7 @@ void *waitingConnectionThread() {
 	appLog(LOG_DEBUG, "<call sem_post> to active init UDP sock\n");
 	sem_post(&sem_sock);
 
-	pthread_mutex_init(&g_file_buff_mutex, NULL);
+
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
@@ -83,6 +83,7 @@ void recvnhandlePackageLoop() {
 	while (1) {
 		/*################ receive package #####################*/
 		if (g_RecvFileFlag != RECV_FILE_ENABLED) {
+			appLog(LOG_DEBUG, "receiving message----")
 			num_byte_read = read(child_stream_sock_fd, PackBuff,
 					MAX_PACKAGE_LEN);
 			if (num_byte_read < 0) {
@@ -114,13 +115,16 @@ void recvnhandlePackageLoop() {
 			} else {
 				if (isEOFPackage(g_FileBuff)) {
 					appLog(LOG_DEBUG, "reached EOF!!!");
-					//	closeFileStream();
+
 					g_RecvFileFlag = RECV_FILE_DISABLED;
-					g_writeDataFlag = DISABLED;
+					g_writeDataFlag = ENABLED; //force stop FileStreamHandlerThread
+
 					pthread_mutex_unlock(&g_file_buff_mutex);
 				} else {
-					pthread_mutex_unlock(&g_file_buff_mutex);
+					appLog(LOG_DEBUG, "enabled write data to file")
 					g_writeDataFlag = ENABLED;
+					pthread_mutex_unlock(&g_file_buff_mutex);
+
 					while (g_writeDataFlag != DISABLED) {
 
 					}
@@ -209,10 +213,10 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	switch (*ctrlBuff) {
 	case CMD_CTRL_PLAY_AUDIO:
 
-		printf("play audio\n");
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_SEND_FILE:
+		appLog(LOG_DEBUG, "CMD_SEND_FILE");
 		ctrlBuff++;
 		ret = initFileHandlerThread(ctrlBuff);
 		if (ret == ACP_SUCCESS) {
@@ -239,23 +243,28 @@ int ControlHandler(char *ctrlBuff, short int length) {
 
 int isEOFPackage(char *packBuff) {
 
-	char *tmpBuff;
-	tmpBuff = calloc(5, sizeof(char));
+	char tmpBuff;
+	//tmpBuff = calloc(5, sizeof(char));
 
-	memcpy(tmpBuff, packBuff, sizeof(tmpBuff));
+	tmpBuff = *packBuff;
+	appLog(LOG_DEBUG, "isEOF header %x", tmpBuff);
+	if (tmpBuff != PACKAGE_HEADER) {
 
-	if (*tmpBuff != PACKAGE_HEADER) {
 		return 0;
 	} else {
-		if (*(++tmpBuff) != PACKAGE_CONTROL) {
-			return 0;
-		} else {
-			if (*(tmpBuff + 2) != CMD_CTRL_EOF) {
-				return 0;
-			}
-		}
+
+		/* {
+		 tmpBuff++;
+		 if (*tmpBuff != PACKAGE_CONTROL) {
+		 return 0;
+		 } else {
+		 tmpBuff + 2;
+		 if (*tmpBuff != CMD_CTRL_EOF) {
+		 return 0;
+		 }
+		 }*/
 	}
-	free(tmpBuff);
+	appLog(LOG_DEBUG, "isEOF");
 	return 1;
 }
 int initFileHandlerThread(char *FileInfo) {
@@ -264,11 +273,11 @@ int initFileHandlerThread(char *FileInfo) {
 	g_waitCount = 0;
 
 	if (pthread_create(&g_File_Handler_Thd, NULL, &FileStreamHandlerThread,
-			&FileInfo)) {
+			FileInfo)) {
 		appLog(LOG_DEBUG, "FileHandlerThread init fail\n");
 		return ACP_FAILED;
 	}
-	pthread_join(&g_File_Handler_Thd, NULL);
+//	pthread_join(&g_File_Handler_Thd, NULL);
 	return ACP_SUCCESS;
 }
 int wrapperControlResp(char resp) {

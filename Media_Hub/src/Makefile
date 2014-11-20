@@ -8,7 +8,7 @@ OBJS = audio_app.o receive_file.o advertisement.o sock_infra.o logger.o playAudi
 
 		
 .c.o: $(DEPS)
-			$(CC) $(CFLAGS) $(DEBUGFLAG) -m32 -c -o $@  $<
+			$(CC) $(CFLAGS) $(DEBUGFLAG) -g -O0 -m32 -c -o $@  $<
 			
 audio_app: $(OBJS)
 #		 	$(CC) -o $@ $^ $(CFLAGS) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123

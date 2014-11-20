@@ -15,7 +15,7 @@
 
 #define ACP_SUCCESS		1
 #define ACP_FAILED		0
-#define MAX_FILE_BUFF_LEN	10*1024
+#define MAX_FILE_BUFF_LEN	100*1024
 #define RECV_FILE_ENABLED	1
 #define RECV_FILE_DISABLED 0
 #define MAX_WAITING_COUNT 	3000
@@ -54,6 +54,7 @@ int g_RecvFileFlag;
 int g_StartTransferFlag;
 int g_waitCount;
 int g_writeDataFlag;
+
 char *g_FileBuff;
 typedef char byte;
 

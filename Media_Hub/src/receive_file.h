@@ -8,17 +8,13 @@
 #ifndef RECEIVE_FILE_H_
 #define RECEIVE_FILE_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <string.h>
-#include <pthread.h>
 
-#define DEFAULT_PATH "/home/"
+
+#define DEFAULT_PATH "/home/duyphan/"
+#define FILE_PATH_LEN_MAX 200
 #define FILE_ERROR -1
 #define FILE_SUCCESS 0
 
-char *g_path_to_file;
 FILE *g_file_stream;
 int g_file_size;
 pthread_t g_File_Handler_Thd;
@@ -31,6 +27,7 @@ FILE *createFileStream(char *);
 void writetoFileStream();
 void *recvFileThread();
 void *FileStreamHandlerThread(char *);
+void closeFileStream();
 
 
 #endif /* RECEIVE_FILE_H_ */

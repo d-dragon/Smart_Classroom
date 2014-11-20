@@ -6,6 +6,12 @@
  */
 
 #include <semaphore.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <string.h>
+#include <pthread.h>
+
 #include "receive_file.h"
 #include "sock_infra.h"
 #include "logger.h"
@@ -17,31 +23,38 @@ char *initFileInfra(char *FileName) {
 
 }
 
-FILE *createFileStream(char *FileInfo) {
+FILE *createFileStream(char *FileName) {
 
 	FILE *tmp_file;
-	char *file_name;
-	file_name = calloc(50, sizeof(char));
-	g_path_to_file = calloc(100, sizeof(char));
-	g_file_size = 0;
+//	char file_name[FILE_NAME_LEN_MAX];
+	char *path_to_file;
+	path_to_file = calloc(FILE_PATH_LEN_MAX, sizeof(char));
+//	g_file_size = 0;
 
-	memcpy(&g_file_size, FileInfo, 4);
-	FileInfo = FileInfo + sizeof(g_file_size);
-	appLog(LOG_DEBUG, "File size %d KB", g_file_size);
+//	memcpy(&g_file_size, FileInfo, 4);
+//	g_file_size = be16toh(g_file_size);
 
-	file_name = FileInfo;
-	appLog(LOG_INFO, "FileName: %s\n", file_name);
+//	FileInfo = FileInfo + sizeof(g_file_size);
+//	appLog(LOG_DEBUG, "File size %d KB", g_file_size);
 
-	strcat(g_path_to_file, DEFAULT_PATH);
-	strcat(g_path_to_file, file_name);
-	appLog(LOG_INFO, "path: %s\n", g_path_to_file);
 
-	tmp_file = fopen(g_path_to_file, "w");
+	appLog(LOG_INFO, "FileName: %s\n", FileName);
+//	file_name = "m.mp3";
+	strncat(path_to_file, DEFAULT_PATH, strlen(DEFAULT_PATH));
+	path_to_file = strcat(path_to_file, FileName);
+	appLog(LOG_INFO, "path to file: %s\n", path_to_file);
+
+	tmp_file = fopen(path_to_file, "w");
 	if (tmp_file == NULL) {
 		appLog(LOG_ERR, "fopen failed\n");
 		return NULL;
 	}
 	appLog(LOG_DEBUG, "File stream was created successfully\n");
+//	fwrite("aasfa", 1, strlen("aasfa"), g_file_stream);
+//	fclose(g_file_stream);
+//	exit(0);
+//	free(file_name);
+//	free(path_to_file);
 	return tmp_file;
 }
 
@@ -117,7 +130,7 @@ void writetoFileStream() {
 }
 void *recvFileThread() {
 
-	g_path_to_file = calloc(256, sizeof(char));
+
 	getInterfaceAddress();
 	int ret = openStreamSocket();
 	if (ret == SOCK_SUCCESS) {
@@ -154,7 +167,12 @@ void *recvFileThread() {
 }
 void *FileStreamHandlerThread(char *FileInfo) {
 
+	int szwrite = 0;
 	g_file_stream = createFileStream(FileInfo);
+	if(g_file_stream == NULL){
+		appLog(LOG_DEBUG, "FileStreamHandlerThread exited");
+		pthread_exit(NULL);
+	}
 
 	appLog(LOG_DEBUG, "inside FileStreamHandlerThread--------\n");
 	while (!g_StartTransferFlag && g_RecvFileFlag == RECV_FILE_DISABLED) {
@@ -171,18 +189,42 @@ void *FileStreamHandlerThread(char *FileInfo) {
 	}
 	wrapperControlResp(CTRL_RESP_ALREADY);
 	appLog(LOG_DEBUG, "Start Transfer file-------------\n");
+	pthread_mutex_init(&g_file_buff_mutex, NULL);
 	g_RecvFileFlag = RECV_FILE_ENABLED;
 	while (1) {
 		while (g_writeDataFlag != ENABLED) {
 
 		}
 		pthread_mutex_lock(&g_file_buff_mutex);
-		appLog(LOG_DEBUG, "%d bytes wrote to File stream---", sizeof(FileInfo));
-		g_writeDataFlag = DISABLED;
-		pthread_mutex_unlock(&g_file_buff_mutex);
+		//check transfer file flow finished--thread exit
+		if(g_RecvFileFlag == RECV_FILE_DISABLED){
+			g_writeDataFlag = DISABLED;
+			closeFileStream();
+			appLog(LOG_DEBUG, "Transfer file completed, FileStreamHandlerThread exited");
 
+			pthread_mutex_unlock(&g_file_buff_mutex);
+			pthread_mutex_destroy(&g_file_buff_mutex);
+
+			pthread_exit(NULL);
+		}
+		//write data to file
+		szwrite = fwrite(g_FileBuff, 1, num_byte_read, g_file_stream);
+		//				printf("%d bytes was written\n", szwrite);
+		if (szwrite < num_byte_read) {
+			appLog(LOG_ERR, "write data to stream file failed!\n");
+		} else if (szwrite == num_byte_read) {
+			appLog(LOG_DEBUG, "wrote %d byte to file stream\n",
+					(int) num_byte_read);
+			g_writeDataFlag = DISABLED;
+			pthread_mutex_unlock(&g_file_buff_mutex);
+
+		}
+		/*		pthread_mutex_lock(g_file_buff_mutex);
+		 pthread_cond_wait(g_file_thread_cond, g_file_buff_mutex);
+		 pthread_mutex_unlock(g_file_buff_mutex);*/
 	}
-	/*		pthread_mutex_lock(g_file_buff_mutex);
-	 pthread_cond_wait(g_file_thread_cond, g_file_buff_mutex);
-	 pthread_mutex_unlock(g_file_buff_mutex);*/
+}
+
+void closeFileStream(){
+	fclose(g_file_stream);
 }
