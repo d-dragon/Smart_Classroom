@@ -40,7 +40,6 @@ void *waitingConnectionThread() {
 	appLog(LOG_DEBUG, "<call sem_post> to active init UDP sock\n");
 	sem_post(&sem_sock);
 
-
 	while (1) {
 		child_stream_sock_fd = accept(stream_sock_fd,
 				(struct sockaddr *) &remote_addr, &socklen);
@@ -83,7 +82,7 @@ void recvnhandlePackageLoop() {
 	while (1) {
 		/*################ receive package #####################*/
 		if (g_RecvFileFlag != RECV_FILE_ENABLED) {
-			appLog(LOG_DEBUG, "receiving message----")
+			appLog(LOG_DEBUG, "receiving message----");
 			num_byte_read = read(child_stream_sock_fd, PackBuff,
 					MAX_PACKAGE_LEN);
 			if (num_byte_read < 0) {
@@ -118,7 +117,7 @@ void recvnhandlePackageLoop() {
 
 					g_RecvFileFlag = RECV_FILE_DISABLED;
 					g_writeDataFlag = ENABLED; //force stop FileStreamHandlerThread
-
+					memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 					pthread_mutex_unlock(&g_file_buff_mutex);
 				} else {
 					appLog(LOG_DEBUG, "enabled write data to file")
@@ -232,6 +231,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		}
 		break;
 	case CMD_START_TRANFER_FILE:
+		appLog(LOG_DEBUG, "CMD_START_TRANFER_FILE");
 		g_StartTransferFlag = 1;
 		break;
 	}
@@ -271,9 +271,13 @@ int initFileHandlerThread(char *FileInfo) {
 
 	g_StartTransferFlag = 0;
 	g_waitCount = 0;
-
+	g_file_stream = createFileStream(FileInfo);
+	if (g_file_stream == NULL) {
+		appLog(LOG_DEBUG, "Create file stream failed!!!");
+		return ACP_FAILED;
+	}
 	if (pthread_create(&g_File_Handler_Thd, NULL, &FileStreamHandlerThread,
-			FileInfo)) {
+			NULL)) {
 		appLog(LOG_DEBUG, "FileHandlerThread init fail\n");
 		return ACP_FAILED;
 	}

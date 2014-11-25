@@ -43,6 +43,7 @@
 
 //define request
 #define CMD_REQ_GET_LIST_FILE		0x01
+#define CMD_REQ_DISCOVER			0x02
 
 //define control response
 #define CTRL_RESP_SUCCESS			0x01

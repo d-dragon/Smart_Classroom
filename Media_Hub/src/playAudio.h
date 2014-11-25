@@ -38,17 +38,12 @@ typedef struct player
 	char* fileName;
 	
 	bool play;
-	
-	
-	
-	
-
-	
-
 }mp3Player;
+
 
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
 int stop(mp3Player* player);//
+void *playAudioThread(int *);
 
 #endif
 

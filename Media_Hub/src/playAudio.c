@@ -125,4 +125,8 @@ int stop(mp3Player* player)
 	
 	return 0;
 }
+
+void *playAudioThread(int *file_index){
+
+}
 #endif

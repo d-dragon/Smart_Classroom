@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
 
 	//create advertise server info thread
 	appLog(LOG_DEBUG, "create adv thread\n");
-	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfo, NULL);
+	ret = pthread_create(&adv_info_thread, NULL, &advertiseServerInfoThread, NULL);
 	if (ret) {
 		appLog(LOG_ERR, "pthread_create %d (failed) while create adv thread\n",
 				ret);

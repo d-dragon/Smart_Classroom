@@ -50,8 +50,8 @@ char file_buff[102400];
 //Declare Datagram socket variable
 int datagram_sock_fd;
 struct sockaddr_in udp_server_address, udp_client_address;
-unsigned int client_add_lenght;
-int message;
+unsigned int gudp_cli_addr_len;
+int udp_byte_read;
 int broadcast_enable;
 
 /*Declare socket semaphore
