@@ -10,7 +10,7 @@
 
 
 
-#define DEFAULT_PATH "/home/duyphan/"
+#define DEFAULT_PATH "/home/"
 #define FILE_PATH_LEN_MAX 200
 #define FILE_ERROR -1
 #define FILE_SUCCESS 0

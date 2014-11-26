@@ -26,22 +26,11 @@ char *initFileInfra(char *FileName) {
 FILE *createFileStream(char *FileName) {
 
 	FILE *tmp_file;
-//	char file_name[FILE_NAME_LEN_MAX];
 	char *path_to_file;
 	path_to_file = calloc(FILE_PATH_LEN_MAX, sizeof(char));
-//	g_file_size = 0;
-
-//	memcpy(&g_file_size, FileInfo, 4);
-//	g_file_size = be16toh(g_file_size);
-
-//	FileInfo = FileInfo + sizeof(g_file_size);
-//	appLog(LOG_DEBUG, "File size %d KB", g_file_size);
-
 
 	appLog(LOG_INFO, "FileName: %s\n", FileName);
-//	file_name = "m.mp3";
-	strncat(path_to_file, DEFAULT_PATH, strlen(DEFAULT_PATH));
-	path_to_file = strcat(path_to_file, FileName);
+	sprintf(path_to_file, "%s%s", DEFAULT_PATH, FileName);
 	appLog(LOG_INFO, "path to file: %s\n", path_to_file);
 
 	tmp_file = fopen(path_to_file, "w");
@@ -50,11 +39,7 @@ FILE *createFileStream(char *FileName) {
 		return NULL;
 	}
 	appLog(LOG_DEBUG, "File stream was created successfully\n");
-//	fwrite("aasfa", 1, strlen("aasfa"), g_file_stream);
-//	fclose(g_file_stream);
-//	exit(0);
-//	free(file_name);
-//	free(path_to_file);
+
 	return tmp_file;
 }
 
@@ -168,11 +153,6 @@ void *recvFileThread() {
 void *FileStreamHandlerThread(char *FileInfo) {
 
 	int szwrite = 0;
-	g_file_stream = createFileStream(FileInfo);
-	if(g_file_stream == NULL){
-		appLog(LOG_DEBUG, "FileStreamHandlerThread exited");
-		pthread_exit(NULL);
-	}
 
 	appLog(LOG_DEBUG, "inside FileStreamHandlerThread--------\n");
 	while (!g_StartTransferFlag && g_RecvFileFlag == RECV_FILE_DISABLED) {

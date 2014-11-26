@@ -211,7 +211,11 @@ int ControlHandler(char *ctrlBuff, short int length) {
 
 	switch (*ctrlBuff) {
 	case CMD_CTRL_PLAY_AUDIO:
-
+		appLog(LOG_DEBUG, "CMD_CTRL_PLAY_AUDIO");
+		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		break;
+	case CMD_CTRL_STOP_AUDIO	:
+		appLog(LOG_DEBUG, "CMD_CTRL_STOP_AUDIO	");
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_SEND_FILE:
@@ -221,11 +225,13 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 			if (ret == ACP_SUCCESS) {
+				free(resp);
 				return ret;
 			}
 		} else {
 			ret = wrapperControlResp((char) CTRL_RESP_FAILED);
 			if (ret == ACP_SUCCESS) {
+				free(resp);
 				return ret;
 			}
 		}
