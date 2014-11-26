@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "sock_infra.h"
 #include "receive_file.h"
+#include "playAudio.h"
 #include <endian.h>
 
 pthread_mutex_t g_file_buff_mutex;
@@ -212,6 +213,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	switch (*ctrlBuff) {
 	case CMD_CTRL_PLAY_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_PLAY_AUDIO");
+		ret = initAudioPlayer(0);
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_CTRL_STOP_AUDIO	:
@@ -273,6 +275,7 @@ int isEOFPackage(char *packBuff) {
 	appLog(LOG_DEBUG, "isEOF");
 	return 1;
 }
+
 int initFileHandlerThread(char *FileInfo) {
 
 	g_StartTransferFlag = 0;
@@ -289,6 +292,26 @@ int initFileHandlerThread(char *FileInfo) {
 	}
 //	pthread_join(&g_File_Handler_Thd, NULL);
 	return ACP_SUCCESS;
+}
+
+int initAudioPlayer(int FileIndex){
+
+	/*FileInfo *file;
+	file = malloc(sizeof(FileInfo));
+	file->filename = malloc(100);
+	file->filename = "m.mp3";
+	file->index = 0;*/
+	char *FileName = malloc(100);
+	FileName = "m.mp3";
+	/*Need to parse file index to get file name*/
+
+
+	if(pthread_create(&g_play_audio_thd, NULL, &playAudioThread, FileName)){
+		appLog(LOG_DEBUG, "init playAudioThread failed!!!");
+		return ACP_FAILED;
+	}
+	return ACP_SUCCESS;
+
 }
 int wrapperControlResp(char resp) {
 

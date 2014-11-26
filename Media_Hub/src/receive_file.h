@@ -21,6 +21,11 @@ pthread_t g_File_Handler_Thd;
 
 extern pthread_mutex_t g_file_buff_mutex;
 
+typedef struct file{
+	int index;
+	char *filename;
+}FileInfo;
+
 
 char *initFileInfra(char *);
 FILE *createFileStream(char *);

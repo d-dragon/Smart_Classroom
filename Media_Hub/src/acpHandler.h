@@ -56,6 +56,7 @@ int g_StartTransferFlag;
 int g_waitCount;
 int g_writeDataFlag;
 
+
 char *g_FileBuff;
 typedef char byte;
 
@@ -83,6 +84,7 @@ void *waitingConnectionThread();
 void recvnhandlePackageLoop();
 int isEOFPackage(char *);
 int initFileHandlerThread(char *);
+int initAudioPlayer(int);
 
 #endif /* ACP_H_ */
 

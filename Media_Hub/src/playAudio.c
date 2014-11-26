@@ -1,7 +1,9 @@
-#ifdef PLAY_AUDIO
+
 #include "playAudio.h"
 #include "logger.h"
+#include "receive_file.h"
 
+#ifdef PLAY_AUDIO
 // Play function use to play a mp3Player instance
 // To use this function, must have one mp3Player to call play
 // In this function, create a stream to write and play mp3 file
@@ -66,7 +68,7 @@ int play(mp3Player* player)
 
 		/* decode and play */
 
-		printf("\n Playing %s .....",player->fileName);
+		appLog(LOG_DEBUG,"\n Playing %s .....",player->fileName);
 		while (player->play)
 		{
 			if(mpg123_read(player->mh, player->buffer, player->buffer_size, &player->done) == MPG123_OK)
@@ -116,7 +118,7 @@ int stop(mp3Player* player)
 	error_check(player->err);
 
 	free(player->buffer);
-		
+
 	mpg123_close(player->mh);
 	mpg123_delete(player->mh);
 	mpg123_exit();
@@ -125,8 +127,24 @@ int stop(mp3Player* player)
 	
 	return 0;
 }
+#endif
 
-void *playAudioThread(int *file_index){
+void *playAudioThread(void *arg){
+
+	appLog(LOG_DEBUG, "inside playAudioThread..........");
+	int status;
+	char *filename = (char *)arg;
+	appLog(LOG_DEBUG, "File to play: %s", filename);
+
+#ifdef PLAY_AUDIO
+	mp3Player *player = malloc(sizeof(mp3Player));
+	player->fileName = malloc(1024 * sizeof(char));
+
+	player->fileName = FileName;
+	status = play(player);
+	free(player);
+#endif
+	pthread_exit(NULL);
 
 }
-#endif
+//#endif
