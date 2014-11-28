@@ -25,7 +25,7 @@
 /********************************************************
  * Define communication protocol session
  ********************************************************/
-#define MAX_PACKAGE_LEN		512
+#define MAX_PACKAGE_LEN		1024
 #define PACKAGE_HEADER 		0x55 //package header
 
 //package type
@@ -79,11 +79,12 @@ void parsePackageContent(char *packageBuff);
 int wrapperControlResp(char resp);
 int wrapperRequestResp(char *resp);
 int ControlHandler(char *ctrlBuff, short int length);
+int RequestHandler(char *);
 
 void *waitingConnectionThread();
 void recvnhandlePackageLoop();
 int isEOFPackage(char *);
-int initFileHandlerThread(char *);
+int initFileHandlerThread();
 int initAudioPlayer(int);
 
 #endif /* ACP_H_ */

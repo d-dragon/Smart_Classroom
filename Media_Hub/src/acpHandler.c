@@ -149,7 +149,7 @@ void parsePackageContent(char *packageBuff) {
 	short int package_len;
 //	int cmd;
 //	int num_args;
-	int ret, i;
+	int i;
 	/*	for (i = 0; i < sizeof(packageBuff); i++) {
 	 appLog(LOG_DEBUG, "%x|", packageBuff[i]);
 	 }*/
@@ -190,6 +190,7 @@ void parsePackageContent(char *packageBuff) {
 	case PACKAGE_RESQUEST:
 		appLog(LOG_DEBUG, "package type: PACKAGE_REQUEST\n");
 		//TODO PACKAGE_REQUEST
+		ret = RequestHandler(packageBuff);
 		break;
 	default:
 		appLog(LOG_DEBUG, "package_type invalid\n");
@@ -247,6 +248,27 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	return ret;
 }
 
+int RequestHandler(char *reqBuff){
+
+	int ret;
+	switch(*reqBuff){
+	case CMD_REQ_GET_LIST_FILE:
+		appLog(LOG_DEBUG, "CMD_REQ_GET_LIST_FILE");
+		char *DirPath;
+		char *ListFile;
+		DirPath = malloc(100);
+		ListFile = malloc(LIST_FILE_MAX);
+		memset(DirPath,0, LIST_FILE_MAX);
+		strcat(DirPath, (char *)DEFAULT_PATH);
+		appLog(LOG_DEBUG, "DirPath: %s", DirPath);
+		ret = getListFile(DirPath, ListFile);
+		if(ret == FILE_SUCCESS){
+			appLog(LOG_DEBUG, "%s", ListFile);
+			return ACP_SUCCESS;
+		}
+		break;
+	}
+}
 /*Check if package is EOF control command*/
 
 int isEOFPackage(char *packBuff) {

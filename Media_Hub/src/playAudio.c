@@ -18,7 +18,6 @@ int play(mp3Player* player)
 		player->mherr=0;
 		printf("\n Open:%s\n",player->fileName);
 	   
-
 		mpg123_init();
 		player->mh = mpg123_new(NULL, &(player->mherr));
 		player->buffer_size = mpg123_outblock(player->mh);
@@ -30,8 +29,6 @@ int play(mp3Player* player)
 
 		printf("\n%d encoding %d samplerate %d channels\n", player->encoding,
 				player->rate, player->channels);
-
-
 
 		/* init portaudio */
 		player->err = Pa_Initialize();
@@ -55,14 +52,10 @@ int play(mp3Player* player)
 				paFramesPerBufferUnspecified, paClipOff,NULL, NULL);
 		error_check(player->err);
 
-		printf("\n Playing %s .....",player->fileName);
 
 		player->err = Pa_StartStream(player->stream);
 		error_check(player->err);
-
 	 
-			
-
 		//err = Pa_SetStreamFinishedCallback(stream, &end_cb);
 		//error_check(err);
 
@@ -74,22 +67,23 @@ int play(mp3Player* player)
 			if(mpg123_read(player->mh, player->buffer, player->buffer_size, &player->done) == MPG123_OK)
 			{
 				Pa_WriteStream(player->stream, player->buffer,(player->done)/4);
+			}else
+			{
+				break;
 			}
-		   
 		}
+		//return for stop to release memory
 		if(!player->play)
 			return 1;
 
-		printf("\n Finish playing !!!!!!\n");
-
-		
-		
-
-	   
-		
+	   //finish play file + stop not called
+		player->err = Pa_StopStream(player->stream);
+		error_check(player->err);
 
 		player->err = Pa_CloseStream(player->stream);
 		error_check(player->err);
+
+
 
 		free(player->buffer);
 		//ao_close(dev);
@@ -98,6 +92,7 @@ int play(mp3Player* player)
 		mpg123_exit();
 
 		Pa_Terminate();
+		appLog(LOG_DEBUG,"\n Finish playing !!!!!!\n");
 		return 0;
 }
 
@@ -131,20 +126,30 @@ int stop(mp3Player* player)
 
 void *playAudioThread(void *arg){
 
-	appLog(LOG_DEBUG, "inside playAudioThread..........");
 	int status;
+	appLog(LOG_DEBUG, "inside playAudioThread..........");
 	char *filename = (char *)arg;
+	char *FilePath = malloc((size_t)100);
+	memset(FilePath, 0, 100);
+	if(!FilePath){
+		appLog(LOG_DEBUG, "allocated memory failed, thread %d exited", (int)pthread_self());
+		/*notify to client*/
+		pthread_exit(NULL);
+	}
 	appLog(LOG_DEBUG, "File to play: %s", filename);
+	strcat(FilePath, (char *)DEFAULT_PATH);
+	strcat(FilePath, filename);
+	appLog(LOG_DEBUG, "File Path: %s", FilePath);
+
 
 #ifdef PLAY_AUDIO
 	mp3Player *player = malloc(sizeof(mp3Player));
 	player->fileName = malloc(1024 * sizeof(char));
 
-	player->fileName = FileName;
+	player->fileName = FilePath;
 	status = play(player);
 	free(player);
 #endif
 	pthread_exit(NULL);
-
 }
 //#endif

@@ -10,10 +10,13 @@
 
 
 
-#define DEFAULT_PATH "/home/"
+//#define DEFAULT_PATH "/home/pi/MEDIA_HUB/"
+#define DEFAULT_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/List_File/"
 #define FILE_PATH_LEN_MAX 200
+#define LIST_FILE_MAX 1000
 #define FILE_ERROR -1
 #define FILE_SUCCESS 0
+#define FILE_UNKNOW 2
 
 FILE *g_file_stream;
 int g_file_size;
@@ -27,12 +30,9 @@ typedef struct file{
 }FileInfo;
 
 
-char *initFileInfra(char *);
 FILE *createFileStream(char *);
-void writetoFileStream();
-void *recvFileThread();
-void *FileStreamHandlerThread(char *);
+void *FileStreamHandlerThread();
 void closeFileStream();
-
+int getListFile(char *, char *);
 
 #endif /* RECEIVE_FILE_H_ */
