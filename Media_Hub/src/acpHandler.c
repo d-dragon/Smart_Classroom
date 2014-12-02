@@ -155,7 +155,7 @@ void parsePackageContent(char *packageBuff) {
 	 }*/
 //check whether package header is valid or not (1st byte)
 	package_header = *packageBuff;
-	appLog(LOG_DEBUG, "package_header %x\n", package_header);
+//	appLog(LOG_DEBUG, "package_header %x\n", package_header);
 	if (package_header != PACKAGE_HEADER) {
 		appLog(LOG_ERR, "received invalid package!!!\n");
 		return;
@@ -164,23 +164,25 @@ void parsePackageContent(char *packageBuff) {
 
 //analyse package type (2nd byte) and take package length
 	package_type = *packageBuff;
-	appLog(LOG_DEBUG, "package_type %x", package_type);
+//	appLog(LOG_DEBUG, "package_type %x", package_type);
 
 	memcpy(&package_len, ++packageBuff, sizeof(package_len));
 
 //convert byte order to little endian
 	package_len = be16toh(package_len);
 
-	appLog(LOG_DEBUG, "package_len %d\n", package_len);
+//	appLog(LOG_DEBUG, "package_len %d\n", package_len);
 	packageBuff = packageBuff + 2;
 
-#ifdef DEBUG	//debug--open/
-	appLog(LOG_DEBUG, "package_content\n");
-	for(i = 0; i < package_len; i++) {
-		appLog(LOG_DEBUG, "%x", packageBuff[i]);
-	}
+	/*
+	 #ifdef DEBUG	//debug--open/
+	 appLog(LOG_DEBUG, "package_content\n");
+	 for(i = 0; i < package_len; i++) {
+	 appLog(LOG_DEBUG, "%x", packageBuff[i]);
+	 }
 
-#endif 	//debug--close
+	 #endif 	//debug--close
+	 */
 //parse package type, striped header and package type and length
 	switch (package_type) {
 	case PACKAGE_CONTROL:
@@ -207,8 +209,6 @@ void parsePackageContent(char *packageBuff) {
 int ControlHandler(char *ctrlBuff, short int length) {
 
 	appLog(LOG_DEBUG, "inside ControlHandler......\n");
-	char *resp;
-	resp = calloc(128, sizeof(char));
 	int ret;
 
 	switch (*ctrlBuff) {
@@ -217,8 +217,9 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		ret = initAudioPlayer(0);
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
-	case CMD_CTRL_STOP_AUDIO	:
+	case CMD_CTRL_STOP_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_STOP_AUDIO	");
+		g_stop_audio_flag = 1;
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_SEND_FILE:
@@ -228,13 +229,11 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 			if (ret == ACP_SUCCESS) {
-				free(resp);
 				return ret;
 			}
 		} else {
 			ret = wrapperControlResp((char) CTRL_RESP_FAILED);
 			if (ret == ACP_SUCCESS) {
-				free(resp);
 				return ret;
 			}
 		}
@@ -248,51 +247,49 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	return ret;
 }
 
-int RequestHandler(char *reqBuff){
+int RequestHandler(char *reqBuff) {
 
 	int ret;
-	switch(*reqBuff){
+	switch (*reqBuff) {
 	case CMD_REQ_GET_LIST_FILE:
 		appLog(LOG_DEBUG, "CMD_REQ_GET_LIST_FILE");
 		char *DirPath;
 		char *ListFile;
-		DirPath = malloc(100);
-		ListFile = malloc(LIST_FILE_MAX);
-		memset(DirPath,0, LIST_FILE_MAX);
-		strcat(DirPath, (char *)DEFAULT_PATH);
+
+		DirPath = malloc(FILE_PATH_LEN_MAX * sizeof(char));
+		ListFile = malloc(LIST_FILE_MAX * sizeof(char));
+		appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p", DirPath, ListFile);
+		memset(DirPath, 0, FILE_PATH_LEN_MAX);
+		memset(ListFile, 0, LIST_FILE_MAX);
+
+		strcat(DirPath, (char *) DEFAULT_PATH);
 		appLog(LOG_DEBUG, "DirPath: %s", DirPath);
+
 		ret = getListFile(DirPath, ListFile);
-		if(ret == FILE_SUCCESS){
+		if (ret == FILE_SUCCESS) {
 			appLog(LOG_DEBUG, "%s", ListFile);
-			return ACP_SUCCESS;
+			ret = wrapperRequestResp(ListFile);
+			appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p", DirPath, ListFile);
+			free(DirPath);
+			free(ListFile);
+			return ret;
+		} else {
+			free(DirPath);
+			free(ListFile);
+			return ACP_FAILED;
 		}
-		break;
+		//no need break;
 	}
 }
 /*Check if package is EOF control command*/
 
 int isEOFPackage(char *packBuff) {
 
-	char tmpBuff;
-	//tmpBuff = calloc(5, sizeof(char));
-
-	tmpBuff = *packBuff;
-	appLog(LOG_DEBUG, "isEOF header %x", tmpBuff);
-	if (tmpBuff != PACKAGE_HEADER) {
-
+	char tmpBuff[5];
+	memcpy(&tmpBuff, packBuff, 5);
+	if ((tmpBuff[0] != PACKAGE_HEADER) || (tmpBuff[1] != PACKAGE_CONTROL)
+			|| (tmpBuff[4] != CMD_CTRL_EOF)) {
 		return 0;
-	} else {
-
-		/* {
-		 tmpBuff++;
-		 if (*tmpBuff != PACKAGE_CONTROL) {
-		 return 0;
-		 } else {
-		 tmpBuff + 2;
-		 if (*tmpBuff != CMD_CTRL_EOF) {
-		 return 0;
-		 }
-		 }*/
 	}
 	appLog(LOG_DEBUG, "isEOF");
 	return 1;
@@ -316,19 +313,30 @@ int initFileHandlerThread(char *FileInfo) {
 	return ACP_SUCCESS;
 }
 
-int initAudioPlayer(int FileIndex){
+int initAudioPlayer(int FileIndex) {
 
 	/*FileInfo *file;
-	file = malloc(sizeof(FileInfo));
-	file->filename = malloc(100);
-	file->filename = "m.mp3";
-	file->index = 0;*/
-	char *FileName = malloc(100);
-	FileName = "m.mp3";
+	 file = malloc(sizeof(FileInfo));
+	 file->filename = malloc(100);
+	 file->filename = "m.mp3";
+	 file->index = 0;*/
+	appLog(LOG_DEBUG, "begin %s", __FUNCTION__);
+	char *FileName = calloc(FILE_NAME_MAX, sizeof(char));
+	if (FileName == NULL) {
+		appLog(LOG_DEBUG, "allocated memory failed");
+		return ACP_FAILED;
+	}else{
+		appLog(LOG_DEBUG, "allocated memory success");
+	}
+//	appLog(LOG_DEBUG, "address FileName: %p", FileName);
+	memset(FileName, 0, FILE_NAME_MAX);
+	strcat(FileName, "m.mp3");//cann't assign FileName = "m.mp3", it change pointer address -> can't free()
+
 	/*Need to parse file index to get file name*/
 
 
-	if(pthread_create(&g_play_audio_thd, NULL, &playAudioThread, FileName)){
+	//FileName will be freed in playAudioThread
+	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThread, (void *)FileName)) {
 		appLog(LOG_DEBUG, "init playAudioThread failed!!!");
 		return ACP_FAILED;
 	}
@@ -365,31 +373,46 @@ int wrapperControlResp(char resp) {
 	return ACP_SUCCESS;
 }
 int wrapperRequestResp(char *resp) {
-	char *buff;
+	unsigned char *buff;
 	int i, ret;
-	buff = calloc(8, sizeof(char));
-	memset(buff, 0x00, 8);
+	unsigned int resp_len = (unsigned int) strlen(resp);
+	resp_len += 1;
+	buff = malloc(MAX_PACKAGE_LEN);
+	memset(buff, 0x00, MAX_PACKAGE_LEN);
 
-	*buff = PACKAGE_HEADER; //header
-	*(++buff) = PACKAGE_CTRL_RESP; //package type
-	*(++buff) = 0x01; //length
-	buff = buff + 2;
-	*buff = *resp;
+	*buff = (char) PACKAGE_HEADER; //header
+	buff++;
+	*buff = (char) PACKAGE_REQ_RESP; //package type
+	buff++;
+	appLog(LOG_DEBUG, "content length: %d", resp_len);
+	memcpy(buff,(void *)&resp_len, 2); //content length
+	appLog(LOG_DEBUG, "content length: %d", resp_len);
+	buff += 2;
+	*buff = (char) REQ_RESP_GET_LIST;
+	buff++;
+	memcpy(buff, resp, strlen(resp));
 
 	//	memcpy(&buff, (char *)resp, sizeof(resp));
-	buff = buff - 4;
-	ret = send(child_stream_sock_fd, buff, 8, 0);
+	buff -= 5;
+	ret = send(child_stream_sock_fd, buff, MAX_PACKAGE_LEN, 0);
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "send response package failed");
 		return ACP_FAILED;
 	}
 
-	//debug package response
-	for (i = 0; i < 8; i++) {
-		appLog(LOG_DEBUG, "%x", buff[i]);
-	}
+	 #ifdef DEBUG
+	 //debug package response
+	 for (i = 0; i < 5; i++) {
+	 appLog(LOG_DEBUG, "%x", buff[i]);
+	 }
+	 buff += 5;
+	 appLog(LOG_DEBUG, "content:%s", buff);
+	 buff -= 5;
+	 #endif
+
+//	free(resp);
 	free(buff);
-	appLog(LOG_DEBUG, "send response package success");
+	appLog(LOG_DEBUG, "send response package %d success", ret);
 	return ACP_SUCCESS;
 }
 

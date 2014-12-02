@@ -12,7 +12,9 @@
 
 //#define DEFAULT_PATH "/home/pi/MEDIA_HUB/"
 #define DEFAULT_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/List_File/"
+//#define DEFAULT_PATH "/home/"
 #define FILE_PATH_LEN_MAX 200
+#define FILE_NAME_MAX 256
 #define LIST_FILE_MAX 1000
 #define FILE_ERROR -1
 #define FILE_SUCCESS 0

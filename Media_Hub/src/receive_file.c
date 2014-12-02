@@ -105,11 +105,12 @@ int getListFile(char *DirPath, char *ListFile){
 	DIR *dir = NULL;
 	struct dirent *dirnode = NULL;
 
-	dir = opendir(DEFAULT_PATH);
+	dir = opendir(DirPath);
 	if(dir){
 		while((dirnode = readdir(dir)) != NULL){
 			if(dirnode->d_type == DT_REG){
-				if((strlen(ListFile) + strlen(dirnode)) > LIST_FILE_MAX){
+				if((strlen(ListFile) + strlen(dirnode->d_name)) > LIST_FILE_MAX){
+					//list file length exceed max len
 					return FILE_UNKNOW;
 				}
 				strcat(ListFile,dirnode->d_name);
@@ -117,8 +118,10 @@ int getListFile(char *DirPath, char *ListFile){
 			}
 		}
 	}else{
+		closedir(dir);
 		appLog(LOG_DEBUG, "open directory failed");
 		return FILE_ERROR;
 	}
+	closedir(dir);
 	return FILE_SUCCESS;
 }

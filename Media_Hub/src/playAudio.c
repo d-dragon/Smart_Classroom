@@ -48,10 +48,10 @@ int play(mp3Player* player)
 		player->out_param.suggestedLatency = Pa_GetDeviceInfo(player->out_param.device)->defaultHighOutputLatency;
 		player->out_param.hostApiSpecificStreamInfo = NULL;
 
+		appLog(LOG_DEBUG,"checking error");
 		player->err = Pa_OpenStream(&(player->stream), NULL, &(player->out_param), player->rate,
 				paFramesPerBufferUnspecified, paClipOff,NULL, NULL);
 		error_check(player->err);
-
 
 		player->err = Pa_StartStream(player->stream);
 		error_check(player->err);
@@ -64,8 +64,13 @@ int play(mp3Player* player)
 		appLog(LOG_DEBUG,"\n Playing %s .....",player->fileName);
 		while (player->play)
 		{
+
 			if(mpg123_read(player->mh, player->buffer, player->buffer_size, &player->done) == MPG123_OK)
 			{
+				//check stop flag
+				if(g_stop_audio_flag){
+					break;
+				}
 				Pa_WriteStream(player->stream, player->buffer,(player->done)/4);
 			}else
 			{
@@ -76,7 +81,6 @@ int play(mp3Player* player)
 		if(!player->play)
 			return 1;
 
-	   //finish play file + stop not called
 		player->err = Pa_StopStream(player->stream);
 		error_check(player->err);
 
@@ -128,17 +132,22 @@ void *playAudioThread(void *arg){
 
 	int status;
 	appLog(LOG_DEBUG, "inside playAudioThread..........");
-	char *filename = (char *)arg;
-	char *FilePath = malloc((size_t)100);
-	memset(FilePath, 0, 100);
+	char *filename = arg;
+
+//	appLog(LOG_DEBUG, "address filename: %p||address arg: %p", filename, arg);
+	char *FilePath;
+	FilePath = malloc(FILE_PATH_LEN_MAX);
 	if(!FilePath){
 		appLog(LOG_DEBUG, "allocated memory failed, thread %d exited", (int)pthread_self());
 		/*notify to client*/
 		pthread_exit(NULL);
 	}
+	memset(FilePath, 0, FILE_PATH_LEN_MAX);
+	g_stop_audio_flag = 0;//flag for stop play
 	appLog(LOG_DEBUG, "File to play: %s", filename);
 	strcat(FilePath, (char *)DEFAULT_PATH);
 	strcat(FilePath, filename);
+
 	appLog(LOG_DEBUG, "File Path: %s", FilePath);
 
 
@@ -150,6 +159,10 @@ void *playAudioThread(void *arg){
 	status = play(player);
 	free(player);
 #endif
+	appLog(LOG_DEBUG, "deallocating memory");
+	free(arg);
+	free(FilePath);
+	appLog(LOG_DEBUG, "exit playAudioThread..........");
 	pthread_exit(NULL);
 }
 //#endif

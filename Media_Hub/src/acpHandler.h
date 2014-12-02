@@ -49,7 +49,12 @@
 #define CTRL_RESP_SUCCESS			0x01
 #define CTRL_RESP_FAILED			0x00
 #define CTRL_RESP_ALREADY			0x02
+
+//define request respone
+#define REQ_RESP_GET_LIST			0X00
 /******************************************************/
+
+
 
 int g_RecvFileFlag;
 int g_StartTransferFlag;

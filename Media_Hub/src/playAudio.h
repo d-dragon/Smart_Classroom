@@ -45,6 +45,7 @@ typedef struct player
 }mp3Player;
 #endif
 pthread_t g_play_audio_thd;
+int g_stop_audio_flag;
 
 #ifdef PLAY_AUDIO
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
