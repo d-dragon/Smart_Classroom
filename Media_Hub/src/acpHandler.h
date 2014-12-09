@@ -90,7 +90,7 @@ void *waitingConnectionThread();
 void recvnhandlePackageLoop();
 int isEOFPackage(char *);
 int initFileHandlerThread();
-int initAudioPlayer(int);
+int initAudioPlayer(char *);
 
 #endif /* ACP_H_ */
 

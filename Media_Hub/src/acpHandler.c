@@ -79,6 +79,7 @@ void recvnhandlePackageLoop() {
 
 	memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
 	memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
+	appLog(LOG_DEBUG, "PackBuff addr: %p", PackBuff);
 
 	while (1) {
 		/*################ receive package #####################*/
@@ -210,11 +211,10 @@ int ControlHandler(char *ctrlBuff, short int length) {
 
 	appLog(LOG_DEBUG, "inside ControlHandler......\n");
 	int ret;
-
 	switch (*ctrlBuff) {
 	case CMD_CTRL_PLAY_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_PLAY_AUDIO");
-		ret = initAudioPlayer(0);
+		ret = initAudioPlayer(++ctrlBuff);
 		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		break;
 	case CMD_CTRL_STOP_AUDIO:
@@ -224,8 +224,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		break;
 	case CMD_SEND_FILE:
 		appLog(LOG_DEBUG, "CMD_SEND_FILE");
-		ctrlBuff++;
-		ret = initFileHandlerThread(ctrlBuff);
+		ret = initFileHandlerThread(++ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
 			if (ret == ACP_SUCCESS) {
@@ -313,7 +312,7 @@ int initFileHandlerThread(char *FileInfo) {
 	return ACP_SUCCESS;
 }
 
-int initAudioPlayer(int FileIndex) {
+int initAudioPlayer(char *filename) {
 
 	/*FileInfo *file;
 	 file = malloc(sizeof(FileInfo));
@@ -330,7 +329,8 @@ int initAudioPlayer(int FileIndex) {
 	}
 //	appLog(LOG_DEBUG, "address FileName: %p", FileName);
 	memset(FileName, 0, FILE_NAME_MAX);
-	strcat(FileName, "m.mp3");//cann't assign FileName = "m.mp3", it change pointer address -> can't free()
+	//  strlen -1 to truncate '|' charater at end of string
+	strncat(FileName, filename, strlen(filename)-1);//cann't assign FileName = "m.mp3", it change pointer address -> can't free()
 
 	/*Need to parse file index to get file name*/
 
