@@ -24,6 +24,13 @@ typedef int bool;
 #define true 1
 #define false 0
 
+typedef enum g_audio_status{
+	AUDIO_STOP,
+	AUDIO_PLAY,
+	AUDIO_PAUSE,
+	AUDIO_ERROR
+}g_audio_status;
+
 #ifdef PLAY_AUDIO
 typedef struct player
 {
@@ -45,7 +52,8 @@ typedef struct player
 }mp3Player;
 #endif
 pthread_t g_play_audio_thd;
-int g_stop_audio_flag;
+pthread_mutex_t g_audio_status_mutex;
+g_audio_status g_audio_flag;
 
 #ifdef PLAY_AUDIO
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
@@ -53,6 +61,8 @@ int stop(mp3Player* player);//
 #endif
 
 void *playAudioThread(void *);
+int stopAudio();
+int pauseAudio();
 
 #endif
 

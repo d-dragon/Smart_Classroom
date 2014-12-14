@@ -15,7 +15,7 @@
 
 #define ACP_SUCCESS		1
 #define ACP_FAILED		0
-#define MAX_FILE_BUFF_LEN	100*1024
+#define MAX_FILE_BUFF_LEN	10*1024
 #define RECV_FILE_ENABLED	1
 #define RECV_FILE_DISABLED 0
 #define MAX_WAITING_COUNT 	3000
@@ -40,6 +40,7 @@
 #define CMD_SEND_FILE				0x02
 #define CMD_START_TRANFER_FILE		0x03
 #define CMD_CTRL_EOF				0x04
+#define CMD_CTRL_PAUSE_AUDIO 		0x05
 
 //define request
 #define CMD_REQ_GET_LIST_FILE		0x01
@@ -49,6 +50,7 @@
 #define CTRL_RESP_SUCCESS			0x01
 #define CTRL_RESP_FAILED			0x00
 #define CTRL_RESP_ALREADY			0x02
+#define CTRL_RESP_FILE_FINISH		0x03
 
 //define request respone
 #define REQ_RESP_GET_LIST			0X00
@@ -88,7 +90,7 @@ int RequestHandler(char *);
 
 void *waitingConnectionThread();
 void recvnhandlePackageLoop();
-int isEOFPackage(char *);
+static int isEOFPackage(char *);
 int initFileHandlerThread();
 int initAudioPlayer(char *);
 

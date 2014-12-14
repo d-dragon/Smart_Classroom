@@ -80,9 +80,10 @@ void recvnhandlePackageLoop() {
 	memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
 	memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 	appLog(LOG_DEBUG, "PackBuff addr: %p", PackBuff);
+	pthread_mutex_init(&g_audio_status_mutex, NULL);
 
 	while (1) {
-		/*################ receive package #####################*/
+		/*################ receive message package here#####################*/
 		if (g_RecvFileFlag != RECV_FILE_ENABLED) {
 			appLog(LOG_DEBUG, "receiving message----");
 			num_byte_read = read(child_stream_sock_fd, PackBuff,
@@ -92,6 +93,9 @@ void recvnhandlePackageLoop() {
 			} else if (num_byte_read == 0) {
 				appLog(LOG_DEBUG, "client connection closed!\n");
 				g_RecvFileFlag = RECV_FILE_DISABLED;
+
+				free(PackBuff);
+				free(g_FileBuff);
 				close(child_stream_sock_fd);
 				exit(0);
 			} else {
@@ -100,7 +104,10 @@ void recvnhandlePackageLoop() {
 			memset(PackBuff, 0x00, MAX_PACKAGE_LEN);
 
 		} else {
-			/*################ receive data to file here #####################*/
+			/*################ receive file data here #####################*/
+			if (g_writeDataFlag != DISABLED) {
+				continue;
+			}
 			appLog(LOG_DEBUG, "receiving file data-------");
 			pthread_mutex_lock(&g_file_buff_mutex);
 			memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
@@ -125,13 +132,6 @@ void recvnhandlePackageLoop() {
 					appLog(LOG_DEBUG, "enabled write data to file")
 					g_writeDataFlag = ENABLED;
 					pthread_mutex_unlock(&g_file_buff_mutex);
-
-					while (g_writeDataFlag != DISABLED) {
-
-					}
-
-					//	writeDatatoFile(FileBuff);
-
 				}
 			}
 		}
@@ -214,19 +214,35 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	switch (*ctrlBuff) {
 	case CMD_CTRL_PLAY_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_PLAY_AUDIO");
-		ret = initAudioPlayer(++ctrlBuff);
-		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		if (g_audio_flag == AUDIO_PAUSE) {
+			pthread_mutex_lock(&g_audio_status_mutex);
+			g_audio_flag = AUDIO_PLAY;
+			pthread_mutex_unlock(&g_audio_status_mutex);
+			wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		} else {
+			ret = initAudioPlayer(++ctrlBuff);
+			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		}
 		break;
 	case CMD_CTRL_STOP_AUDIO:
-		appLog(LOG_DEBUG, "CMD_CTRL_STOP_AUDIO	");
-		g_stop_audio_flag = 1;
-		ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		appLog(LOG_DEBUG, "CMD_CTRL_STOP_AUDIO");
+		ret = stopAudio();
+		if (ret == ACP_SUCCESS) {
+			wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		}
+		break;
+	case CMD_CTRL_PAUSE_AUDIO:
+		appLog(LOG_DEBUG, "CMD_CTRL_PAUSE_AUDIO");
+		ret = pauseAudio();
+		if (ret == ACP_SUCCESS) {
+			wrapperControlResp((char) CTRL_RESP_SUCCESS);
+		}
 		break;
 	case CMD_SEND_FILE:
 		appLog(LOG_DEBUG, "CMD_SEND_FILE");
 		ret = initFileHandlerThread(++ctrlBuff);
 		if (ret == ACP_SUCCESS) {
-			ret = wrapperControlResp((char) CTRL_RESP_SUCCESS);
+			ret = wrapperControlResp(CTRL_RESP_ALREADY);
 			if (ret == ACP_SUCCESS) {
 				return ret;
 			}
@@ -240,6 +256,9 @@ int ControlHandler(char *ctrlBuff, short int length) {
 	case CMD_START_TRANFER_FILE:
 		appLog(LOG_DEBUG, "CMD_START_TRANFER_FILE");
 		g_StartTransferFlag = 1;
+		break;
+	default:
+		appLog(LOG_DEBUG, "Command invalid");
 		break;
 	}
 
@@ -257,7 +276,8 @@ int RequestHandler(char *reqBuff) {
 
 		DirPath = malloc(FILE_PATH_LEN_MAX * sizeof(char));
 		ListFile = malloc(LIST_FILE_MAX * sizeof(char));
-		appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p", DirPath, ListFile);
+		appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p",
+				DirPath, ListFile);
 		memset(DirPath, 0, FILE_PATH_LEN_MAX);
 		memset(ListFile, 0, LIST_FILE_MAX);
 
@@ -268,7 +288,8 @@ int RequestHandler(char *reqBuff) {
 		if (ret == FILE_SUCCESS) {
 			appLog(LOG_DEBUG, "%s", ListFile);
 			ret = wrapperRequestResp(ListFile);
-			appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p", DirPath, ListFile);
+			appLog(LOG_DEBUG, "DirPath addr: %p || ListFile addr: %p",
+					DirPath, ListFile);
 			free(DirPath);
 			free(ListFile);
 			return ret;
@@ -282,7 +303,7 @@ int RequestHandler(char *reqBuff) {
 }
 /*Check if package is EOF control command*/
 
-int isEOFPackage(char *packBuff) {
+static int isEOFPackage(char *packBuff) {
 
 	char tmpBuff[5];
 	memcpy(&tmpBuff, packBuff, 5);
@@ -308,6 +329,8 @@ int initFileHandlerThread(char *FileInfo) {
 		appLog(LOG_DEBUG, "FileHandlerThread init fail\n");
 		return ACP_FAILED;
 	}
+	pthread_mutex_init(&g_file_buff_mutex, NULL);
+	g_RecvFileFlag = RECV_FILE_ENABLED;
 //	pthread_join(&g_File_Handler_Thd, NULL);
 	return ACP_SUCCESS;
 }
@@ -324,19 +347,24 @@ int initAudioPlayer(char *filename) {
 	if (FileName == NULL) {
 		appLog(LOG_DEBUG, "allocated memory failed");
 		return ACP_FAILED;
-	}else{
+	} else {
 		appLog(LOG_DEBUG, "allocated memory success");
 	}
 //	appLog(LOG_DEBUG, "address FileName: %p", FileName);
 	memset(FileName, 0, FILE_NAME_MAX);
 	//  strlen -1 to truncate '|' charater at end of string
-	strncat(FileName, filename, strlen(filename)-1);//cann't assign FileName = "m.mp3", it change pointer address -> can't free()
+	strncat(FileName, filename, strlen(filename) - 1); //cann't assign FileName = "m.mp3", it change pointer address -> can't free()
 
 	/*Need to parse file index to get file name*/
 
+	//init play audio thread
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_STOP;
+	pthread_mutex_unlock(&g_audio_status_mutex);
 
 	//FileName will be freed in playAudioThread
-	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThread, (void *)FileName)) {
+	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThread,
+			(void *) FileName)) {
 		appLog(LOG_DEBUG, "init playAudioThread failed!!!");
 		return ACP_FAILED;
 	}
@@ -385,7 +413,7 @@ int wrapperRequestResp(char *resp) {
 	*buff = (char) PACKAGE_REQ_RESP; //package type
 	buff++;
 	appLog(LOG_DEBUG, "content length: %d", resp_len);
-	memcpy(buff,(void *)&resp_len, 2); //content length
+	memcpy(buff, (void *) &resp_len, 2); //content length
 	appLog(LOG_DEBUG, "content length: %d", resp_len);
 	buff += 2;
 	*buff = (char) REQ_RESP_GET_LIST;
@@ -400,15 +428,15 @@ int wrapperRequestResp(char *resp) {
 		return ACP_FAILED;
 	}
 
-	 #ifdef DEBUG
-	 //debug package response
-	 for (i = 0; i < 5; i++) {
-	 appLog(LOG_DEBUG, "%x", buff[i]);
-	 }
-	 buff += 5;
-	 appLog(LOG_DEBUG, "content:%s", buff);
-	 buff -= 5;
-	 #endif
+#ifdef DEBUG
+	//debug package response
+	for (i = 0; i < 5; i++) {
+		appLog(LOG_DEBUG, "%x", buff[i]);
+	}
+	buff += 5;
+	appLog(LOG_DEBUG, "content:%s", buff);
+	buff -= 5;
+#endif
 
 //	free(resp);
 	free(buff);

@@ -18,7 +18,6 @@
 #include "logger.h"
 #include "acpHandler.h"
 
-
 FILE *createFileStream(char *FileName) {
 
 	FILE *tmp_file;
@@ -39,40 +38,44 @@ FILE *createFileStream(char *FileName) {
 	return tmp_file;
 }
 
-
-
 void *FileStreamHandlerThread() {
 
 	int szwrite = 0;
+	appLog(LOG_DEBUG, "start FileStreamHandlerThread--------\n");
+	/*	while (!g_StartTransferFlag && g_RecvFileFlag == RECV_FILE_DISABLED) {
+	 g_waitCount++;
+	 if (g_waitCount <= MAX_WAITING_COUNT) {
+	 usleep(1000);
+	 } else {
+	 appLog(LOG_DEBUG,
+	 "Wating start transfer file timeout---thread exit\n");
+	 g_RecvFileFlag = RECV_FILE_DISABLED;
+	 pthread_exit(NULL);
 
-	appLog(LOG_DEBUG, "inside FileStreamHandlerThread--------\n");
-	while (!g_StartTransferFlag && g_RecvFileFlag == RECV_FILE_DISABLED) {
-		g_waitCount++;
-		if (g_waitCount <= MAX_WAITING_COUNT) {
-			usleep(1000);
-		} else {
-			appLog(LOG_DEBUG,
-					"Wating start transfer file timeout---thread exit\n");
-			g_RecvFileFlag = RECV_FILE_DISABLED;
-			pthread_exit(NULL);
+	 }
+	 }*/
 
-		}
-	}
-	wrapperControlResp(CTRL_RESP_ALREADY);
-	appLog(LOG_DEBUG, "Start Transfer file-------------\n");
-	pthread_mutex_init(&g_file_buff_mutex, NULL);
-	g_RecvFileFlag = RECV_FILE_ENABLED;
+//	appLog(LOG_DEBUG, "Start Transfer file-------------\n");
+//	g_RecvFileFlag = RECV_FILE_ENABLED;
 	while (1) {
-		while (g_writeDataFlag != ENABLED) {
 
+		//first time need data before write it to file stream
+		if (g_writeDataFlag != ENABLED) {
+			continue;
 		}
 		pthread_mutex_lock(&g_file_buff_mutex);
 		//check transfer file flow finished--thread exit
-		if(g_RecvFileFlag == RECV_FILE_DISABLED){
+		if (g_RecvFileFlag == RECV_FILE_DISABLED) {
 			g_writeDataFlag = DISABLED;
 			closeFileStream();
-			appLog(LOG_DEBUG, "Transfer file completed, FileStreamHandlerThread exited");
 
+			if (wrapperControlResp(CTRL_RESP_FILE_FINISH) == ACP_SUCCESS) {
+				appLog(LOG_DEBUG,
+						"Transfer file completed, FileStreamHandlerThread exit");
+			} else {
+				appLog(LOG_DEBUG,
+						"Transfer file incomplete, FileStreamHandlerThread exit");
+			}
 			pthread_mutex_unlock(&g_file_buff_mutex);
 			pthread_mutex_destroy(&g_file_buff_mutex);
 
@@ -83,6 +86,17 @@ void *FileStreamHandlerThread() {
 		//				printf("%d bytes was written\n", szwrite);
 		if (szwrite < num_byte_read) {
 			appLog(LOG_ERR, "write data to stream file failed!\n");
+			g_writeDataFlag = DISABLED;
+			g_RecvFileFlag = RECV_FILE_DISABLED;
+			closeFileStream();
+			if (wrapperControlResp(CTRL_RESP_FAILED) == ACP_SUCCESS) {
+				appLog(LOG_DEBUG,
+						"Transfer file incomplete, FileStreamHandlerThread exit");
+			}
+			pthread_mutex_unlock(&g_file_buff_mutex);
+			pthread_mutex_destroy(&g_file_buff_mutex);
+
+			pthread_exit(NULL);
 		} else if (szwrite == num_byte_read) {
 			appLog(LOG_DEBUG, "wrote %d byte to file stream\n",
 					(int) num_byte_read);
@@ -96,28 +110,30 @@ void *FileStreamHandlerThread() {
 	}
 }
 
-void closeFileStream(){
-	fclose(g_file_stream);
+void closeFileStream() {
+	if (g_file_stream != NULL) {
+		fclose(g_file_stream);
+	}
 }
 
-int getListFile(char *DirPath, char *ListFile){
+int getListFile(char *DirPath, char *ListFile) {
 
 	DIR *dir = NULL;
 	struct dirent *dirnode = NULL;
 
 	dir = opendir(DirPath);
-	if(dir){
-		while((dirnode = readdir(dir)) != NULL){
-			if(dirnode->d_type == DT_REG){
-				if((strlen(ListFile) + strlen(dirnode->d_name)) > LIST_FILE_MAX){
+	if (dir) {
+		while ((dirnode = readdir(dir)) != NULL) {
+			if (dirnode->d_type == DT_REG) {
+				if ((strlen(ListFile) + strlen(dirnode->d_name)) > LIST_FILE_MAX) {
 					//list file length exceed max len
 					return FILE_UNKNOW;
 				}
-				strcat(ListFile,dirnode->d_name);
-				strcat(ListFile,"|");
+				strcat(ListFile, dirnode->d_name);
+				strcat(ListFile, "|");
 			}
 		}
-	}else{
+	} else {
 		closedir(dir);
 		appLog(LOG_DEBUG, "open directory failed");
 		return FILE_ERROR;
