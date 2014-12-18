@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <dirent.h>
 
-#include "receive_file.h"
+#include "FileHandler.h"
 #include "sock_infra.h"
 #include "logger.h"
 #include "acpHandler.h"
