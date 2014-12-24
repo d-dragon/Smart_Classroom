@@ -240,6 +240,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		break;
 	case CMD_SEND_FILE:
 		appLog(LOG_DEBUG, "CMD_SEND_FILE");
+		getFileFromFtp("10.0.0.100", "IMG_3858.CR2");
 		ret = initFileHandlerThread(++ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp(CTRL_RESP_ALREADY);

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <python2.7/Python.h>
 
 #include "FileHandler.h"
 #include "sock_infra.h"
@@ -139,5 +140,80 @@ int getListFile(char *DirPath, char *ListFile) {
 		return FILE_ERROR;
 	}
 	closedir(dir);
+	return FILE_SUCCESS;
+}
+
+int getFileFromFtp(char *FtpServerIP, char *FileName) {
+
+	PyObject *pName, *pModule, *pFunc;
+	PyObject *pArgs, *pValue;
+
+	int i;
+	long arg;
+
+	//init python interpreter
+	Py_Initialize();
+	PyRun_SimpleString("import sys");
+	PyRun_SimpleString(PY_SYS_PATH);
+
+	//load python module
+	pName = PyString_FromString(PY_MODULE);
+	pModule = PyImport_Import(pName);
+	Py_DECREF(pName);
+
+	if (pModule != NULL) {
+		//get python function
+		pFunc = PyObject_GetAttrString(pModule, FTP_GET_FILE_FUNC);
+		//checking pFunc is callable
+		if (pFunc && PyCallable_Check(pFunc)) {
+			//create arg list with n member
+			pArgs = PyTuple_New(2);
+			//convert arg from C to Python
+			for (i = 0; i < 2; i++) {
+				if (i == 0) {
+					pValue = PyString_FromString(FtpServerIP);
+				} else {
+					pValue = PyString_FromString(FileName);
+				}
+				if (!pValue) {
+					Py_DECREF(pArgs);
+					Py_DECREF(pModule);
+					printf("cannot convert argument\n");
+					return FILE_ERROR;
+				}
+				//set arg to python reference to pValue
+				PyTuple_SetItem(pArgs, i, pValue);
+			}
+
+			//call Python Func
+			pValue = PyObject_CallObject(pFunc, pArgs);
+			Py_DECREF(pArgs);
+			if (pValue != NULL) {
+				printf("Result of Python call: %ld\n", PyInt_AsLong(pValue));
+				Py_DECREF(pValue);
+			} else {
+				Py_DECREF(pFunc);
+				Py_DECREF(pModule);
+				PyErr_Print();
+				printf("call failed\n");
+				return FILE_ERROR;
+			}
+
+		} else {
+			if (PyErr_Occurred()) {
+				PyErr_Print();
+			} else {
+				printf("cannot find function \'%s\'\n", FTP_GET_FILE_FUNC);
+				return FILE_ERROR;
+			}
+		}
+		Py_XDECREF(pFunc);
+		Py_DECREF(pModule);
+	} else {
+		PyErr_Print();
+		printf("failed to load %s\n", PY_MODULE);
+		return 1;
+	}
+	Py_Finalize();
 	return FILE_SUCCESS;
 }

@@ -9,11 +9,11 @@ OBJS = audio_app.o FileHandler.o advertisement.o sock_infra.o logger.o playAudio
 		
 .c.o: $(DEPS)
 #			$(CC) $(CFLAGS) $(DEBUGFLAG) $(PLAYAUDIOFLAG) -g -O0 -c -o $@  $<
-			$(CC) $(CFLAGS) $(DEBUGFLAG) -g -O0 -c -m32 -o $@  $<
+			$(CC) $(CFLAGS) $(DEBUGFLAG) -I/usr/include/python2.7 -g -O0 -c -o $@  $<
 			
 audio_app: $(OBJS)
 #		 	$(CC) -o $@ $^ $(CFLAGS) $(PLAYAUDIOFLAG) -pthread -lrt -lasound -ljack libportaudio.a -lmpg123
-			$(CC) -o $@ $^ $(CFLAGS) $(DEBUGFLAG) -m32 -pthread
+			$(CC) -o $@ $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7
 			rm *.o
 #			cp audio_app /home/duyphan/ftpserver/
 			
