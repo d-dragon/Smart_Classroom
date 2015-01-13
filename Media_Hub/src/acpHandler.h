@@ -62,6 +62,7 @@ int g_RecvFileFlag;
 int g_StartTransferFlag;
 int g_waitCount;
 int g_writeDataFlag;
+char *g_remote_addr;
 
 
 char *g_FileBuff;

@@ -49,8 +49,9 @@ void *waitingConnectionThread() {
 			exit(0);
 			continue;
 		}
+		g_remote_addr = inet_ntoa(remote_addr.sin_addr);
 		appLog(LOG_INFO, "server: got connection from %s\n",
-				inet_ntoa(remote_addr.sin_addr));
+				g_remote_addr);
 		pid_t pid = fork();
 		switch (pid) {
 		case 0:
@@ -240,8 +241,8 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		break;
 	case CMD_SEND_FILE:
 		appLog(LOG_DEBUG, "CMD_SEND_FILE");
-		getFileFromFtp("10.0.0.100", "IMG_3858.CR2");
-		ret = initFileHandlerThread(++ctrlBuff);
+		getFileFromFtp(g_remote_addr, ++ctrlBuff);
+//		ret = initFileHandlerThread(ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp(CTRL_RESP_ALREADY);
 			if (ret == ACP_SUCCESS) {
