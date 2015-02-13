@@ -8,6 +8,7 @@
 #include "acpHandler.h"
 #include "sock_infra.h"
 #include "logger.h"
+#include "xmlHandler.h"
 
 void *advertiseServerInfoThread() {
 
@@ -36,15 +37,33 @@ void *advertiseServerInfoThread() {
 
 	}
 
+	ret = openMulRecvSocket();
+	if (ret < 0) {
+		appLog(LOG_ERR, "openMulRecvSocket failed!\n");
+	} else {
+		appLog(LOG_DEBUG, "openMulRecvSocket success!\n");
+	}
+	//receive multicast data
+	udp_byte_read = read(mul_fd, send_recv_buff, BUFF_LEN_MAX);
+	if(udp_byte_read < 0){
+		appLog(LOG_DEBUG, "receiving multicast data failed\n");
+	}else{
+		appLog(LOG_DEBUG,"multicast data: %s\n", send_recv_buff);
+		char *header;
+		header = getRootElementContent(send_recv_buff, strlen(send_recv_buff));
+		appLog(LOG_DEBUG, "header: %s", header);
+		free(header);
+	}
+
 	while (1) {
 
 		memset(send_recv_buff, 0x00, BUFF_LEN_MAX);
 		count = 0;
 
-/*		num_bytes = sendto(datagram_sock_fd, "192.168.168.140",
-				strlen("192.168.168.140"), 0,
-				(struct sockaddr *) &udp_client_address,
-				sizeof(udp_client_address));*/
+		/*		num_bytes = sendto(datagram_sock_fd, "192.168.168.140",
+		 strlen("192.168.168.140"), 0,
+		 (struct sockaddr *) &udp_client_address,
+		 sizeof(udp_client_address));*/
 
 		udp_byte_read = recvfrom(datagram_sock_fd, send_recv_buff, BUFF_LEN_MAX,
 				0, (struct sockaddr*) &udp_client_address, &gudp_cli_addr_len);

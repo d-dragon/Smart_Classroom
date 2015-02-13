@@ -28,7 +28,9 @@
 /*define and declare server socket*/
 #define TCP_PORT 1991
 #define UDP_PORT "1992"
+#define UDP_MUL_PORT 5102
 #define BROADCAST_DEST_ADDR "255.255.255.255"
+#define MULTICAST_ADDR "239.255.1.111"
 #define LOOPBACK_DEFAULT "127.0.0.1"
 #define BACKLOG	10
 #define SOCK_ERROR -1
@@ -49,7 +51,9 @@ char file_buff[102400];
 
 //Declare Datagram socket variable
 int datagram_sock_fd;
-struct sockaddr_in udp_server_address, udp_client_address;
+struct sockaddr_in udp_server_address, udp_client_address, mul_sock;
+struct ip_mreq mul_group;
+int mul_fd;
 unsigned int gudp_cli_addr_len;
 int udp_byte_read;
 int broadcast_enable;
@@ -62,6 +66,7 @@ sem_t sem_sock;
 //Declare sock function
 int openStreamSocket();
 int openDatagramSocket();
+int openMulRecvSocket();
 char *getInterfaceAddress();
 
 

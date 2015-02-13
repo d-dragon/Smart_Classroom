@@ -62,7 +62,8 @@ int openStreamSocket() {
 		appLog(LOG_ERR, "call listen() error\n");
 		return SOCK_ERROR;
 	} else {
-		appLog(LOG_DEBUG, "TCP socket is listening incoming connection at %s\n", interface_addr);
+		appLog(LOG_DEBUG, "TCP socket is listening incoming connection at %s\n",
+				interface_addr);
 	}
 	return SOCK_SUCCESS;
 }
@@ -121,9 +122,11 @@ char *getInterfaceAddress() {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			ret = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
 					interface_addr, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-			if(ret == 0){
-				appLog(LOG_DEBUG, "address of %s: %s\n", ifa->ifa_name, interface_addr);
-				if(strncmp(LOOPBACK_DEFAULT, interface_addr, sizeof(LOOPBACK_DEFAULT)) == 0){
+			if (ret == 0) {
+				appLog(LOG_DEBUG, "address of %s: %s\n",
+						ifa->ifa_name, interface_addr);
+				if (strncmp(LOOPBACK_DEFAULT, interface_addr,
+						sizeof(LOOPBACK_DEFAULT)) == 0) {
 					continue;
 				}
 				return interface_addr;
@@ -134,4 +137,47 @@ char *getInterfaceAddress() {
 	return NULL;
 }
 
+int openMulRecvSocket() {
 
+	mul_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (mul_fd < 0) {
+		appLog(LOG_DEBUG, "Creating multicast socket failed\n");
+		close(mul_fd);
+		return SOCK_ERROR;
+	}else{
+		appLog(LOG_DEBUG, " open multicast socket success\n");
+	}
+	int reuse = 1; //multiple applications can use one port on datagram local addr
+	if(setsockopt(mul_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0){
+		appLog(LOG_DEBUG, "setting REUSEADDR failed\n");
+		close(mul_fd);
+		return SOCK_ERROR;
+	}
+
+	memset(&mul_sock, 0, sizeof(mul_sock));
+	mul_sock.sin_family = AF_INET;
+	mul_sock.sin_port = htons(5102);
+	mul_sock.sin_addr.s_addr = INADDR_ANY;
+	if(bind(mul_fd, (struct sockaddr*)&mul_sock, sizeof(mul_sock))){
+
+		appLog(LOG_DEBUG, "binding mul socket failed\n");
+		close(mul_fd);
+		return SOCK_ERROR;
+	}
+
+/* join the multicast to group 239.255.1.111 on local address.
+ * Note that this IP_ADD_MEMBERSHIP option must be */
+/* called for each local interface over which the multicast */
+/* datagrams are to be received.
+ */
+	mul_group.imr_multiaddr.s_addr = inet_addr((char *)MULTICAST_ADDR);
+	mul_group.imr_interface.s_addr = inet_addr(interface_addr);
+	if(setsockopt(mul_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mul_group, sizeof(mul_group))){
+		appLog(LOG_DEBUG, "joing multicast group %s on the %s failed\n", MULTICAST_ADDR, interface_addr);
+		close(mul_fd);
+		return SOCK_ERROR;
+	}else{
+		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n", MULTICAST_ADDR, interface_addr);
+	}
+	return SOCK_SUCCESS;
+}
