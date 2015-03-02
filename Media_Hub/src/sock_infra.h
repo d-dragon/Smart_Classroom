@@ -67,6 +67,7 @@ sem_t sem_sock;
 int openStreamSocket();
 int openDatagramSocket();
 int openMulRecvSocket();
+int connecttoStreamSocket(char *ip, char *port);
 char *getInterfaceAddress();
 
 

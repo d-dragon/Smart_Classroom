@@ -144,11 +144,12 @@ int openMulRecvSocket() {
 		appLog(LOG_DEBUG, "Creating multicast socket failed\n");
 		close(mul_fd);
 		return SOCK_ERROR;
-	}else{
+	} else {
 		appLog(LOG_DEBUG, " open multicast socket success\n");
 	}
 	int reuse = 1; //multiple applications can use one port on datagram local addr
-	if(setsockopt(mul_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse, sizeof(reuse)) < 0){
+	if (setsockopt(mul_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &reuse,
+			sizeof(reuse)) < 0) {
 		appLog(LOG_DEBUG, "setting REUSEADDR failed\n");
 		close(mul_fd);
 		return SOCK_ERROR;
@@ -158,26 +159,59 @@ int openMulRecvSocket() {
 	mul_sock.sin_family = AF_INET;
 	mul_sock.sin_port = htons(5102);
 	mul_sock.sin_addr.s_addr = INADDR_ANY;
-	if(bind(mul_fd, (struct sockaddr*)&mul_sock, sizeof(mul_sock))){
+	if (bind(mul_fd, (struct sockaddr*) &mul_sock, sizeof(mul_sock))) {
 
 		appLog(LOG_DEBUG, "binding mul socket failed\n");
 		close(mul_fd);
 		return SOCK_ERROR;
 	}
 
-/* join the multicast to group 239.255.1.111 on local address.
- * Note that this IP_ADD_MEMBERSHIP option must be */
-/* called for each local interface over which the multicast */
-/* datagrams are to be received.
- */
-	mul_group.imr_multiaddr.s_addr = inet_addr((char *)MULTICAST_ADDR);
+	/* join the multicast to group 239.255.1.111 on local address.
+	 * Note that this IP_ADD_MEMBERSHIP option must be */
+	/* called for each local interface over which the multicast */
+	/* datagrams are to be received.
+	 */
+	mul_group.imr_multiaddr.s_addr = inet_addr((char *) MULTICAST_ADDR);
 	mul_group.imr_interface.s_addr = inet_addr(interface_addr);
-	if(setsockopt(mul_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mul_group, sizeof(mul_group))){
-		appLog(LOG_DEBUG, "joing multicast group %s on the %s failed\n", MULTICAST_ADDR, interface_addr);
+	if (setsockopt(mul_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mul_group,
+			sizeof(mul_group))) {
+		appLog(LOG_DEBUG, "joing multicast group %s on the %s failed\n",
+				MULTICAST_ADDR, interface_addr);
 		close(mul_fd);
 		return SOCK_ERROR;
-	}else{
-		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n", MULTICAST_ADDR, interface_addr);
+	} else {
+		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n",
+				MULTICAST_ADDR, interface_addr);
 	}
 	return SOCK_SUCCESS;
 }
+
+/*
+ * connect to tcp socket
+ * addr: remote address
+ * port: connection port
+ * return: socket file descriptor
+ */
+int connecttoStreamSocket(char *addr, char *port) {
+
+	int sd_sock;
+	struct sockaddr_in serv_addr;
+
+	sd_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sd_sock < 0) {
+		appLog(LOG_DEBUG, "open socket failed!");
+		return SOCK_ERROR;
+	}
+
+	memset(&serv_addr, 0x00, sizeof(struct sockaddr_in));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(atoi(port));
+	serv_addr.sin_addr.s_addr = inet_addr(addr);
+
+	if (connect(sd_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+		appLog(LOG_DEBUG, "connect to station failed");
+		return SOCK_ERROR;
+	}
+	return sd_sock;
+}
+

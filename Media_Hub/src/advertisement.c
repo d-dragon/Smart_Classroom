@@ -45,14 +45,27 @@ void *advertiseServerInfoThread() {
 	}
 	//receive multicast data
 	udp_byte_read = read(mul_fd, send_recv_buff, BUFF_LEN_MAX);
-	if(udp_byte_read < 0){
+	if (udp_byte_read < 0) {
 		appLog(LOG_DEBUG, "receiving multicast data failed\n");
-	}else{
-		appLog(LOG_DEBUG,"multicast data: %s\n", send_recv_buff);
-		char *header;
-		header = getRootElementContent(send_recv_buff, strlen(send_recv_buff));
-		appLog(LOG_DEBUG, "header: %s", header);
-		free(header);
+	} else {
+		appLog(LOG_DEBUG, "multicast data: %s\n", send_recv_buff);
+		char *server_ip;
+		int sd;
+		server_ip = getXmlElementByName(send_recv_buff, "ip");
+		if(!(strlen(server_ip))){
+			appLog(LOG_DEBUG, "element name invalid");
+		}else{
+			if((sd = connecttoStreamSocket(server_ip, "6969"))){
+				appLog(LOG_DEBUG, "connected to station success");
+				int ret = send(sd, "hey!", sizeof("hey!"),0);
+				if (ret){
+					appLog(LOG_DEBUG, "sent data to station success");
+				}
+			}
+		}
+		free(server_ip);
+		exit(0);
+
 	}
 
 	while (1) {
