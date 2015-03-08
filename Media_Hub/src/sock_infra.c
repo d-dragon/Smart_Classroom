@@ -139,6 +139,7 @@ char *getInterfaceAddress() {
 
 int openMulRecvSocket() {
 
+	int mul_fd;
 	mul_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (mul_fd < 0) {
 		appLog(LOG_DEBUG, "Creating multicast socket failed\n");
@@ -183,7 +184,7 @@ int openMulRecvSocket() {
 		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n",
 				MULTICAST_ADDR, interface_addr);
 	}
-	return SOCK_SUCCESS;
+	return mul_fd;
 }
 
 /*

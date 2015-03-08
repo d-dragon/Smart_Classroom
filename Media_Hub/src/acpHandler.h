@@ -64,6 +64,8 @@ int g_waitCount;
 int g_writeDataFlag;
 char *g_remote_addr;
 
+pthread_t g_TaskHandlerThread;
+
 
 char *g_FileBuff;
 typedef char byte;
@@ -94,6 +96,10 @@ void recvnhandlePackageLoop();
 static int isEOFPackage(char *);
 int initFileHandlerThread();
 int initAudioPlayer(char *);
+
+int initTaskHandler(char *message);
+void *TaskHandlerThread(void *arg);
+void MessageProcessor(char *msg_buff);
 
 #endif /* ACP_H_ */
 

@@ -9,6 +9,7 @@
 #include "sock_infra.h"
 #include "logger.h"
 #include "xmlHandler.h"
+#include "FileHandler.h"
 
 void *advertiseServerInfoThread() {
 
@@ -26,7 +27,7 @@ void *advertiseServerInfoThread() {
 //	udp_client_address.sin_port = UDP_PORT;
 //	udp_client_address.sin_addr.s_addr = inet_addr(interface_addr);
 
-	ret = openDatagramSocket();
+/*	ret = openDatagramSocket();
 	if (ret < 0) {
 		appLog(LOG_ERR, "openDatagramSocket failed!\n");
 		pthread_exit(NULL);
@@ -35,8 +36,9 @@ void *advertiseServerInfoThread() {
 		sem_destroy(&sem_sock);
 		appLog(LOG_DEBUG, "sem_sock was detroyed\n");
 
-	}
+	}*/
 
+/*
 	ret = openMulRecvSocket();
 	if (ret < 0) {
 		appLog(LOG_ERR, "openMulRecvSocket failed!\n");
@@ -50,23 +52,45 @@ void *advertiseServerInfoThread() {
 	} else {
 		appLog(LOG_DEBUG, "multicast data: %s\n", send_recv_buff);
 		char *server_ip;
+		char *filename;
+		char databuff[MAX_PACKAGE_LEN];
 		int sd;
 		server_ip = getXmlElementByName(send_recv_buff, "ip");
-		if(!(strlen(server_ip))){
+		if (!(strlen(server_ip))) {
 			appLog(LOG_DEBUG, "element name invalid");
-		}else{
-			if((sd = connecttoStreamSocket(server_ip, "6969"))){
+		} else {
+			if ((sd = connecttoStreamSocket(server_ip, "6969"))) {
 				appLog(LOG_DEBUG, "connected to station success");
-				int ret = send(sd, "hey!", sizeof("hey!"),0);
-				if (ret){
+				int ret = send(sd, "hey!", sizeof("hey!"), 0);
+				if (ret) {
 					appLog(LOG_DEBUG, "sent data to station success");
+				}
+				ret = read(sd, databuff, MAX_PACKAGE_LEN);
+				if(ret < 0){
+					appLog(LOG_DEBUG, "read data failed");
+					exit(1);
+				}
+				free(server_ip);
+				server_ip = getXmlElementByName(databuff, "ftpaddr");
+				if (!(strlen(server_ip))) {
+					appLog(LOG_DEBUG, "element name invalid");
+				}
+				filename = getXmlElementByName(databuff, "filename");
+				if (!(strlen(filename))) {
+					appLog(LOG_DEBUG, "element name invalid");
+				}
+				ret = getFileFromFtp(server_ip, filename);
+				if(ret==FILE_SUCCESS){
+					appLog(LOG_DEBUG, "get file from ftp success");
+
 				}
 			}
 		}
 		free(server_ip);
 		exit(0);
 
-	}
+	}*/
+
 
 	while (1) {
 
@@ -153,4 +177,42 @@ int parseDiscoveredMessage(char *message) {
 		return MESSAGE_INVALID;
 	}
 	return MESSAGE_VALID;
+}
+void startMulticastListener(){
+
+	int ret;
+	int multicast_fd;
+
+	char *msg_buff;
+
+	msg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
+
+
+	if(msg_buff == NULL){
+		appLog(LOG_DEBUG, "allocate buffer failed, exit program");
+		exit(1);
+	}
+
+
+	multicast_fd = openMulRecvSocket();
+	if (multicast_fd < 0) {
+		appLog(LOG_ERR, "openMulRecvSocket failed!\n");
+		exit(1);
+	} else {
+		appLog(LOG_DEBUG, "open multicast socket success! fd = %d!\n", multicast_fd);
+	}
+
+	while(1){
+		memset(msg_buff, 0x00, BUFF_LEN_MAX);
+		ret = recv(multicast_fd, msg_buff, BUFF_LEN_MAX, 0);
+		if (ret > 0){
+
+			appLog(LOG_DEBUG, "received %d bytes",(int)strlen(msg_buff));
+			MessageProcessor(msg_buff);
+		}else{
+			appLog(LOG_DEBUG, "read multicast message failed");
+		}
+	}
+
+
 }

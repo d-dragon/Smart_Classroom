@@ -60,17 +60,12 @@ int findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name,
 
 	xmlChar *content;
 	node = node->children;
-	appLog(LOG_DEBUG, "node name: %s", node->name);
 	while (node != NULL) {
-		appLog(LOG_DEBUG, "debug-----");
 		if (strcmp((char *) node->name, element_name)) {
-			appLog(LOG_DEBUG, "debug-----");
 			if (node->children->children != NULL) {
-				appLog(LOG_DEBUG, "debug-----");
 				findElement(doc, node, element_name, result);
 			}
 		} else {
-			appLog(LOG_DEBUG, "debug-----");
 			content = xmlNodeListGetString(doc, node->children, 1);
 			strcpy(result,(char *)content);
 			free(content);
@@ -94,8 +89,8 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 	xmlDocPtr xmldoc;
 	xmlNodePtr xmlrootnode;
 	char *xmlcontent;
-	xmlcontent = malloc(64);
-	memset(xmlcontent, 0x00, 64);
+	xmlcontent = malloc(512);
+	memset(xmlcontent, 0x00, 512);
 
 	xmldoc = xmlReadMemory(xmlbuff, (int) strlen(xmlbuff), "tmp.xml", NULL, 0);
 	if (xmldoc == NULL) {
@@ -103,7 +98,6 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 		appLog(LOG_DEBUG, "xmlReadMemory failed");
 		return NULL;
 	}
-	appLog(LOG_DEBUG, "debug-----");
 	xmlrootnode = xmlDocGetRootElement(xmldoc);
 	if (xmlrootnode == NULL) {
 		xmlFreeDoc(xmldoc);
@@ -111,12 +105,10 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 		return NULL;
 	}
 	appLog(LOG_DEBUG, "root node name: %s", xmlrootnode->name);
-	appLog(LOG_DEBUG, "debug-----");
 	if (strcmp((char *) xmlrootnode->name, (char *) "message")) {
 		appLog(LOG_DEBUG, "message is invalid!!");
 		return NULL;
 	}
-	appLog(LOG_DEBUG, "debug-----");
 	int ret = findElement(xmldoc, xmlrootnode, name, xmlcontent);
 	appLog(LOG_DEBUG,"%s: %s",name, xmlcontent);
 	return xmlcontent;

@@ -27,7 +27,8 @@
 
 /*define and declare server socket*/
 #define TCP_PORT 1991
-#define UDP_PORT "1992"
+#define UDP_PORT "1994"
+#define STREAM_SOCK_PORT "6969"
 #define UDP_MUL_PORT 5102
 #define BROADCAST_DEST_ADDR "255.255.255.255"
 #define MULTICAST_ADDR "239.255.1.111"
@@ -53,7 +54,6 @@ char file_buff[102400];
 int datagram_sock_fd;
 struct sockaddr_in udp_server_address, udp_client_address, mul_sock;
 struct ip_mreq mul_group;
-int mul_fd;
 unsigned int gudp_cli_addr_len;
 int udp_byte_read;
 int broadcast_enable;

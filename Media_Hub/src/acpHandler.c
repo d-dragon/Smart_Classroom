@@ -10,9 +10,57 @@
 #include "sock_infra.h"
 #include "FileHandler.h"
 #include "playAudio.h"
+#include "xmlHandler.h"
 #include <endian.h>
+#include <strings.h>
 
+/*Task commands definition*/
+struct RequestCmd {
+	/*command*/
+	const char *cmd_str;
+	/* command index*/
+	int cmd_index;
+	/*number of arguments*/
+	int num_args;
+	/*arguments*/
+	char *args;
+
+} ReqestCmd;
+
+enum request_cmd_index {
+
+	GET_PI_INFO = 1,
+	INIT_TASK_HANDLER,
+	GET_FILE,
+	PLAY_AUDIO,
+	STOP_AUDIO,
+	PAUSE_AUDIO,
+	CLOSE_TASK_HANDLER
+};
+
+static struct RequestCmd RequestCmdList[] = {
+		{ "GetPiInfo", GET_PI_INFO, 1, "" }, { "InitTaskHandler",
+				INIT_TASK_HANDLER, 1, "server_ip" }, { "GetFile", GET_FILE, 2,
+				"list_file" }, { "PlayAudio", PLAY_AUDIO, 1, "file_name" }, };
+
+struct NotifyInfo {
+	const char *info_str;
+	int info_index;
+
+} NotifyInfo;
+
+enum notify_info_index {
+	SERVER_INFO = 1, FTP_ADDR
+};
+static struct NotifyInfo InfoList[] = { { "serverinfo", SERVER_INFO }, {
+		"ftpaddr", FTP_ADDR } };
 pthread_mutex_t g_file_buff_mutex;
+int stream_sock_sd;
+
+int NotifyMessageHandler(char *message);
+int RequestMessageHandler(char *message);
+int ResponseMessageHandler(char *message);
+int getNotifyIndex(char *info);
 
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
@@ -50,8 +98,7 @@ void *waitingConnectionThread() {
 			continue;
 		}
 		g_remote_addr = inet_ntoa(remote_addr.sin_addr);
-		appLog(LOG_INFO, "server: got connection from %s\n",
-				g_remote_addr);
+		appLog(LOG_INFO, "server: got connection from %s\n", g_remote_addr);
 		pid_t pid = fork();
 		switch (pid) {
 		case 0:
@@ -82,7 +129,7 @@ void recvnhandlePackageLoop() {
 	memset(g_FileBuff, 0x00, MAX_FILE_BUFF_LEN);
 	appLog(LOG_DEBUG, "PackBuff addr: %p", PackBuff);
 	pthread_mutex_init(&g_audio_status_mutex, NULL);
-
+//	ret = send(child_stream_sock_fd, "<?xml version=\"1.0\"?><message><type>request</type><action><command>SendFile</command><ftpaddr>192.168.1.34</ftpaddr><username>anonymous</username><filename>21 Guns - Green day.mp3</filename></action></message>", MAX_PACKAGE_LEN, 0);
 	while (1) {
 		/*################ receive message package here#####################*/
 		if (g_RecvFileFlag != RECV_FILE_ENABLED) {
@@ -160,6 +207,7 @@ void parsePackageContent(char *packageBuff) {
 //	appLog(LOG_DEBUG, "package_header %x\n", package_header);
 	if (package_header != PACKAGE_HEADER) {
 		appLog(LOG_ERR, "received invalid package!!!\n");
+
 		return;
 	}
 	packageBuff++;
@@ -446,3 +494,134 @@ int wrapperRequestResp(char *resp) {
 	return ACP_SUCCESS;
 }
 
+int initTaskHandler(char *message) {
+
+	int ret;
+	char *server_ip;
+
+	server_ip = getXmlElementByName(message, "ip");
+	if(strlen(server_ip) <= 0){
+		appLog(LOG_DEBUG, "server_ip is invalid");
+		return ACP_FAILED;
+	}
+	ret = pthread_create(&g_TaskHandlerThread, NULL, &TaskHandlerThread,
+			(void *) server_ip);
+	if (ret) {
+		appLog(LOG_DEBUG, "init Task Handler failed");
+		return ACP_FAILED;
+	} else {
+		appLog(LOG_DEBUG, "init Task handler success");
+		return ACP_SUCCESS;
+	}
+}
+
+void *TaskHandlerThread(void *arg) {
+
+	int ret;
+	char *server_ip = arg;
+
+	appLog(LOG_DEBUG, "Pi is connecting to Station at %s", server_ip);
+	stream_sock_sd = connecttoStreamSocket(server_ip, STREAM_SOCK_PORT);
+
+	if (stream_sock_sd != SOCK_ERROR) {
+		appLog(LOG_DEBUG, "Pi connected to Station!!!");
+		free(server_ip);
+	} else {
+		appLog(LOG_DEBUG, "Pi - Station connection init failed, % exit",
+				__FUNCTION__);
+		free(server_ip);
+		pthread_exit(NULL);
+	}
+
+	while (1) {
+
+		appLog(LOG_DEBUG, "running Task Handler!!!");
+		sleep(2);
+	}
+}
+
+void MessageProcessor(char *message) {
+
+	int ret;
+	char *msg_type;
+
+	msg_type = getXmlElementByName(message, XML_MESSGAE_TYPE);
+
+	if (strlen(msg_type)) {
+		appLog(LOG_DEBUG, "message type: %s", msg_type);
+	} else {
+		appLog(LOG_DEBUG, "message type is invalid!!");
+		free(msg_type);
+		return;
+	}
+
+	if (strcmp(msg_type, XML_MESSAGE_NOTIFY) == 0) {
+		ret = NotifyMessageHandler(message);
+		//TODO
+	} else if (strcmp(msg_type, XML_MESSAGE_REQUEST) == 0) {
+		ret = RequestMessageHandler(message);
+		//TODO
+	} else if (strcmp(msg_type, XML_MESSAGE_RESPONSE) == 0) {
+		ret = ResponseMessageHandler(message);
+		//TODO
+	} else {
+		appLog(LOG_DEBUG, "message type not match");
+	}
+	if(ret){
+		appLog(LOG_DEBUG, "Handle %s message success!", msg_type);
+	}else{
+		appLog(LOG_DEBUG, "Handle %s message failed!", msg_type);
+	}
+	free(msg_type);
+	return;
+
+}
+
+int NotifyMessageHandler(char *message) {
+
+	appLog(LOG_DEBUG, "processing notify message");
+	int ret;
+	int notify_index;
+	char *info;
+
+	info = getXmlElementByName(message, XML_MESSGAE_INFO);
+	if(strlen(info) <= 0){
+		appLog(LOG_DEBUG, "nofity info: %s is invalid", info);
+		return ACP_FAILED;
+	}
+	notify_index = getNotifyIndex(info);
+
+	switch (notify_index) {
+	case SERVER_INFO:
+		ret = initTaskHandler(message);
+		break;
+	default:
+		appLog(LOG_DEBUG, "notify info %s index %d no match", info, notify_index);
+		break;
+	}
+
+	free(info);
+	return ret;
+}
+
+int RequestMessageHandler(char *message) {
+	appLog(LOG_DEBUG, "processing request message");
+
+}
+
+int ResponseMessageHandler(char *message) {
+	appLog(LOG_DEBUG, "processing response message");
+}
+
+int getNotifyIndex(char *info) {
+
+	int numofnotifies = (sizeof(InfoList)) / (sizeof(NotifyInfo));
+	int i;
+	for (i = 0; i < numofnotifies; i++) {
+		appLog(LOG_DEBUG,"InfoList[%d].info_str: %s", i, InfoList[i].info_str);
+		if (strcmp(info, InfoList[i].info_str) == 0) {
+			return InfoList[i].info_index;
+		}
+	}
+	return 0;
+}

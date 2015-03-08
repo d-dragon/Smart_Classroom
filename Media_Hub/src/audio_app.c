@@ -34,15 +34,21 @@ int main(int argc, char *argv[]) {
 #endif
 */
 
-	pthread_t acp_thread;
-	pthread_t adv_info_thread;
+//	pthread_t acp_thread;
+//	pthread_t adv_info_thread;
 	int ret;
 
 	/*call for init Logger*/
 	initLogger();
 
+	/*get network interface address*/
+	getInterfaceAddress();
+
+	startMulticastListener();
+
+
 	/*init socket semaphore*/
-	ret = sem_init(&sem_sock, 0, 0);
+/*	ret = sem_init(&sem_sock, 0, 0);
 	if (ret != 0) {
 		appLog(LOG_ERR, "sock semaphore init failed\n");
 	} else {
@@ -73,5 +79,5 @@ int main(int argc, char *argv[]) {
 
 	pthread_join(acp_thread, NULL);
 	pthread_join(adv_info_thread, NULL);
-	return APP_SUCCESS;
+	return APP_SUCCESS;*/
 }
