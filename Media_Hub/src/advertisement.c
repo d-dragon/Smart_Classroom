@@ -209,6 +209,12 @@ void startMulticastListener(){
 
 			appLog(LOG_DEBUG, "received %d bytes",(int)strlen(msg_buff));
 			MessageProcessor(msg_buff);
+			char *buff = NULL;
+			buff = writeXmlToBuff(RESPONSE_SUCCESS, "room1");
+			if(buff != NULL){
+				appLog(LOG_DEBUG, "xml response: %s", buff);
+				free(buff);
+			}
 		}else{
 			appLog(LOG_DEBUG, "read multicast message failed");
 		}

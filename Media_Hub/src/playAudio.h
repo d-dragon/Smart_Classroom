@@ -60,6 +60,8 @@ int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in
 int stop(mp3Player* player);//
 #endif
 
+int playAudio(char *message);
+int initAudioPlayer(char *filename);
 void *playAudioThread(void *);
 int stopAudio();
 int pauseAudio();

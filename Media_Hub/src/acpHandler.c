@@ -41,7 +41,10 @@ enum request_cmd_index {
 static struct RequestCmd RequestCmdList[] = {
 		{ "GetPiInfo", GET_PI_INFO, 1, "" }, { "InitTaskHandler",
 				INIT_TASK_HANDLER, 1, "server_ip" }, { "GetFile", GET_FILE, 2,
-				"list_file" }, { "PlayAudio", PLAY_AUDIO, 1, "file_name" }, };
+				"list_file" }, { "PlayFile", PLAY_AUDIO, 1, "file_name" },
+				{"StopFile", STOP_AUDIO, 1, "file_name"},
+				{"PauseFile", PAUSE_AUDIO, 1, "file_name"}
+};
 
 struct NotifyInfo {
 	const char *info_str;
@@ -52,15 +55,20 @@ struct NotifyInfo {
 enum notify_info_index {
 	SERVER_INFO = 1, FTP_ADDR
 };
-static struct NotifyInfo InfoList[] = { { "serverinfo", SERVER_INFO }, {
+static struct NotifyInfo InfoList[] = { { "Management Server's address", SERVER_INFO }, {
 		"ftpaddr", FTP_ADDR } };
+
+ServerInfo server_info;
+
 pthread_mutex_t g_file_buff_mutex;
 int stream_sock_sd;
 
 int NotifyMessageHandler(char *message);
 int RequestMessageHandler(char *message);
 int ResponseMessageHandler(char *message);
+int playAudio(char *message);
 int getNotifyIndex(char *info);
+int getRequestCommandIndex(char *command);
 
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
@@ -385,42 +393,7 @@ int initFileHandlerThread(char *FileInfo) {
 	return ACP_SUCCESS;
 }
 
-int initAudioPlayer(char *filename) {
 
-	/*FileInfo *file;
-	 file = malloc(sizeof(FileInfo));
-	 file->filename = malloc(100);
-	 file->filename = "m.mp3";
-	 file->index = 0;*/
-	appLog(LOG_DEBUG, "begin %s", __FUNCTION__);
-	char *FileName = calloc(FILE_NAME_MAX, sizeof(char));
-	if (FileName == NULL) {
-		appLog(LOG_DEBUG, "allocated memory failed");
-		return ACP_FAILED;
-	} else {
-		appLog(LOG_DEBUG, "allocated memory success");
-	}
-//	appLog(LOG_DEBUG, "address FileName: %p", FileName);
-	memset(FileName, 0, FILE_NAME_MAX);
-	//  strlen -1 to truncate '|' charater at end of string
-	strncat(FileName, filename, strlen(filename) - 1); //cann't assign FileName = "m.mp3", it change pointer address -> can't free()
-
-	/*Need to parse file index to get file name*/
-
-	//init play audio thread
-	pthread_mutex_lock(&g_audio_status_mutex);
-	g_audio_flag = AUDIO_STOP;
-	pthread_mutex_unlock(&g_audio_status_mutex);
-
-	//FileName will be freed in playAudioThread
-	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThread,
-			(void *) FileName)) {
-		appLog(LOG_DEBUG, "init playAudioThread failed!!!");
-		return ACP_FAILED;
-	}
-	return ACP_SUCCESS;
-
-}
 int wrapperControlResp(char resp) {
 
 	char *buff;
@@ -518,12 +491,16 @@ int initTaskHandler(char *message) {
 void *TaskHandlerThread(void *arg) {
 
 	int ret;
+	int byte_count = 0;
 	char *server_ip = arg;
+	char *pmsg_buff;
+
+	pmsg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
 
 	appLog(LOG_DEBUG, "Pi is connecting to Station at %s", server_ip);
-	stream_sock_sd = connecttoStreamSocket(server_ip, STREAM_SOCK_PORT);
+	stream_sock_fd = connecttoStreamSocket(server_ip, STREAM_SOCK_PORT);
 
-	if (stream_sock_sd != SOCK_ERROR) {
+	if (stream_sock_fd != SOCK_ERROR) {
 		appLog(LOG_DEBUG, "Pi connected to Station!!!");
 		free(server_ip);
 	} else {
@@ -533,46 +510,60 @@ void *TaskHandlerThread(void *arg) {
 		pthread_exit(NULL);
 	}
 
+	pthread_mutex_init(&g_audio_status_mutex, NULL);
 	while (1) {
-
 		appLog(LOG_DEBUG, "running Task Handler!!!");
-		sleep(2);
+		memset(pmsg_buff, 0x00, BUFF_LEN_MAX);
+
+		byte_count = recv(stream_sock_fd, pmsg_buff, BUFF_LEN_MAX, 0);
+		if(byte_count < 0){
+			appLog(LOG_DEBUG, "received data failed!");
+		}else if(byte_count == 0){
+			appLog(LOG_DEBUG, "remote socket was closed -> close stream sock %d", stream_sock_fd);
+			close(stream_sock_fd);
+			free(pmsg_buff);
+			appLog(LOG_DEBUG, "exit Task Handler thread!!");
+			pthread_exit(NULL);
+		}else{
+			appLog(LOG_DEBUG,"message data received >>>> %s", pmsg_buff);
+			MessageProcessor(pmsg_buff);
+		}
 	}
 }
 
 void MessageProcessor(char *message) {
 
 	int ret;
-	char *msg_type;
+	char *pmsg_type;
 
-	msg_type = getXmlElementByName(message, XML_MESSGAE_TYPE);
+	pmsg_type = getXmlElementByName(message, XML_MESSGAE_TYPE);
 
-	if (strlen(msg_type)) {
-		appLog(LOG_DEBUG, "message type: %s", msg_type);
+	if (strlen(pmsg_type)) {
+		appLog(LOG_DEBUG, "message type: %s", pmsg_type);
 	} else {
 		appLog(LOG_DEBUG, "message type is invalid!!");
-		free(msg_type);
+		free(pmsg_type);
 		return;
 	}
 
-	if (strcmp(msg_type, XML_MESSAGE_NOTIFY) == 0) {
+	if (strcmp(pmsg_type, XML_MESSAGE_NOTIFY) == 0) {
 		ret = NotifyMessageHandler(message);
 		//TODO
-	} else if (strcmp(msg_type, XML_MESSAGE_REQUEST) == 0) {
+	} else if (strcmp(pmsg_type, XML_MESSAGE_REQUEST) == 0) {
 		ret = RequestMessageHandler(message);
 		//TODO
-	} else if (strcmp(msg_type, XML_MESSAGE_RESPONSE) == 0) {
+	} else if (strcmp(pmsg_type, XML_MESSAGE_RESPONSE) == 0) {
 		ret = ResponseMessageHandler(message);
 		//TODO
 	} else {
 		appLog(LOG_DEBUG, "message type not match");
 	}
-	if(ret){
-		appLog(LOG_DEBUG, "Handle %s message success!", msg_type);
+	if(ret == ACP_SUCCESS){
+		appLog(LOG_DEBUG, "Handle %s message success!", pmsg_type);
 	}else{
-		appLog(LOG_DEBUG, "Handle %s message failed!", msg_type);
+		appLog(LOG_DEBUG, "Handle %s message failed!", pmsg_type);
 	}
-	free(msg_type);
+	free(pmsg_type);
 	return;
 
 }
@@ -582,31 +573,64 @@ int NotifyMessageHandler(char *message) {
 	appLog(LOG_DEBUG, "processing notify message");
 	int ret;
 	int notify_index;
-	char *info;
+	char *pinfo;
 
-	info = getXmlElementByName(message, XML_MESSGAE_INFO);
-	if(strlen(info) <= 0){
-		appLog(LOG_DEBUG, "nofity info: %s is invalid", info);
+	pinfo = getXmlElementByName(message, XML_MESSGAE_INFO);
+	if(strlen(pinfo) <= 0){
+		appLog(LOG_DEBUG, "nofity info: %s is invalid", pinfo);
 		return ACP_FAILED;
 	}
-	notify_index = getNotifyIndex(info);
+	notify_index = getNotifyIndex(pinfo);
 
 	switch (notify_index) {
 	case SERVER_INFO:
 		ret = initTaskHandler(message);
 		break;
 	default:
-		appLog(LOG_DEBUG, "notify info %s index %d no match", info, notify_index);
+		appLog(LOG_DEBUG, "notify info %s index %d no match", pinfo, notify_index);
 		break;
 	}
 
-	free(info);
+	free(pinfo);
 	return ret;
 }
 
 int RequestMessageHandler(char *message) {
 	appLog(LOG_DEBUG, "processing request message");
+	int ret;
+	int cmd_index;
+	char *cmd;
 
+	cmd = getXmlElementByName(message, XML_MESSAGE_COMMAND);
+
+	if( strlen(cmd) <= 0){
+		appLog(LOG_DEBUG,"get request command failed: %s", cmd);
+		return ACP_FAILED;
+	}
+	cmd_index = getRequestCommandIndex(cmd);
+
+	if(cmd_index == 0){
+		appLog(LOG_DEBUG, "command not found");
+		return ACP_FAILED;
+	}
+	switch(cmd_index){
+	case GET_FILE:
+		ret = getFile(message);
+		break;
+	case PLAY_AUDIO:
+		ret = playAudio(message);
+		break;
+	case STOP_AUDIO:
+		appLog(LOG_DEBUG, "called stopAudio");
+		ret = stopAudio();
+		break;
+	case PAUSE_AUDIO:
+		appLog(LOG_DEBUG, "called pauseAudio");
+		ret = pauseAudio();
+		break;
+	default:
+		break;
+	}
 }
 
 int ResponseMessageHandler(char *message) {
@@ -624,4 +648,45 @@ int getNotifyIndex(char *info) {
 		}
 	}
 	return 0;
+}
+
+int getRequestCommandIndex(char *command){
+	int numofcmd = (sizeof RequestCmdList) / (sizeof ReqestCmd);
+	int i;
+	for (i = 0; i < numofcmd; i++){
+		if(strcmp(command, RequestCmdList[i].cmd_str) == 0){
+			return RequestCmdList[i].cmd_index;
+		}
+	}
+	return 0;
+}
+
+int playAudio(char *message){
+
+	char *pfile_name;
+	int ret;
+
+	appLog(LOG_DEBUG, "debug----");
+	pfile_name = getXmlElementByName(message, "filename");
+
+	appLog(LOG_DEBUG,"file name: %s", pfile_name);
+	if(strlen(pfile_name) <= 0){
+		appLog(LOG_DEBUG,"file is not exist");
+		free(pfile_name);
+		return ACP_FAILED;
+	}
+
+	ret = initAudioPlayer(pfile_name);
+
+	free(pfile_name);
+	return ret;
+}
+int collectServerInfo(message){
+
+	char *tmp;
+
+	tmp = getXmlElementByName(message, "ip");
+	memcpy(&(server_info.serverIp), tmp);
+
+
 }

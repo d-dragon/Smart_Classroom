@@ -11,9 +11,13 @@
 #include <libxml2/libxml/tree.h>
 #include <libxml2/libxml/xmlstring.h>
 #include <libxml2/libxml/xmlmemory.h>
+#include <libxml2/libxml/xmlwriter.h>
+#include <libxml2/libxml/xmlIO.h>
+#include <libxml2/libxml/encoding.h>
 #include <libxml2/libxml/xmlversion.h>
 #include "xmlHandler.h"
 #include "logger.h"
+#include "acpHandler.h"
 
 int findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name,
 		char *result);
@@ -28,7 +32,6 @@ char *getXmlMessageType(char *xmlbuff) {
 	xmlDocPtr xmldoc;
 	xmlNodePtr xmlrootnode;
 	xmlChar *xmlcontent;
-
 	xmldoc = xmlReadMemory(xmlbuff, (int) strlen(xmlbuff), "tmp.xml", NULL, 0);
 
 	if (xmldoc == NULL) {
@@ -67,7 +70,7 @@ int findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name,
 			}
 		} else {
 			content = xmlNodeListGetString(doc, node->children, 1);
-			strcpy(result,(char *)content);
+			strcpy(result, (char *) content);
 			free(content);
 //			result = (char *)content;
 			return 1;
@@ -110,6 +113,94 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 		return NULL;
 	}
 	int ret = findElement(xmldoc, xmlrootnode, name, xmlcontent);
-	appLog(LOG_DEBUG,"%s: %s",name, xmlcontent);
+	appLog(LOG_DEBUG, "%s: %s", name, xmlcontent);
 	return xmlcontent;
+}
+
+/*must free return pointer*/
+char *writeXmlToBuff(char *resp_code, char *att_info) {
+
+	int ret;
+	xmlTextWriterPtr writer;
+	xmlBufferPtr buffer;
+	char *tmp;
+
+	tmp = calloc(BUFF_LEN_MAX, sizeof(char));
+
+	/* Create a new XML buffer, to which the XML document will be
+	 * written */
+	buffer = xmlBufferCreate();
+	if (buffer == NULL) {
+		appLog(LOG_DEBUG, "create xml buffer failed");
+		return NULL;
+	}
+
+	/* Create a new XmlWriter for memory, with no compression.
+	 * Remark: there is no compression for this kind of xmlTextWriter */
+	writer = xmlNewTextWriterMemory(buffer, 0);
+	if (writer == NULL) {
+		appLog(LOG_DEBUG, "create xml writer failed");
+		return NULL;
+	}
+
+	/* Start the document with the xml default for the version,
+	 * encoding ISO UTF-8 and the default for the standalone
+	 * declaration. */
+	ret = xmlTextWriterStartDocument(writer, NULL, XML_ENCODING, "yes");
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error at xmlTextWriterStartDocument");
+		return NULL;
+	}
+
+	/*start root element*/
+	ret = xmlTextWriterStartElement(writer, BAD_CAST "message");
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error at xmlTextWriterStartElement");
+		return NULL;
+	}
+
+	/*start type elemnt*/
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "type", "response");
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
+	/*end type element*/
+/*	ret = xmlTextWriterEndElement(writer);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterEndElement");
+		return NULL;
+	}*/
+
+	/*start type elemnt*/
+	ret = xmlTextWriterStartElement(writer, BAD_CAST "content");
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
+
+
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "result", resp_code);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
+		return NULL;
+	}
+
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "AttInfo", att_info);
+		if (ret < 0) {
+			appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
+			return NULL;
+		}
+
+	/*close the elements message and type*/
+	ret = xmlTextWriterEndDocument(writer);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterEndDocument");
+		return NULL;
+	}
+	memcpy(tmp, buffer->content, strlen(buffer->content));
+	xmlFreeTextWriter(writer);
+	xmlBufferFree(buffer);
+//	appLog(LOG_DEBUG, "xml response:  %s", (char *) buffer->content);
+	return tmp;
 }

@@ -175,6 +175,8 @@ void *playAudioThread(void *arg) {
 	player->fileName = FilePath;
 	status = play(player);
 	free(player);
+#else
+	appLog(LOG_DEBUG, "pi is playing %s", filename);
 #endif
 	appLog(LOG_DEBUG, "deallocating memory");
 	free(arg);
@@ -183,16 +185,55 @@ void *playAudioThread(void *arg) {
 	pthread_exit(NULL);
 }
 
+int initAudioPlayer(char *filename) {
+
+	/*FileInfo *file;
+	 file = malloc(sizeof(FileInfo));
+	 file->filename = malloc(100);
+	 file->filename = "m.mp3";
+	 file->index = 0;*/
+	appLog(LOG_DEBUG, "inside initAudio")
+	char *FileName;
+	FileName = calloc(FILE_NAME_MAX, sizeof(char));
+	if (FileName == NULL) {
+		appLog(LOG_DEBUG, "allocated memory failed");
+		return ACP_FAILED;
+	}
+//	appLog(LOG_DEBUG, "address FileName: %p", FileName);
+//	memset(FileName, 0, FILE_NAME_MAX);
+	//  strlen -1 to truncate '|' charater at end of string
+	appLog(LOG_DEBUG, "debug----");
+	strncat(FileName, filename, strlen(filename)); //cann't assign FileName = "m.mp3", it change pointer address -> can't free()
+	appLog(LOG_DEBUG, "debug----");
+	/*Need to parse file index to get file name*/
+
+	//init play audio thread
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_STOP;
+	pthread_mutex_unlock(&g_audio_status_mutex);
+
+	//FileName will be freed in playAudioThread
+	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThread,
+			(void *) FileName)) {
+		appLog(LOG_DEBUG, "init playAudioThread failed!!!");
+		return ACP_FAILED;
+	}
+	return ACP_SUCCESS;
+}
+
+
 int stopAudio() {
 
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
+	appLog(LOG_DEBUG, "setting flag to AUDIO_STOP");
 	pthread_mutex_unlock(&g_audio_status_mutex);
 	return ACP_SUCCESS;
 }
 
 int pauseAudio() {
 	pthread_mutex_lock(&g_audio_status_mutex);
+	appLog(LOG_DEBUG, "setting flag to AUDIO_PAUSE");
 	g_audio_flag = AUDIO_PAUSE;
 	pthread_mutex_unlock(&g_audio_status_mutex);
 	return ACP_SUCCESS;

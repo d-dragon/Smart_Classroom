@@ -8,7 +8,7 @@
 #ifndef ADVERTISEMENT_H_
 #define ADVERTISEMENT_H_
 
-#define BUFF_LEN_MAX 1024
+
 #define COUNT_MAX 10
 #define MESSAGE_INVALID 0
 #define MESSAGE_VALID 1

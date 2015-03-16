@@ -16,6 +16,7 @@
 
 #include "FileHandler.h"
 #include "sock_infra.h"
+#include "xmlHandler.h"
 #include "logger.h"
 #include "acpHandler.h"
 
@@ -216,4 +217,33 @@ int getFileFromFtp(char *FtpServerIP, char *FileName) {
 	}
 	Py_Finalize();
 	return FILE_SUCCESS;
+}
+
+int getFile(char *message) {
+
+	char *pftp_addr;
+	char *pfile_name;
+
+	pftp_addr = getXmlElementByName(message, "ftpaddr");
+
+	if (strlen(pftp_addr) <= 0) {
+		appLog(LOG_DEBUG, "get ftp address failed");
+		free(pftp_addr);
+		return FILE_ERROR;
+	}
+
+	pfile_name = getXmlElementByName(message, "filename");
+	if (strlen(pfile_name) <= 0) {
+		appLog(LOG_DEBUG, "get ftp address failed");
+		free(pftp_addr);
+		free(pfile_name);
+		return FILE_ERROR;
+	}
+
+	int ret = getFileFromFtp(pftp_addr, pfile_name);
+
+	free(pftp_addr);
+	free(pfile_name);
+
+	return ret;
 }

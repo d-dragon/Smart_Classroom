@@ -47,6 +47,7 @@ void closeFileStream();
 int getListFile(char *, char *);
 
 int getFileFromFtp(char *, char *);
+int getFile(char *);
 
 
 #endif /* RECEIVE_FILE_H_ */

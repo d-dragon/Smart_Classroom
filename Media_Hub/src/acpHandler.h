@@ -13,14 +13,17 @@
 #include <string.h>
 #include <pthread.h>
 
-#define ACP_SUCCESS		1
-#define ACP_FAILED		0
+#define ACP_SUCCESS		0
+#define ACP_FAILED		-1
 #define MAX_FILE_BUFF_LEN	10*1024
 #define RECV_FILE_ENABLED	1
 #define RECV_FILE_DISABLED 0
 #define MAX_WAITING_COUNT 	3000
 #define ENABLED		1
 #define DISABLED	0
+#define BUFF_LEN_MAX 1024
+#define RESPONSE_SUCCESS	"SUCCESS"
+#define RESPONSE_FAILED		"FAILED"
 
 /********************************************************
  * Define communication protocol session
@@ -63,6 +66,18 @@ int g_StartTransferFlag;
 int g_waitCount;
 int g_writeDataFlag;
 char *g_remote_addr;
+
+typedef struct Ftp_Info{
+
+	char Ip[24];
+	char User[24];
+	char Password[24];
+}FtpInfo;
+typedef struct Server_Info{
+	char serverIp[24];
+	FtpInfo ftp;
+}ServerInfo;
+
 
 pthread_t g_TaskHandlerThread;
 

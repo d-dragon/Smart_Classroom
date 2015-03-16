@@ -12,14 +12,14 @@ OBJS = audio_app.o FileHandler.o advertisement.o sock_infra.o logger.o playAudio
 ifeq ($(TARGET),x86)
 	$(CC) $(CFLAGS) $(DEBUGFLAG) -I/usr/include/python2.7 -I/usr/include/libxml2 -g -O0 -c -o $@  $<
 else
-	$(CC) $(CFLAGS) $(DEBUGFLAG) $(PLAYAUDIOFLAG) -D RPI -I/usr/include/python2.7 -g -O0 -c -o $@  $<
+	$(CC) $(CFLAGS) $(DEBUGFLAG) $(PLAYAUDIOFLAG) -D RPI -I/usr/include/python2.7 -I/usr/include/libxml2 -g -O0 -c -o $@  $<
 endif
 			
 audio_app: $(OBJS)
 ifeq ($(TARGET),x86)
 	$(CC) -o $@ $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2
 else
-	$(CC) -o $@ $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 libportaudio.a -lmpg123
+	$(CC) -o $@ $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123
 endif
 			
 	rm *.o
