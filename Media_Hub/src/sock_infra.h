@@ -69,6 +69,7 @@ int openDatagramSocket();
 int openMulRecvSocket();
 int connecttoStreamSocket(char *ip, char *port);
 char *getInterfaceAddress();
+int sendMulMessage(char *message);
 
 
 #endif /* SOCK_INFRA_H_ */

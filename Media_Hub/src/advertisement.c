@@ -10,6 +10,7 @@
 #include "logger.h"
 #include "xmlHandler.h"
 #include "FileHandler.h"
+#include "playAudio.h"
 
 void *advertiseServerInfoThread() {
 
@@ -181,7 +182,7 @@ int parseDiscoveredMessage(char *message) {
 void startMulticastListener(){
 
 	int ret;
-	int multicast_fd;
+//	int multicast_fd;
 
 	char *msg_buff;
 
@@ -192,7 +193,7 @@ void startMulticastListener(){
 		appLog(LOG_DEBUG, "allocate buffer failed, exit program");
 		exit(1);
 	}
-
+	g_audio_flag = AUDIO_STOP;
 
 	multicast_fd = openMulRecvSocket();
 	if (multicast_fd < 0) {
@@ -209,12 +210,6 @@ void startMulticastListener(){
 
 			appLog(LOG_DEBUG, "received %d bytes",(int)strlen(msg_buff));
 			MessageProcessor(msg_buff);
-			char *buff = NULL;
-			buff = writeXmlToBuff(RESPONSE_SUCCESS, "room1");
-			if(buff != NULL){
-				appLog(LOG_DEBUG, "xml response: %s", buff);
-				free(buff);
-			}
 		}else{
 			appLog(LOG_DEBUG, "read multicast message failed");
 		}

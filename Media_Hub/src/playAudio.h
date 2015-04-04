@@ -54,6 +54,7 @@ typedef struct player
 pthread_t g_play_audio_thd;
 pthread_mutex_t g_audio_status_mutex;
 g_audio_status g_audio_flag;
+char g_file_name_playing[128];
 
 #ifdef PLAY_AUDIO
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function

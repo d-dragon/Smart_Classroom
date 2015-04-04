@@ -112,7 +112,6 @@ int play(mp3Player* player)
 	mpg123_exit();
 
 	Pa_Terminate();
-
 	appLog(LOG_DEBUG,"\n Finish playing !!!!!!\n");
 	return 0;
 }
@@ -228,6 +227,7 @@ int stopAudio() {
 	g_audio_flag = AUDIO_STOP;
 	appLog(LOG_DEBUG, "setting flag to AUDIO_STOP");
 	pthread_mutex_unlock(&g_audio_status_mutex);
+	sendResultResponse(ACP_SUCCESS, NULL);
 	return ACP_SUCCESS;
 }
 
@@ -236,6 +236,7 @@ int pauseAudio() {
 	appLog(LOG_DEBUG, "setting flag to AUDIO_PAUSE");
 	g_audio_flag = AUDIO_PAUSE;
 	pthread_mutex_unlock(&g_audio_status_mutex);
+	sendResultResponse(ACP_SUCCESS, NULL);
 	return ACP_SUCCESS;
 }
 //#endif

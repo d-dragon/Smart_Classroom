@@ -24,6 +24,7 @@
 #define BUFF_LEN_MAX 1024
 #define RESPONSE_SUCCESS	"SUCCESS"
 #define RESPONSE_FAILED		"FAILED"
+#define ROOM_NAME_DEFAULT			"room1"
 
 /********************************************************
  * Define communication protocol session
@@ -66,6 +67,7 @@ int g_StartTransferFlag;
 int g_waitCount;
 int g_writeDataFlag;
 char *g_remote_addr;
+int multicast_fd;
 
 typedef struct Ftp_Info{
 
@@ -78,6 +80,7 @@ typedef struct Server_Info{
 	FtpInfo ftp;
 }ServerInfo;
 
+ServerInfo g_ServerInfo;
 
 pthread_t g_TaskHandlerThread;
 
@@ -113,8 +116,10 @@ int initFileHandlerThread();
 int initAudioPlayer(char *);
 
 int initTaskHandler(char *message);
+int collectServerInfo(message);
 void *TaskHandlerThread(void *arg);
 void MessageProcessor(char *msg_buff);
+int sendResultResponse(int resp_code, char *resp_content);
 
 #endif /* ACP_H_ */
 

@@ -221,15 +221,16 @@ int getFileFromFtp(char *FtpServerIP, char *FileName) {
 
 int getFile(char *message) {
 
+	int ret;
 	char *pftp_addr;
 	char *pfile_name;
 
 	pftp_addr = getXmlElementByName(message, "ftpaddr");
 
-	if (strlen(pftp_addr) <= 0) {
+	if (!pftp_addr) {
 		appLog(LOG_DEBUG, "get ftp address failed");
 		free(pftp_addr);
-		return FILE_ERROR;
+		ret = FILE_ERROR;
 	}
 
 	pfile_name = getXmlElementByName(message, "filename");
@@ -237,13 +238,14 @@ int getFile(char *message) {
 		appLog(LOG_DEBUG, "get ftp address failed");
 		free(pftp_addr);
 		free(pfile_name);
-		return FILE_ERROR;
+		ret = FILE_ERROR;
 	}
 
-	int ret = getFileFromFtp(pftp_addr, pfile_name);
+	ret = getFileFromFtp(pftp_addr, pfile_name);
 
 	free(pftp_addr);
 	free(pfile_name);
+	ret = sendResultResponse(ret, NULL);
 
 	return ret;
 }

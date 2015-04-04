@@ -140,6 +140,7 @@ char *getInterfaceAddress() {
 int openMulRecvSocket() {
 
 	int mul_fd;
+
 	mul_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (mul_fd < 0) {
 		appLog(LOG_DEBUG, "Creating multicast socket failed\n");
@@ -159,7 +160,8 @@ int openMulRecvSocket() {
 	memset(&mul_sock, 0, sizeof(mul_sock));
 	mul_sock.sin_family = AF_INET;
 	mul_sock.sin_port = htons(5102);
-	mul_sock.sin_addr.s_addr = INADDR_ANY;
+	mul_sock.sin_addr.s_addr = inet_addr(MULTICAST_ADDR); //INADDR_ANY
+
 	if (bind(mul_fd, (struct sockaddr*) &mul_sock, sizeof(mul_sock))) {
 
 		appLog(LOG_DEBUG, "binding mul socket failed\n");
@@ -184,7 +186,55 @@ int openMulRecvSocket() {
 		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n",
 				MULTICAST_ADDR, interface_addr);
 	}
+
 	return mul_fd;
+}
+
+int sendMulMessage(char *message) {
+
+	struct in_addr localInterface;
+	struct sockaddr_in groupSock;
+	int fd;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		appLog(LOG_DEBUG, "open socket failed");
+		return -1;
+	}
+
+	memset((char *) &groupSock, 0, sizeof(groupSock));
+	groupSock.sin_family = AF_INET;
+	groupSock.sin_addr.s_addr = inet_addr("239.255.1.111");
+	groupSock.sin_port = htons(5102);
+
+	localInterface.s_addr = inet_addr(interface_addr);
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (char *) &localInterface,
+			sizeof(localInterface)) < 0) {
+		perror("Setting local interface error");
+		exit(1);
+	} else
+		printf("Setting the local interface...OK\n");
+
+	/*char loopch = 0;
+	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *) &loopch,
+			sizeof(loopch)) < 0) {
+		perror("Setting IP_MULTICAST_LOOP error");
+		close(fd);
+		exit(1);
+	} else {
+		printf("Disabling the loopback...OK.\n");
+	}*/
+	if (sendto(fd, message, strlen(message), 0, (struct sockaddr*) &groupSock,
+			sizeof(groupSock)) < 0) {
+		perror("Sending datagram message error");
+		return -1;
+	} else {
+		printf("Sending datagram message...OK\n");
+		close(fd);
+		return 0;
+	}
+
+
 }
 
 /*
@@ -209,7 +259,8 @@ int connecttoStreamSocket(char *addr, char *port) {
 	serv_addr.sin_port = htons(atoi(port));
 	serv_addr.sin_addr.s_addr = inet_addr(addr);
 
-	if (connect(sd_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+	if (connect(sd_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))
+			< 0) {
 		appLog(LOG_DEBUG, "connect to station failed");
 		return SOCK_ERROR;
 	}

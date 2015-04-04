@@ -30,7 +30,7 @@ struct RequestCmd {
 enum request_cmd_index {
 
 	GET_PI_INFO = 1,
-	INIT_TASK_HANDLER,
+	PI_CONNECT_SERVER,
 	GET_FILE,
 	PLAY_AUDIO,
 	STOP_AUDIO,
@@ -39,12 +39,11 @@ enum request_cmd_index {
 };
 
 static struct RequestCmd RequestCmdList[] = {
-		{ "GetPiInfo", GET_PI_INFO, 1, "" }, { "InitTaskHandler",
-				INIT_TASK_HANDLER, 1, "server_ip" }, { "GetFile", GET_FILE, 2,
-				"list_file" }, { "PlayFile", PLAY_AUDIO, 1, "file_name" },
-				{"StopFile", STOP_AUDIO, 1, "file_name"},
-				{"PauseFile", PAUSE_AUDIO, 1, "file_name"}
-};
+		{ "GetPiInfo", GET_PI_INFO, 1, "" }, { "PiConnectServer",
+				PI_CONNECT_SERVER, 1, "server_ip" }, { "GetFile", GET_FILE, 2,
+				"list_file" }, { "PlayFile", PLAY_AUDIO, 1, "file_name" }, {
+				"StopFile", STOP_AUDIO, 1, "file_name" }, { "PauseFile",
+				PAUSE_AUDIO, 1, "file_name" } };
 
 struct NotifyInfo {
 	const char *info_str;
@@ -55,12 +54,13 @@ struct NotifyInfo {
 enum notify_info_index {
 	SERVER_INFO = 1, FTP_ADDR
 };
-static struct NotifyInfo InfoList[] = { { "Management Server's address", SERVER_INFO }, {
+static struct NotifyInfo InfoList[] = { { "ServerInfo", SERVER_INFO }, {
 		"ftpaddr", FTP_ADDR } };
 
 ServerInfo server_info;
 
 pthread_mutex_t g_file_buff_mutex;
+
 int stream_sock_sd;
 
 int NotifyMessageHandler(char *message);
@@ -393,7 +393,6 @@ int initFileHandlerThread(char *FileInfo) {
 	return ACP_SUCCESS;
 }
 
-
 int wrapperControlResp(char resp) {
 
 	char *buff;
@@ -470,22 +469,29 @@ int wrapperRequestResp(char *resp) {
 int initTaskHandler(char *message) {
 
 	int ret;
-	char *server_ip;
+	char *server_ip = &(g_ServerInfo.serverIp);
+	char *room_list;
 
-	server_ip = getXmlElementByName(message, "ip");
-	if(strlen(server_ip) <= 0){
+	room_list = getXmlElementByName(message, "room");
+	if (!room_list) {
 		appLog(LOG_DEBUG, "server_ip is invalid");
+		free(room_list);
 		return ACP_FAILED;
 	}
-	ret = pthread_create(&g_TaskHandlerThread, NULL, &TaskHandlerThread,
-			(void *) server_ip);
-	if (ret) {
-		appLog(LOG_DEBUG, "init Task Handler failed");
-		return ACP_FAILED;
-	} else {
-		appLog(LOG_DEBUG, "init Task handler success");
-		return ACP_SUCCESS;
+	if (strstr(room_list, (char *) ROOM_NAME_DEFAULT) != NULL) {
+		ret = pthread_create(&g_TaskHandlerThread, NULL, &TaskHandlerThread,
+				(void *) server_ip);
+		free(room_list);
+		if (ret) {
+			appLog(LOG_DEBUG, "init Task Handler failed");
+			return ACP_FAILED;
+		} else {
+			appLog(LOG_DEBUG, "init Task handler success");
+			return ACP_SUCCESS;
+		}
 	}
+	free(room_list);
+	return ACP_FAILED;
 }
 
 void *TaskHandlerThread(void *arg) {
@@ -502,30 +508,32 @@ void *TaskHandlerThread(void *arg) {
 
 	if (stream_sock_fd != SOCK_ERROR) {
 		appLog(LOG_DEBUG, "Pi connected to Station!!!");
-		free(server_ip);
+//		free(server_ip);
 	} else {
-		appLog(LOG_DEBUG, "Pi - Station connection init failed, % exit",
-				__FUNCTION__);
-		free(server_ip);
+		appLog(LOG_DEBUG,
+				"Pi - Station connection init failed, TaskHandlerThread exit");
+//		free(server_ip);
 		pthread_exit(NULL);
 	}
-
+	sendResultResponse(ACP_SUCCESS, (char *) ROOM_NAME_DEFAULT);
 	pthread_mutex_init(&g_audio_status_mutex, NULL);
 	while (1) {
 		appLog(LOG_DEBUG, "running Task Handler!!!");
 		memset(pmsg_buff, 0x00, BUFF_LEN_MAX);
 
 		byte_count = recv(stream_sock_fd, pmsg_buff, BUFF_LEN_MAX, 0);
-		if(byte_count < 0){
+		if (byte_count < 0) {
 			appLog(LOG_DEBUG, "received data failed!");
-		}else if(byte_count == 0){
-			appLog(LOG_DEBUG, "remote socket was closed -> close stream sock %d", stream_sock_fd);
+		} else if (byte_count == 0) {
+			appLog(LOG_DEBUG,
+					"remote socket was closed -> close stream sock %d",
+					stream_sock_fd);
 			close(stream_sock_fd);
 			free(pmsg_buff);
 			appLog(LOG_DEBUG, "exit Task Handler thread!!");
 			pthread_exit(NULL);
-		}else{
-			appLog(LOG_DEBUG,"message data received >>>> %s", pmsg_buff);
+		} else {
+			appLog(LOG_DEBUG, "message data received >>>> %s", pmsg_buff);
 			MessageProcessor(pmsg_buff);
 		}
 	}
@@ -538,7 +546,7 @@ void MessageProcessor(char *message) {
 
 	pmsg_type = getXmlElementByName(message, XML_MESSGAE_TYPE);
 
-	if (strlen(pmsg_type)) {
+	if (pmsg_type != NULL) {
 		appLog(LOG_DEBUG, "message type: %s", pmsg_type);
 	} else {
 		appLog(LOG_DEBUG, "message type is invalid!!");
@@ -558,9 +566,9 @@ void MessageProcessor(char *message) {
 	} else {
 		appLog(LOG_DEBUG, "message type not match");
 	}
-	if(ret == ACP_SUCCESS){
+	if (ret == ACP_SUCCESS) {
 		appLog(LOG_DEBUG, "Handle %s message success!", pmsg_type);
-	}else{
+	} else {
 		appLog(LOG_DEBUG, "Handle %s message failed!", pmsg_type);
 	}
 	free(pmsg_type);
@@ -576,7 +584,7 @@ int NotifyMessageHandler(char *message) {
 	char *pinfo;
 
 	pinfo = getXmlElementByName(message, XML_MESSGAE_INFO);
-	if(strlen(pinfo) <= 0){
+	if (!pinfo) {
 		appLog(LOG_DEBUG, "nofity info: %s is invalid", pinfo);
 		return ACP_FAILED;
 	}
@@ -584,10 +592,11 @@ int NotifyMessageHandler(char *message) {
 
 	switch (notify_index) {
 	case SERVER_INFO:
-		ret = initTaskHandler(message);
+		ret = collectServerInfo(message);
 		break;
 	default:
-		appLog(LOG_DEBUG, "notify info %s index %d no match", pinfo, notify_index);
+		appLog(LOG_DEBUG, "notify info %s index %d no match",
+				pinfo, notify_index);
 		break;
 	}
 
@@ -603,17 +612,20 @@ int RequestMessageHandler(char *message) {
 
 	cmd = getXmlElementByName(message, XML_MESSAGE_COMMAND);
 
-	if( strlen(cmd) <= 0){
-		appLog(LOG_DEBUG,"get request command failed: %s", cmd);
+	if (!cmd) {
+		appLog(LOG_DEBUG, "get request command failed: %s", cmd);
 		return ACP_FAILED;
 	}
 	cmd_index = getRequestCommandIndex(cmd);
 
-	if(cmd_index == 0){
+	if (cmd_index == 0) {
 		appLog(LOG_DEBUG, "command not found");
 		return ACP_FAILED;
 	}
-	switch(cmd_index){
+	switch (cmd_index) {
+	case PI_CONNECT_SERVER:
+		ret = initTaskHandler(message);
+		break;
 	case GET_FILE:
 		ret = getFile(message);
 		break;
@@ -642,7 +654,7 @@ int getNotifyIndex(char *info) {
 	int numofnotifies = (sizeof(InfoList)) / (sizeof(NotifyInfo));
 	int i;
 	for (i = 0; i < numofnotifies; i++) {
-		appLog(LOG_DEBUG,"InfoList[%d].info_str: %s", i, InfoList[i].info_str);
+		appLog(LOG_DEBUG, "InfoList[%d].info_str: %s", i, InfoList[i].info_str);
 		if (strcmp(info, InfoList[i].info_str) == 0) {
 			return InfoList[i].info_index;
 		}
@@ -650,43 +662,160 @@ int getNotifyIndex(char *info) {
 	return 0;
 }
 
-int getRequestCommandIndex(char *command){
+int getRequestCommandIndex(char *command) {
+
 	int numofcmd = (sizeof RequestCmdList) / (sizeof ReqestCmd);
 	int i;
-	for (i = 0; i < numofcmd; i++){
-		if(strcmp(command, RequestCmdList[i].cmd_str) == 0){
+	for (i = 0; i < numofcmd; i++) {
+		if (strcmp(command, RequestCmdList[i].cmd_str) == 0) {
 			return RequestCmdList[i].cmd_index;
 		}
 	}
 	return 0;
 }
 
-int playAudio(char *message){
+int playAudio(char *message) {
 
 	char *pfile_name;
 	int ret;
 
-	appLog(LOG_DEBUG, "debug----");
-	pfile_name = getXmlElementByName(message, "filename");
+	if (g_audio_flag == STOP_AUDIO) {
+		pfile_name = getXmlElementByName(message, "filename");
+		appLog(LOG_DEBUG, "file name: %s", pfile_name);
+		if (!pfile_name) {
+			appLog(LOG_DEBUG, "file is not exist");
+			free(pfile_name);
+			sendResultResponse(ACP_FAILED, NULL);
+			return ACP_FAILED;
+		}
+		snprintf(g_file_name_playing, sizeof(g_file_name_playing),"%s",pfile_name);
+		ret = initAudioPlayer(pfile_name);
+		usleep(500000); //0.5s
+		if (ret == ACP_SUCCESS) {
+			if (g_audio_flag == AUDIO_PLAY) {
+				sendResultResponse(ACP_SUCCESS, pfile_name);
+			} else {
+				sendResultResponse(ACP_FAILED, NULL);
+			}
+		}
+	} else {
 
-	appLog(LOG_DEBUG,"file name: %s", pfile_name);
-	if(strlen(pfile_name) <= 0){
-		appLog(LOG_DEBUG,"file is not exist");
-		free(pfile_name);
-		return ACP_FAILED;
+		pfile_name = getXmlElementByName(message, "filename");
+
+		appLog(LOG_DEBUG, "file name: %s", pfile_name);
+		if (!pfile_name) {
+			appLog(LOG_DEBUG, "file is not exist");
+			free(pfile_name);
+			sendResultResponse(ACP_FAILED, NULL);
+			return ACP_FAILED;
+		}
+		if(strcmp(g_file_name_playing,pfile_name) == 0){
+			appLog(LOG_DEBUG, "%s is playing", pfile_name);
+			sendResultResponse(ACP_SUCCESS, "playing");
+			return ACP_SUCCESS;
+		}
+		ret = initAudioPlayer(pfile_name);
+		usleep(500000); //0.5s
+		if (ret == ACP_SUCCESS) {
+			if (g_audio_flag == AUDIO_PLAY) {
+				sendResultResponse(ACP_SUCCESS, pfile_name);
+			} else {
+				sendResultResponse(ACP_FAILED, NULL);
+			}
+		}
 	}
-
-	ret = initAudioPlayer(pfile_name);
-
 	free(pfile_name);
 	return ret;
 }
-int collectServerInfo(message){
+int collectServerInfo( message) {
 
-	char *tmp;
+	char *servIp;
+	char *ftpaddr;
+	char *ftpusr;
+	char *ftppass;
 
-	tmp = getXmlElementByName(message, "ip");
-	memcpy(&(server_info.serverIp), tmp);
+	memset(&(g_ServerInfo.ftp.Password), 0x00,
+			sizeof(g_ServerInfo.ftp.Password));
 
+	servIp = getXmlElementByName(message, "serveraddress");
+	ftpaddr = getXmlElementByName(message, "ftpaddress");
+	ftpusr = getXmlElementByName(message, "ftpuser");
+	ftppass = getXmlElementByName(message, "ftppassword");
 
+	if (servIp != NULL) {
+		memset(&(g_ServerInfo.serverIp), 0x00, sizeof(g_ServerInfo.serverIp));
+		snprintf(g_ServerInfo.serverIp, sizeof(g_ServerInfo.serverIp), "%s",
+				servIp);
+		free(servIp);
+	}
+
+	if (ftpaddr != NULL) {
+		memset(&(g_ServerInfo.ftp.Ip), 0x00, sizeof(g_ServerInfo.ftp.Ip));
+		snprintf(g_ServerInfo.ftp.Ip, sizeof(g_ServerInfo.ftp.Ip), "%s",
+				ftpaddr);
+		free(ftpaddr);
+	}
+
+	if (ftpusr != NULL) {
+		memset(&(g_ServerInfo.ftp.User), 0x00, sizeof(g_ServerInfo.ftp.User));
+		snprintf(g_ServerInfo.ftp.User, sizeof(g_ServerInfo.ftp.User), "%s",
+				ftpusr);
+		free(ftpusr);
+	}
+
+	if (ftppass != NULL) {
+		memset(&(g_ServerInfo.ftp.Password), 0x00,
+				sizeof(g_ServerInfo.ftp.Password));
+		snprintf(g_ServerInfo.ftp.Password, sizeof(g_ServerInfo.ftp.Password),
+				"%s", ftppass);
+		free(ftppass);
+	}
+
+	if (!(servIp && ftpaddr && ftpusr && ftppass)) {
+		appLog(LOG_DEBUG, "collect Server Info failed");
+		return ACP_FAILED;
+	}
+	appLog(LOG_DEBUG, "%s || %s || %s || %s",
+			g_ServerInfo.serverIp, g_ServerInfo.ftp.Ip, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
+	char *buff = NULL;
+	buff = writeXmlToBuff(RESPONSE_SUCCESS, "room1");
+	if (buff == NULL) {
+		return ACP_FAILED;
+	}
+	/*int ret = sendto(multicast_fd, buff, BUFF_LEN_MAX, 0,(struct sockaddr*)&mul_sock, sizeof(mul_sock));
+	 if(ret > 0){
+	 appLog(LOG_DEBUG, "sent %d byte response success!", ret);
+	 }
+	 sleep(5);*/
+	appLog(LOG_DEBUG, "xml response %d byte: %s", strlen(buff), buff);
+	sendMulMessage(buff);
+	free(buff);
+	return ACP_SUCCESS;
+}
+
+int sendResultResponse(int resp_code, char *resp_content) {
+
+	int ret;
+	char *resp_buff;
+
+	if (resp_code == 0) {
+		resp_buff = writeXmlToBuff((char *) RESPONSE_SUCCESS, resp_content);
+	} else {
+		resp_buff = writeXmlToBuff((char *) RESPONSE_FAILED, resp_content);
+	}
+
+	if (resp_buff == NULL) {
+		appLog(LOG_DEBUG, "send result response failed!");
+		return ACP_FAILED;
+	}
+
+	appLog(LOG_DEBUG, "response content: %s", resp_buff);
+	ret = send(stream_sock_fd, resp_buff, strlen(resp_buff), 0);
+
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "send response failed");
+		return ACP_FAILED;
+	}
+
+	return ACP_SUCCESS;
 }

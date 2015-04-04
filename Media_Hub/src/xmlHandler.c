@@ -19,8 +19,7 @@
 #include "logger.h"
 #include "acpHandler.h"
 
-int findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name,
-		char *result);
+char *findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name);
 
 /* Get xml message type
  * return: notify/request/response
@@ -58,26 +57,23 @@ char *getXmlMessageType(char *xmlbuff) {
 
 }
 
-int findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name,
-		char *result) {
+char *findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name) {
 
-	xmlChar *content;
+	xmlChar *content = NULL;
 	node = node->children;
 	while (node != NULL) {
 		if (strcmp((char *) node->name, element_name)) {
 			if (node->children->children != NULL) {
-				findElement(doc, node, element_name, result);
+				content = findElement(doc, node, element_name);
 			}
 		} else {
 			content = xmlNodeListGetString(doc, node->children, 1);
-			strcpy(result, (char *) content);
-			free(content);
 //			result = (char *)content;
-			return 1;
+			break;
 		}
 		node = node->next;
 	}
-	return 0;
+	return (char *) content;
 }
 
 /*
@@ -92,8 +88,8 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 	xmlDocPtr xmldoc;
 	xmlNodePtr xmlrootnode;
 	char *xmlcontent;
-	xmlcontent = malloc(512);
-	memset(xmlcontent, 0x00, 512);
+//	xmlcontent = malloc(512);
+//	memset(xmlcontent, 0x00, 512);
 
 	xmldoc = xmlReadMemory(xmlbuff, (int) strlen(xmlbuff), "tmp.xml", NULL, 0);
 	if (xmldoc == NULL) {
@@ -112,8 +108,10 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 		appLog(LOG_DEBUG, "message is invalid!!");
 		return NULL;
 	}
-	int ret = findElement(xmldoc, xmlrootnode, name, xmlcontent);
+	xmlcontent = findElement(xmldoc, xmlrootnode, name);
 	appLog(LOG_DEBUG, "%s: %s", name, xmlcontent);
+	xmlFreeDoc(xmldoc);
+//	xmlFreeNode(xmlrootnode);
 	return xmlcontent;
 }
 
@@ -166,11 +164,11 @@ char *writeXmlToBuff(char *resp_code, char *att_info) {
 		return NULL;
 	}
 	/*end type element*/
-/*	ret = xmlTextWriterEndElement(writer);
-	if (ret < 0) {
-		appLog(LOG_DEBUG, "error in xmlTextWriterEndElement");
-		return NULL;
-	}*/
+	/*	ret = xmlTextWriterEndElement(writer);
+	 if (ret < 0) {
+	 appLog(LOG_DEBUG, "error in xmlTextWriterEndElement");
+	 return NULL;
+	 }*/
 
 	/*start type elemnt*/
 	ret = xmlTextWriterStartElement(writer, BAD_CAST "content");
@@ -178,20 +176,20 @@ char *writeXmlToBuff(char *resp_code, char *att_info) {
 		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
 		return NULL;
 	}
-
-
-	ret = xmlTextWriterWriteElement(writer, BAD_CAST "result", resp_code);
-	if (ret < 0) {
-		appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
-		return NULL;
-	}
-
-	ret = xmlTextWriterWriteElement(writer, BAD_CAST "AttInfo", att_info);
+	if (resp_code != NULL) {
+		ret = xmlTextWriterWriteElement(writer, BAD_CAST "result", resp_code);
 		if (ret < 0) {
 			appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
 			return NULL;
 		}
-
+	}
+	if (att_info != NULL) {
+		ret = xmlTextWriterWriteElement(writer, BAD_CAST "AttInfo", att_info);
+		if (ret < 0) {
+			appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
+			return NULL;
+		}
+	}
 	/*close the elements message and type*/
 	ret = xmlTextWriterEndDocument(writer);
 	if (ret < 0) {
