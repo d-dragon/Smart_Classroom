@@ -64,8 +64,8 @@ int stop(mp3Player* player);//
 int playAudio(char *message);
 int initAudioPlayer(char *filename);
 void *playAudioThread(void *);
-int stopAudio();
-int pauseAudio();
+int stopAudio(char *message);
+int pauseAudio(char *message);
 
 #endif
 

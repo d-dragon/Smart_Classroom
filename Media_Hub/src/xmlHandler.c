@@ -103,20 +103,21 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 		appLog(LOG_DEBUG, "xmlDocGetRootElement failed", __FUNCTION__);
 		return NULL;
 	}
-	appLog(LOG_DEBUG, "root node name: %s", xmlrootnode->name);
+//	appLog(LOG_DEBUG, "root node name: %s", xmlrootnode->name);
 	if (strcmp((char *) xmlrootnode->name, (char *) "message")) {
 		appLog(LOG_DEBUG, "message is invalid!!");
 		return NULL;
 	}
 	xmlcontent = findElement(xmldoc, xmlrootnode, name);
-	appLog(LOG_DEBUG, "%s: %s", name, xmlcontent);
+//	appLog(LOG_DEBUG, "%s: %s", name, xmlcontent);
 	xmlFreeDoc(xmldoc);
 //	xmlFreeNode(xmlrootnode);
 	return xmlcontent;
 }
 
 /*must free return pointer*/
-char *writeXmlToBuff(char *resp_code, char *att_info) {
+char *writeXmlToBuff(char *msg_id, char *resp_for, char *resp_code,
+		char *att_info) {
 
 	int ret;
 	xmlTextWriterPtr writer;
@@ -157,12 +158,18 @@ char *writeXmlToBuff(char *resp_code, char *att_info) {
 		return NULL;
 	}
 
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "id", msg_id);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
 	/*start type elemnt*/
 	ret = xmlTextWriterWriteElement(writer, BAD_CAST "type", "response");
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
 		return NULL;
 	}
+
 	/*end type element*/
 	/*	ret = xmlTextWriterEndElement(writer);
 	 if (ret < 0) {
@@ -174,6 +181,11 @@ char *writeXmlToBuff(char *resp_code, char *att_info) {
 	ret = xmlTextWriterStartElement(writer, BAD_CAST "content");
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "responsefor", resp_for);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteFormatComment");
 		return NULL;
 	}
 	if (resp_code != NULL) {

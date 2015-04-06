@@ -283,14 +283,14 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		break;
 	case CMD_CTRL_STOP_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_STOP_AUDIO");
-		ret = stopAudio();
+//		ret = stopAudio();
 		if (ret == ACP_SUCCESS) {
 			wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		}
 		break;
 	case CMD_CTRL_PAUSE_AUDIO:
 		appLog(LOG_DEBUG, "CMD_CTRL_PAUSE_AUDIO");
-		ret = pauseAudio();
+//		ret = pauseAudio();
 		if (ret == ACP_SUCCESS) {
 			wrapperControlResp((char) CTRL_RESP_SUCCESS);
 		}
@@ -471,8 +471,13 @@ int initTaskHandler(char *message) {
 	int ret;
 	char *server_ip = &(g_ServerInfo.serverIp);
 	char *room_list;
+	char *msg_id;
+	char *resp_for;
 
 	room_list = getXmlElementByName(message, "room");
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
+
 	if (!room_list) {
 		appLog(LOG_DEBUG, "server_ip is invalid");
 		free(room_list);
@@ -484,14 +489,33 @@ int initTaskHandler(char *message) {
 		free(room_list);
 		if (ret) {
 			appLog(LOG_DEBUG, "init Task Handler failed");
-			return ACP_FAILED;
+			ret = ACP_FAILED;
 		} else {
-			appLog(LOG_DEBUG, "init Task handler success");
-			return ACP_SUCCESS;
+			appLog(LOG_DEBUG, "init Task handler success %d", stream_sock_fd);
+			ret = ACP_SUCCESS;
 		}
 	}
-	free(room_list);
-	return ACP_FAILED;
+	int count = 0;
+	usleep(200000);
+	while (count < 5) {
+
+		if (stream_sock_fd > 0) {
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS,
+					(char *) ROOM_NAME_DEFAULT);
+			break;
+		} else {
+			sleep(1);
+			count++;
+		}
+		if (count == 5) {
+			sendResultResponse(msg_id, resp_for, ACP_FAILED,
+					(char *) ROOM_NAME_DEFAULT);
+			break;
+		}
+	}
+	free(msg_id);
+	free(resp_for);
+	return ret;
 }
 
 void *TaskHandlerThread(void *arg) {
@@ -511,11 +535,11 @@ void *TaskHandlerThread(void *arg) {
 //		free(server_ip);
 	} else {
 		appLog(LOG_DEBUG,
-				"Pi - Station connection init failed, TaskHandlerThread exit");
+				"Pi - Station connection init failed: stream_sock_fd %d, TaskHandlerThread exit",
+				stream_sock_fd);
 //		free(server_ip);
 		pthread_exit(NULL);
 	}
-	sendResultResponse(ACP_SUCCESS, (char *) ROOM_NAME_DEFAULT);
 	pthread_mutex_init(&g_audio_status_mutex, NULL);
 	while (1) {
 		appLog(LOG_DEBUG, "running Task Handler!!!");
@@ -634,11 +658,11 @@ int RequestMessageHandler(char *message) {
 		break;
 	case STOP_AUDIO:
 		appLog(LOG_DEBUG, "called stopAudio");
-		ret = stopAudio();
+		ret = stopAudio(message);
 		break;
 	case PAUSE_AUDIO:
 		appLog(LOG_DEBUG, "called pauseAudio");
-		ret = pauseAudio();
+		ret = pauseAudio(message);
 		break;
 	default:
 		break;
@@ -677,7 +701,12 @@ int getRequestCommandIndex(char *command) {
 int playAudio(char *message) {
 
 	char *pfile_name;
+	char *msg_id;
+	char *resp_for;
 	int ret;
+
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
 
 	if (g_audio_flag == STOP_AUDIO) {
 		pfile_name = getXmlElementByName(message, "filename");
@@ -685,17 +714,18 @@ int playAudio(char *message) {
 		if (!pfile_name) {
 			appLog(LOG_DEBUG, "file is not exist");
 			free(pfile_name);
-			sendResultResponse(ACP_FAILED, NULL);
+			sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
 			return ACP_FAILED;
 		}
-		snprintf(g_file_name_playing, sizeof(g_file_name_playing),"%s",pfile_name);
+		snprintf(g_file_name_playing, sizeof(g_file_name_playing), "%s",
+				pfile_name);
 		ret = initAudioPlayer(pfile_name);
 		usleep(500000); //0.5s
 		if (ret == ACP_SUCCESS) {
 			if (g_audio_flag == AUDIO_PLAY) {
-				sendResultResponse(ACP_SUCCESS, pfile_name);
+				sendResultResponse(msg_id, resp_for, ACP_SUCCESS, pfile_name);
 			} else {
-				sendResultResponse(ACP_FAILED, NULL);
+				sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
 			}
 		}
 	} else {
@@ -706,24 +736,27 @@ int playAudio(char *message) {
 		if (!pfile_name) {
 			appLog(LOG_DEBUG, "file is not exist");
 			free(pfile_name);
-			sendResultResponse(ACP_FAILED, NULL);
+			sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
 			return ACP_FAILED;
 		}
-		if(strcmp(g_file_name_playing,pfile_name) == 0){
+		if (strcmp(g_file_name_playing, pfile_name) == 0) {
 			appLog(LOG_DEBUG, "%s is playing", pfile_name);
-			sendResultResponse(ACP_SUCCESS, "playing");
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "playing");
 			return ACP_SUCCESS;
 		}
 		ret = initAudioPlayer(pfile_name);
 		usleep(500000); //0.5s
 		if (ret == ACP_SUCCESS) {
 			if (g_audio_flag == AUDIO_PLAY) {
-				sendResultResponse(ACP_SUCCESS, pfile_name);
+				sendResultResponse(msg_id, resp_for, ACP_SUCCESS, pfile_name);
 			} else {
-				sendResultResponse(ACP_FAILED, NULL);
+				sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
 			}
 		}
 	}
+
+	free(msg_id);
+	free(resp_for);
 	free(pfile_name);
 	return ret;
 }
@@ -733,6 +766,8 @@ int collectServerInfo( message) {
 	char *ftpaddr;
 	char *ftpusr;
 	char *ftppass;
+	char *msg_id;
+	char *resp_for;
 
 	memset(&(g_ServerInfo.ftp.Password), 0x00,
 			sizeof(g_ServerInfo.ftp.Password));
@@ -741,6 +776,8 @@ int collectServerInfo( message) {
 	ftpaddr = getXmlElementByName(message, "ftpaddress");
 	ftpusr = getXmlElementByName(message, "ftpuser");
 	ftppass = getXmlElementByName(message, "ftppassword");
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, XML_MESSGAE_INFO);
 
 	if (servIp != NULL) {
 		memset(&(g_ServerInfo.serverIp), 0x00, sizeof(g_ServerInfo.serverIp));
@@ -778,7 +815,7 @@ int collectServerInfo( message) {
 	appLog(LOG_DEBUG, "%s || %s || %s || %s",
 			g_ServerInfo.serverIp, g_ServerInfo.ftp.Ip, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
 	char *buff = NULL;
-	buff = writeXmlToBuff(RESPONSE_SUCCESS, "room1");
+	buff = writeXmlToBuff(msg_id, resp_for, RESPONSE_SUCCESS, "room1");
 	if (buff == NULL) {
 		return ACP_FAILED;
 	}
@@ -790,18 +827,23 @@ int collectServerInfo( message) {
 	appLog(LOG_DEBUG, "xml response %d byte: %s", strlen(buff), buff);
 	sendMulMessage(buff);
 	free(buff);
+	free(msg_id);
+	free(resp_for);
 	return ACP_SUCCESS;
 }
 
-int sendResultResponse(int resp_code, char *resp_content) {
+int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
+		char *resp_content) {
 
 	int ret;
 	char *resp_buff;
 
 	if (resp_code == 0) {
-		resp_buff = writeXmlToBuff((char *) RESPONSE_SUCCESS, resp_content);
+		resp_buff = writeXmlToBuff(msg_id, resp_for, (char *) RESPONSE_SUCCESS,
+				resp_content);
 	} else {
-		resp_buff = writeXmlToBuff((char *) RESPONSE_FAILED, resp_content);
+		resp_buff = writeXmlToBuff(msg_id, resp_for, (char *) RESPONSE_FAILED,
+				resp_content);
 	}
 
 	if (resp_buff == NULL) {

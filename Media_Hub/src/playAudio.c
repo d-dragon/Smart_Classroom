@@ -86,9 +86,9 @@ int play(mp3Player* player)
 		} else
 		{
 
-/*			pthread_mutex_lock(&g_audio_status_mutex);
-			g_audio_flag = AUDIO_ERROR; //audio monitor will notify this play audio error
-			pthread_mutex_unlock(&g_audio_status_mutex);*/
+			/*			pthread_mutex_lock(&g_audio_status_mutex);
+			 g_audio_flag = AUDIO_ERROR; //audio monitor will notify this play audio error
+			 pthread_mutex_unlock(&g_audio_status_mutex);*/
 			pthread_mutex_lock(&g_audio_status_mutex);
 			g_audio_flag = AUDIO_STOP;
 			pthread_mutex_unlock(&g_audio_status_mutex);
@@ -175,6 +175,7 @@ void *playAudioThread(void *arg) {
 	status = play(player);
 	free(player);
 #else
+	g_audio_flag = AUDIO_PLAY;
 	appLog(LOG_DEBUG, "pi is playing %s", filename);
 #endif
 	appLog(LOG_DEBUG, "deallocating memory");
@@ -220,23 +221,35 @@ int initAudioPlayer(char *filename) {
 	return ACP_SUCCESS;
 }
 
+int stopAudio(char *message) {
 
-int stopAudio() {
+	char *resp_for;
+	char *msg_id;
+
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
 
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
 	appLog(LOG_DEBUG, "setting flag to AUDIO_STOP");
 	pthread_mutex_unlock(&g_audio_status_mutex);
-	sendResultResponse(ACP_SUCCESS, NULL);
+	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
 	return ACP_SUCCESS;
 }
 
-int pauseAudio() {
+int pauseAudio(char *message) {
+
+	char *resp_for;
+	char *msg_id;
+
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
+
 	pthread_mutex_lock(&g_audio_status_mutex);
 	appLog(LOG_DEBUG, "setting flag to AUDIO_PAUSE");
 	g_audio_flag = AUDIO_PAUSE;
 	pthread_mutex_unlock(&g_audio_status_mutex);
-	sendResultResponse(ACP_SUCCESS, NULL);
+	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
 	return ACP_SUCCESS;
 }
 //#endif

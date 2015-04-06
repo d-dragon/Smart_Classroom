@@ -119,7 +119,7 @@ int initTaskHandler(char *message);
 int collectServerInfo(message);
 void *TaskHandlerThread(void *arg);
 void MessageProcessor(char *msg_buff);
-int sendResultResponse(int resp_code, char *resp_content);
+int sendResultResponse(char *msg_id, char *resp_for,int resp_code, char *resp_content);
 
 #endif /* ACP_H_ */
 

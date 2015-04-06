@@ -224,8 +224,12 @@ int getFile(char *message) {
 	int ret;
 	char *pftp_addr;
 	char *pfile_name;
+	char *msg_id;
+	char *resp_for;
 
 	pftp_addr = getXmlElementByName(message, "ftpaddr");
+	msg_id = getXmlElementByName(message,"id");
+	resp_for = getXmlElementByName(message,"command");
 
 	if (!pftp_addr) {
 		appLog(LOG_DEBUG, "get ftp address failed");
@@ -242,10 +246,12 @@ int getFile(char *message) {
 	}
 
 	ret = getFileFromFtp(pftp_addr, pfile_name);
+	ret = sendResultResponse(msg_id, resp_for, ret, NULL);
 
 	free(pftp_addr);
 	free(pfile_name);
-	ret = sendResultResponse(ret, NULL);
+	free(msg_id);
+	free(resp_for);
 
 	return ret;
 }
