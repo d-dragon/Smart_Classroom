@@ -24,7 +24,7 @@
 #define BUFF_LEN_MAX 1024
 #define RESPONSE_SUCCESS	"SUCCESS"
 #define RESPONSE_FAILED		"FAILED"
-#define ROOM_NAME_DEFAULT			"room1"
+#define ROOM_NAME_DEFAULT			"room2"
 
 /********************************************************
  * Define communication protocol session

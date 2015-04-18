@@ -297,7 +297,7 @@ int ControlHandler(char *ctrlBuff, short int length) {
 		break;
 	case CMD_SEND_FILE:
 		appLog(LOG_DEBUG, "CMD_SEND_FILE");
-		getFileFromFtp(g_remote_addr, ++ctrlBuff);
+//		getFileFromFtp(g_remote_addr, ++ctrlBuff);
 //		ret = initFileHandlerThread(ctrlBuff);
 		if (ret == ACP_SUCCESS) {
 			ret = wrapperControlResp(CTRL_RESP_ALREADY);
@@ -815,7 +815,7 @@ int collectServerInfo( message) {
 	appLog(LOG_DEBUG, "%s || %s || %s || %s",
 			g_ServerInfo.serverIp, g_ServerInfo.ftp.Ip, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
 	char *buff = NULL;
-	buff = writeXmlToBuff(msg_id, resp_for, RESPONSE_SUCCESS, "room1");
+	buff = writeXmlToBuff(msg_id, resp_for, RESPONSE_SUCCESS, "room2");
 	if (buff == NULL) {
 		return ACP_FAILED;
 	}

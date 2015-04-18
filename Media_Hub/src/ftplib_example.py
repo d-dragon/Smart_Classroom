@@ -1,12 +1,11 @@
 from ftplib import FTP
 
-def getFile(hostdomain, filename):
+def getFile(hostdomain, filename,user,passwd):
 
-        print(hostdomain)
-        ftp = FTP(hostdomain)
-        ftp.login()
-        ftp.cwd('/')
-#	filename = 'IMG_3858.CR2'
+   	print(hostdomain)
+	ftp = FTP(hostdomain)
+    	ftp.login(user, passwd)
+    	ftp.cwd('/demo')
 	localfile = open(filename, 'wb')
 	print(filename)
 	ftp.retrbinary('RETR ' + filename, localfile.write, 1024)

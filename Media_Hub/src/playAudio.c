@@ -3,7 +3,7 @@
 #include "FileHandler.h"
 #include "acpHandler.h"
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 // Play function use to play a mp3Player instance
 // To use this function, must have one mp3Player to call play
 // In this function, create a stream to write and play mp3 file
@@ -167,7 +167,7 @@ void *playAudioThread(void *arg) {
 
 	appLog(LOG_DEBUG, "File Path: %s", FilePath);
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 	mp3Player *player = malloc(sizeof(mp3Player));
 	player->fileName = malloc(1024 * sizeof(char));
 

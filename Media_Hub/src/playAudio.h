@@ -2,7 +2,7 @@
 #ifndef __PLAY_AUDIO_H__
 #define __PLAY_AUDIO_H__
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 #include <portaudio.h>
 #include <mpg123.h>
 #endif
@@ -31,7 +31,7 @@ typedef enum g_audio_status{
 	AUDIO_ERROR
 }g_audio_status;
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 typedef struct player
 {
 	PaStreamParameters out_param;
@@ -56,7 +56,7 @@ pthread_mutex_t g_audio_status_mutex;
 g_audio_status g_audio_flag;
 char g_file_name_playing[128];
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
 int stop(mp3Player* player);//
 #endif

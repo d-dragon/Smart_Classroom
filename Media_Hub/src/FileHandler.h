@@ -16,8 +16,8 @@
 #else
 #define DEFAULT_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/List_File/"
 #define SOURCE_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/src"
-//#define PY_SYS_PATH "sys.path.append('/home/duyphan/git/Smart_Classroom/Media_Hub/src')"
-#define PY_SYS_PATH "sys.path.append('/home/r1/Downloads/testpi')"
+#define PY_SYS_PATH "sys.path.append('/home/duyphan/git/Smart_Classroom/Media_Hub/src')"
+//#define PY_SYS_PATH "sys.path.append('/home/r1/Downloads/testpi')"
 #endif
 //#define DEFAULT_PATH "/home/"
 #define FILE_PATH_LEN_MAX 200
@@ -46,7 +46,7 @@ void *FileStreamHandlerThread();
 void closeFileStream();
 int getListFile(char *, char *);
 
-int getFileFromFtp(char *, char *);
+int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName, char *Password);
 int getFile(char *);
 
 

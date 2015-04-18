@@ -7,7 +7,7 @@
 #include <syslog.h>
 #include <string.h>
 
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 #include "playAudio.h"
 #endif
 
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 
 
 /*
-#ifdef PLAY_AUDIO
+#ifdef AUDIO_ENABLE
 	int status;
 	 mp3Player* player = malloc(sizeof(mp3Player));
 

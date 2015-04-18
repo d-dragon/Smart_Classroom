@@ -144,14 +144,19 @@ int getListFile(char *DirPath, char *ListFile) {
 	return FILE_SUCCESS;
 }
 
-int getFileFromFtp(char *FtpServerIP, char *FileName) {
+int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
+		char *Password) {
 
 	PyObject *pName, *pModule, *pFunc;
 	PyObject *pArgs, *pValue;
 
-	int i;
-	long arg;
+	int i, numargs;
 
+	if (UserName != NULL) {
+		numargs = 4;
+	} else { //anonymous login
+		numargs = 2;
+	}
 	//init python interpreter
 	Py_Initialize();
 	PyRun_SimpleString("import sys");
@@ -168,13 +173,23 @@ int getFileFromFtp(char *FtpServerIP, char *FileName) {
 		//checking pFunc is callable
 		if (pFunc && PyCallable_Check(pFunc)) {
 			//create arg list with n member
-			pArgs = PyTuple_New(2);
+			pArgs = PyTuple_New(numargs);
 			//convert arg from C to Python
-			for (i = 0; i < 2; i++) {
-				if (i == 0) {
+			for (i = 0; i < numargs; i++) {
+
+				switch (i) {
+				case 0:
 					pValue = PyString_FromString(FtpServerIP);
-				} else {
+					break;
+				case 1:
 					pValue = PyString_FromString(FileName);
+					break;
+				case 2:
+					pValue = PyString_FromString(UserName);
+					break;
+				case 3:
+					pValue = PyString_FromString(Password);
+					break;
 				}
 				if (!pValue) {
 					Py_DECREF(pArgs);
@@ -222,33 +237,36 @@ int getFileFromFtp(char *FtpServerIP, char *FileName) {
 int getFile(char *message) {
 
 	int ret;
-	char *pftp_addr;
+//	char *pftp_addr;
 	char *pfile_name;
 	char *msg_id;
 	char *resp_for;
 
-	pftp_addr = getXmlElementByName(message, "ftpaddr");
-	msg_id = getXmlElementByName(message,"id");
-	resp_for = getXmlElementByName(message,"command");
+//	pftp_addr = getXmlElementByName(message, "ftpaddr");
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
 
-	if (!pftp_addr) {
-		appLog(LOG_DEBUG, "get ftp address failed");
-		free(pftp_addr);
-		ret = FILE_ERROR;
-	}
+	/*	if (!pftp_addr) {
+	 appLog(LOG_DEBUG, "get ftp address failed");
+	 free(pftp_addr);
+	 ret = FILE_ERROR;
+	 }*/
 
 	pfile_name = getXmlElementByName(message, "filename");
 	if (strlen(pfile_name) <= 0) {
 		appLog(LOG_DEBUG, "get ftp address failed");
-		free(pftp_addr);
+//		free(pftp_addr);
 		free(pfile_name);
 		ret = FILE_ERROR;
 	}
 
-	ret = getFileFromFtp(pftp_addr, pfile_name);
-	ret = sendResultResponse(msg_id, resp_for, ret, NULL);
+	appLog(LOG_DEBUG, " %s %s %s %s",
+			g_ServerInfo.ftp.Ip, pfile_name, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
+	ret = getFileFromFtp(g_ServerInfo.ftp.Ip, pfile_name,
+			&(g_ServerInfo.ftp.User), &(g_ServerInfo.ftp.Password));
+	ret = sendResultResponse(msg_id, resp_for, ret, pfile_name);
 
-	free(pftp_addr);
+//	free(pftp_addr);
 	free(pfile_name);
 	free(msg_id);
 	free(resp_for);

@@ -1,7 +1,7 @@
 #CC=arm-linux-gnueabihf-gcc
 CC=gcc
 CFLAGS=-I. -Wall
-PLAYAUDIOFLAG=-D PLAY_AUDIO
+PLAYAUDIOFLAG=-D AUDIO_ENABLE
 DEBUGFLAG=-D DEBUG
 TARGET = x86
 DEPS = FileHandler.h sock_infra.h advertisement.h logger.h playAudio.h acpHandler.h xmlHandler.h
