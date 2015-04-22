@@ -728,6 +728,10 @@ int playAudio(char *message) {
 				sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
 			}
 		}
+	} else if (g_audio_flag == AUDIO_PAUSE) {
+		pthread_mutex_lock(&g_audio_status_mutex);
+		g_audio_flag = AUDIO_PLAY;
+		pthread_mutex_unlock(&g_audio_status_mutex);
 	} else {
 
 		pfile_name = getXmlElementByName(message, "filename");
@@ -743,7 +747,11 @@ int playAudio(char *message) {
 			appLog(LOG_DEBUG, "%s is playing", pfile_name);
 			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "playing");
 			return ACP_SUCCESS;
+		} else {
+			g_audio_flag = STOP_AUDIO;
+			usleep(200000); //sleep 0.2s waiting for previous thread exit
 		}
+
 		ret = initAudioPlayer(pfile_name);
 		usleep(500000); //0.5s
 		if (ret == ACP_SUCCESS) {
