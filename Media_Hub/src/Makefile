@@ -23,8 +23,12 @@ else
 endif
 			
 	rm *.o
+ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
 	sudo rm /usr/bin/MediaHub
+endif
+ifneq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
 	sudo rm /usr/bin/startMediaHub.sh
+endif
 	sudo cp MediaHub /usr/bin/
 	sudo cp startMediaHub.sh /usr/bin/
 			
