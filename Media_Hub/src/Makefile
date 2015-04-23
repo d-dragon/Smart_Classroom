@@ -23,7 +23,10 @@ else
 endif
 			
 	rm *.o
-#			cp audio_app /home/duyphan/ftpserver/
+	sudo rm /usr/bin/audio_app
+	sudo rm /usr/bin/startMediaHub.sh
+	sudo cp audio_app /usr/bin/
+	sudo cp startMediaHub.sh /usr/bin/
 			
 .PHONY: clean
 
