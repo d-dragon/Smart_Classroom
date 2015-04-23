@@ -6,9 +6,9 @@ while true; do
 ip=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1`
 mask=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 4`
 gw=`route -n | grep 'UG[ \t]' | awk '{print $2}'`
-echo "ip=$ip"
-echo "netmask=$mask"
-echo "gateway=$gw"
+echo "ip=$ip" > /dev/ttyAMA0
+echo "netmask=$mask" > /dev/ttyAMA0
+echo "gateway=$gw" > /dev/ttyAMA0
 #mask="255.255.255.0"
 #res="${mask//[^255]}"
 
@@ -31,13 +31,15 @@ ping -q -c5 $gw > /dev/null
 
 if [ $? -eq 0 ]
 then
-	echo "network is ok"
+	echo "network is ok" > /dev/ttyAMA0
 	flag=1
 fi
 if [ $flag -eq 1 ]
 then
-#        ./home/pi/Smart_Classroom/Media_Hub/src/audio_app &
-#        killall /home/pi/Smart_Classroom/Media_Hub/src/audio_app
+        audio_app &
+	wait 
+	echo "started MediaHub" > /dev/ttyAMA0
+        killall audio_app
 	flag=0
 fi
 done

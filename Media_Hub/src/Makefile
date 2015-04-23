@@ -17,15 +17,15 @@ endif
 			
 audio_app: $(OBJS)
 ifeq ($(TARGET),x86)
-	$(CC) -o $@ $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2
+	$(CC) -o MediaHub $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2
 else
-	$(CC) -o $@ $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123
+	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123
 endif
 			
 	rm *.o
-	sudo rm /usr/bin/audio_app
+	sudo rm /usr/bin/MediaHub
 	sudo rm /usr/bin/startMediaHub.sh
-	sudo cp audio_app /usr/bin/
+	sudo cp MediaHub /usr/bin/
 	sudo cp startMediaHub.sh /usr/bin/
 			
 .PHONY: clean
