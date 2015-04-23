@@ -36,10 +36,10 @@ then
 fi
 if [ $flag -eq 1 ]
 then
-        audio_app &
+        MediaHub &
 	wait 
 	echo "started MediaHub" > /dev/ttyAMA0
-        killall audio_app
+        killall MediaHub
 	flag=0
 fi
 done
