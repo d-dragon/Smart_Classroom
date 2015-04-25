@@ -23,6 +23,7 @@ else
 endif
 			
 	rm *.o
+ifeq ($(TARGET),x86)
 ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
 	sudo rm /usr/bin/MediaHub
 endif
@@ -31,7 +32,7 @@ ifneq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
 endif
 	sudo cp MediaHub /usr/bin/
 	sudo cp startMediaHub.sh /usr/bin/
-			
+endif			
 .PHONY: clean
 
 clean:

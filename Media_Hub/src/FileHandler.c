@@ -157,6 +157,7 @@ int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
 	} else { //anonymous login
 		numargs = 2;
 	}
+
 	//init python interpreter
 	Py_Initialize();
 	PyRun_SimpleString("import sys");
