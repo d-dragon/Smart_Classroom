@@ -10,7 +10,7 @@
 
 
 #ifdef RPI
-#define DEFAULT_PATH "/home/pi/MEDIA_HUB/"
+#define DEFAULT_PATH "/home/pi/Smart_Classroom/Media_Hub/src"
 #define SOURCE_PATH "/home/pi/Smart_Classroom/src"
 #define PY_SYS_PATH "sys.path.append('/home/pi/Smart_Classroom/Media_Hub/src')"
 #else

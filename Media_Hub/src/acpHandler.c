@@ -707,9 +707,9 @@ int playAudio(char *message) {
 
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
-
+	pfile_name = getXmlElementByName(message, "filename");
+	appLog(LOG_DEBUG,"inside playAudio");
 	if (g_audio_flag == STOP_AUDIO) {
-		pfile_name = getXmlElementByName(message, "filename");
 		appLog(LOG_DEBUG, "file name: %s", pfile_name);
 		if (!pfile_name) {
 			appLog(LOG_DEBUG, "file is not exist");
