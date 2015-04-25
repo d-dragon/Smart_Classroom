@@ -5,7 +5,7 @@ def getFile(hostdomain, filename,user,passwd):
    	print(hostdomain)
 	print(user)
 	print(passwd)
-	ftp.connect(hostdomain,'2121')
+	ftp = FTP(hostdomain)
     	ftp.login(user, passwd)
     	ftp.cwd('/demo')
 	localfile = open(filename, 'wb')
