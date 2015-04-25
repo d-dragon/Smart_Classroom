@@ -23,7 +23,7 @@ else
 endif
 			
 	rm *.o
-ifeq ($(TARGET),x86)
+ifneq ($(TARGET),x86)
 ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
 	sudo rm /usr/bin/MediaHub
 endif
