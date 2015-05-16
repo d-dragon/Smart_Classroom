@@ -708,15 +708,18 @@ int playAudio(char *message) {
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
 	pfile_name = getXmlElementByName(message, "filename");
-	appLog(LOG_DEBUG,"inside playAudio");
+	if (!pfile_name) {
+		appLog(LOG_DEBUG, "file is not exist");
+		free(msg_id);
+		free(resp_for);
+		free(pfile_name);
+		sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
+		return ACP_FAILED;
+	}
+	appLog(LOG_DEBUG, "inside playAudio");
 	if (g_audio_flag == STOP_AUDIO) {
 		appLog(LOG_DEBUG, "file name: %s", pfile_name);
-		if (!pfile_name) {
-			appLog(LOG_DEBUG, "file is not exist");
-			free(pfile_name);
-			sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
-			return ACP_FAILED;
-		}
+
 		snprintf(g_file_name_playing, sizeof(g_file_name_playing), "%s",
 				pfile_name);
 		ret = initAudioPlayer(pfile_name);
@@ -729,12 +732,30 @@ int playAudio(char *message) {
 			}
 		}
 	} else if (g_audio_flag == AUDIO_PAUSE) {
-		pthread_mutex_lock(&g_audio_status_mutex);
-		g_audio_flag = AUDIO_PLAY;
-		pthread_mutex_unlock(&g_audio_status_mutex);
+		if (strcmp(g_file_name_playing, pfile_name) == 0) {
+			pthread_mutex_lock(&g_audio_status_mutex);
+			g_audio_flag = AUDIO_PLAY;
+			pthread_mutex_unlock(&g_audio_status_mutex);
+			appLog(LOG_DEBUG, "%s is playing", pfile_name);
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "playing");
+		} else {
+			g_audio_flag = STOP_AUDIO;
+			usleep(100000);
+			ret = initAudioPlayer(pfile_name);
+			usleep(500000); //0.5s
+			if (ret == ACP_SUCCESS) {
+				if (g_audio_flag == AUDIO_PLAY) {
+					sendResultResponse(msg_id, resp_for, ACP_SUCCESS,
+							pfile_name);
+				} else {
+					sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
+				}
+			}
+		}
+
 	} else {
 
-		pfile_name = getXmlElementByName(message, "filename");
+//		pfile_name = getXmlElementByName(message, "filename");
 
 		appLog(LOG_DEBUG, "file name: %s", pfile_name);
 		if (!pfile_name) {
