@@ -19,7 +19,8 @@
 //get content from xml doc by element name
 char *getXmlMessageType(char *xmlbuff);
 char *getXmlElementByName(char *xmlbuff, char *name);
-char *writeXmlToBuff(char *msg_id, char *resp_for,char *resp_code, char *att_info);
+char *writeXmlToBuffResp(char *msg_id, char *resp_for,char *resp_code, char *att_info);
+char *writeXmlToBuffNotify(char *msg_id, char *info, char *content);
 
 
 #endif /* XMLHANDLER_H_ */

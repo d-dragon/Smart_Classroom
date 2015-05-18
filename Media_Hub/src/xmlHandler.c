@@ -116,7 +116,7 @@ char *getXmlElementByName(char *xmlbuff, char *name) {
 }
 
 /*must free return pointer*/
-char *writeXmlToBuff(char *msg_id, char *resp_for, char *resp_code,
+char *writeXmlToBuffResp(char *msg_id, char *resp_for, char *resp_code,
 		char *att_info) {
 
 	int ret;

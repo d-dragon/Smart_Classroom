@@ -844,7 +844,7 @@ int collectServerInfo( message) {
 	appLog(LOG_DEBUG, "%s || %s || %s || %s",
 			g_ServerInfo.serverIp, g_ServerInfo.ftp.Ip, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
 	char *buff = NULL;
-	buff = writeXmlToBuff(msg_id, resp_for, RESPONSE_SUCCESS, "room2");
+	buff = writeXmlToBuffResp(msg_id, resp_for, RESPONSE_SUCCESS, "room2");
 	if (buff == NULL) {
 		return ACP_FAILED;
 	}
@@ -868,10 +868,10 @@ int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
 	char *resp_buff;
 
 	if (resp_code == 0) {
-		resp_buff = writeXmlToBuff(msg_id, resp_for, (char *) RESPONSE_SUCCESS,
+		resp_buff = writeXmlToBuffResp(msg_id, resp_for, (char *) RESPONSE_SUCCESS,
 				resp_content);
 	} else {
-		resp_buff = writeXmlToBuff(msg_id, resp_for, (char *) RESPONSE_FAILED,
+		resp_buff = writeXmlToBuffResp(msg_id, resp_for, (char *) RESPONSE_FAILED,
 				resp_content);
 	}
 
