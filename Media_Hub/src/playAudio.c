@@ -179,7 +179,13 @@ void *playAudioThread(void *arg) {
 	appLog(LOG_DEBUG, "pi is playing %s", filename);
 #endif
 	appLog(LOG_DEBUG, "deallocating memory");
-	memset(g_file_name_playing, 0x00,128);
+	memset(g_file_name_playing, 0x00, 128);
+
+	if (status == 0) {
+		sendPlayingStatusNotify(NULL, filename, 2, "Finished playing success!");
+	}else{
+		sendPlayingStatusNotify(NULL, filename, 2, "playing failed/stopped!");
+	}
 	free(arg);
 	free(FilePath);
 	appLog(LOG_DEBUG, "exit playAudioThread..........");
@@ -234,7 +240,7 @@ int stopAudio(char *message) {
 	g_audio_flag = AUDIO_STOP;
 	appLog(LOG_DEBUG, "setting flag to AUDIO_STOP");
 	pthread_mutex_unlock(&g_audio_status_mutex);
-	memset(g_file_name_playing,0x00,128);
+	memset(g_file_name_playing, 0x00, 128);
 	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
 	return ACP_SUCCESS;
 }

@@ -7,7 +7,7 @@
 
 #ifndef XMLHANDLER_H_
 #define XMLHANDLER_H_
-
+#include "acpHandler.h"
 #define XML_MESSGAE_TYPE		"type"
 #define XML_MESSGAE_INFO		"info"
 #define XML_MESSAGE_NOTIFY		"notify"
@@ -20,7 +20,7 @@
 char *getXmlMessageType(char *xmlbuff);
 char *getXmlElementByName(char *xmlbuff, char *name);
 char *writeXmlToBuffResp(char *msg_id, char *resp_for,char *resp_code, char *att_info);
-char *writeXmlToBuffNotify(char *msg_id, char *info, char *content);
+char *writeXmlToBuffNotify(char *msg_id, NotifyPiStatus notify_status);
 
 
 #endif /* XMLHANDLER_H_ */

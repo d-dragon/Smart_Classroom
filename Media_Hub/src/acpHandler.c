@@ -868,11 +868,11 @@ int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
 	char *resp_buff;
 
 	if (resp_code == 0) {
-		resp_buff = writeXmlToBuffResp(msg_id, resp_for, (char *) RESPONSE_SUCCESS,
-				resp_content);
+		resp_buff = writeXmlToBuffResp(msg_id, resp_for,
+				(char *) RESPONSE_SUCCESS, resp_content);
 	} else {
-		resp_buff = writeXmlToBuffResp(msg_id, resp_for, (char *) RESPONSE_FAILED,
-				resp_content);
+		resp_buff = writeXmlToBuffResp(msg_id, resp_for,
+				(char *) RESPONSE_FAILED, resp_content);
 	}
 
 	if (resp_buff == NULL) {
@@ -888,5 +888,90 @@ int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
 		return ACP_FAILED;
 	}
 
+	return ACP_SUCCESS;
+}
+
+/*int sendPlayingStatusNotify(char *file_name, char *status) {
+
+ char *data_buff;
+ int ret, i;
+ NotifyPiStatus *notify_status;
+
+ appLog(LOG_DEBUG, "--------");
+ notify_status = malloc(sizeof(notify_status));
+ appLog(LOG_DEBUG, "--------");
+ notify_status->info = calloc(32, sizeof(char));
+ appLog(LOG_DEBUG, "--------");
+ appLog(LOG_DEBUG, "--------");
+ notify_status->obj_ele = malloc(sizeof(XMLTag));
+ notify_status->status_ele = malloc(sizeof(XMLTag));
+ notify_status->obj_ele->ele_name = calloc(32, sizeof(char));
+ appLog(LOG_DEBUG, "--------");
+ notify_status->status_ele->ele_name = calloc(32, sizeof(char));
+ appLog(LOG_DEBUG, "--------");
+ notify_status->obj_ele->ele_content = calloc(128, sizeof(char));
+ appLog(LOG_DEBUG, "--------");
+ if ((notify_status->content_ele[i]->ele_name == NULL)
+ || (notify_status->content_ele[i]->ele_content == NULL)) {
+ return ACP_FAILED;
+ }
+ //	memset(notify_status, 0, sizeof(notify_status));
+ appLog(LOG_DEBUG, "--------");
+ notify_status->info = "AudioStatus";
+ appLog(LOG_DEBUG, "--------");
+ memcpy(notify_status->obj_ele->ele_name, (char *)"filename", strlen("filename"));
+ appLog(LOG_DEBUG, "--------");
+ notify_status->obj_ele->ele_content = file_name;
+ appLog(LOG_DEBUG, "--------");
+ notify_status->status_ele->ele_name = "status";
+ notify_status->status_ele->ele_content = status;
+ appLog(LOG_DEBUG, "--------");
+ data_buff = writeXmlToBuffNotify("123", notify_status);
+
+ if (data_buff == NULL) {
+ appLog(LOG_DEBUG, "xml data is null");
+ return ACP_FAILED;
+ }
+ appLog(LOG_DEBUG, "notify data: \n %s", data_buff);
+ ret = send(stream_sock_fd, data_buff, strlen(data_buff), 0);
+
+ if( ret < 0){
+ appLog(LOG_DEBUG, "send nofity failed!");
+ return ACP_FAILED;
+ }
+ free(notify_status);
+ free(data_buff);
+ }*/
+
+int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag, char *status) {
+
+	char *data_buff;
+	int ret, i;
+	NotifyPiStatus notify_status;
+
+	notify_status.info = "AudioStatus";
+	notify_status.num_content_tag = num_tag;
+	notify_status.content_tag[0].ele_name = "filename";
+	notify_status.content_tag[0].ele_content = file_name;
+	notify_status.content_tag[1].ele_name = "status";
+	notify_status.content_tag[1].ele_content = status;
+
+	if(msg_id == NULL){
+		msg_id = (char *)MSG_ID_DEFAULT;
+	}
+	data_buff = writeXmlToBuffNotify(msg_id, notify_status);
+
+	if (data_buff == NULL) {
+		appLog(LOG_DEBUG, "xml data is null");
+		return ACP_FAILED;
+	}
+	appLog(LOG_DEBUG, "notify data: \n %s", data_buff);
+	ret = send(stream_sock_fd, data_buff, strlen(data_buff), 0);
+
+	 if( ret < 0){
+	 appLog(LOG_DEBUG, "send nofity failed!");
+	 return ACP_FAILED;
+	 }
+	free(data_buff);
 	return ACP_SUCCESS;
 }

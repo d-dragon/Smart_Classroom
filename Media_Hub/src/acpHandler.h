@@ -22,8 +22,10 @@
 #define ENABLED		1
 #define DISABLED	0
 #define BUFF_LEN_MAX 1024
+#define NUM_CONTENT_TAG 5
 #define RESPONSE_SUCCESS	"SUCCESS"
 #define RESPONSE_FAILED		"FAILED"
+#define MSG_ID_DEFAULT		"000"
 #define ROOM_NAME_DEFAULT			"room2"
 
 /********************************************************
@@ -51,8 +53,8 @@
 #define CMD_REQ_DISCOVER			0x02
 
 //define control response
+#define CTRL_RESP_FAILED           0x00
 #define CTRL_RESP_SUCCESS			0x01
-#define CTRL_RESP_FAILED			0x00
 #define CTRL_RESP_ALREADY			0x02
 #define CTRL_RESP_FILE_FINISH		0x03
 
@@ -79,6 +81,29 @@ typedef struct Server_Info{
 	char serverIp[24];
 	FtpInfo ftp;
 }ServerInfo;
+
+/*typedef struct Xml_Element{
+	char *ele_name;
+	char *ele_content;
+}XMLTag;
+
+typedef struct Notify_Info{
+	char *info;
+	XMLTag *obj_ele;
+	XMLTag *status_ele;
+}NotifyPiStatus;*/
+
+typedef struct Xml_Element{
+	char *ele_name;
+	char *ele_content;
+}XMLTag;
+
+typedef struct Notify_Info{
+	char *info;
+	int num_content_tag;
+	XMLTag content_tag[NUM_CONTENT_TAG];
+}NotifyPiStatus;
+
 
 ServerInfo g_ServerInfo;
 
@@ -120,6 +145,7 @@ int collectServerInfo(message);
 void *TaskHandlerThread(void *arg);
 void MessageProcessor(char *msg_buff);
 int sendResultResponse(char *msg_id, char *resp_for,int resp_code, char *resp_content);
+int sendPlayingStatusNotify(char *msg_id, char *file_name,int num_tag, char *status);
 
 #endif /* ACP_H_ */
 

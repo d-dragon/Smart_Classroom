@@ -196,6 +196,7 @@ void startMulticastListener(){
 	g_audio_flag = AUDIO_STOP;
 
 	multicast_fd = openMulRecvSocket();
+
 	if (multicast_fd < 0) {
 		appLog(LOG_ERR, "openMulRecvSocket failed!\n");
 		exit(1);
