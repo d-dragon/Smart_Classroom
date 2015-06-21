@@ -19,7 +19,7 @@ audio_app: $(OBJS)
 ifeq ($(TARGET),x86)
 	$(CC) -o MediaHub $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2
 else
-	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123
+	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123 -lm
 endif
 			
 	rm *.o
@@ -28,12 +28,12 @@ ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
 	sudo rm /usr/bin/MediaHub
 endif
 ifneq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
-	sudo rm /usr/bin/startMediaHub.sh
+#	sudo rm /usr/bin/startMediaHub.sh
 endif
-	sudo killall startMediaHub.sh
-	sudo killall MediaHub
-	sudo cp MediaHub /usr/bin/
-	sudo cp startMediaHub.sh /usr/bin/
+#	sudo killall startMediaHub.sh
+#	sudo killall MediaHub
+#	sudo cp MediaHub /usr/bin/
+#	sudo cp startMediaHub.sh /usr/bin/
 endif			
 .PHONY: clean
 
