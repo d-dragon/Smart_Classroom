@@ -654,7 +654,7 @@ int RequestMessageHandler(char *message) {
 		ret = getFile(message);
 		break;
 	case PLAY_AUDIO:
-		ret = playAudio(message);
+		ret = playAudioAlt(message);
 		break;
 	case STOP_AUDIO:
 		appLog(LOG_DEBUG, "called stopAudio");
@@ -788,6 +788,169 @@ int playAudio(char *message) {
 	free(resp_for);
 	free(pfile_name);
 	return ret;
+}
+
+int playAudioAlt(char *message) {
+
+	int ret;
+	PlayingInfo *info; //this pointer will be freed in sub-function
+	char *resp_cmd;
+	char *tmp;
+	char shell_cmd[256];
+
+	//info struct will be freed in this function if play failed or not call initAudioPlayer
+	//otherwise, it will be freed in playAudioThread
+	info = malloc(sizeof(PlayingInfo));
+	info->filename = calloc(128, sizeof(char));
+
+	tmp = getXmlElementByName(message, "id");
+	info->filename = getXmlElementByName(message, "filename");
+	resp_cmd = getXmlElementByName(message, "command");
+
+	if ((tmp == NULL) || (info->filename == NULL) || (resp_cmd == NULL)) {
+		appLog(LOG_DEBUG, "play failed");
+		sendResultResponse("000", "play", ACP_FAILED, NULL);
+		free(info->filename);
+		free(info);
+		free(tmp);
+		free(resp_cmd);
+		return ACP_FAILED;
+	}
+
+	info->msgid = atoi(tmp);
+
+	if (g_audio_flag == AUDIO_PLAY) {
+		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
+				== 0) {
+			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
+					g_file_name_playing);
+			free(info->filename);
+			free(info);
+		} else { //play another file
+			//stop recently player thread
+			memset(shell_cmd, 0x00, 256);
+			snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
+			if (system(shell_cmd) != 0) {
+				pthread_cancel(g_play_audio_thd);
+				pthread_mutex_lock(&g_audio_status_mutex);
+				g_audio_flag = AUDIO_STOP;
+				pthread_mutex_unlock(&g_audio_status_mutex);
+				sendPlayingStatusNotify(NULL, g_file_name_playing, 2,
+						"stopped!");
+			} else { //quit audio player success, terminate player thread
+				int check_count = 0;
+				do {
+					if (g_audio_flag == AUDIO_STOP) {
+						break;
+					} else {
+						check_count++;
+						if (check_count == 5) {
+							pthread_mutex_lock(&g_audio_status_mutex);
+							g_audio_flag = AUDIO_STOP;
+							pthread_mutex_unlock(&g_audio_status_mutex);
+							pthread_cancel(g_play_audio_thd);
+						}
+						usleep(50000);
+					}
+				} while (check_count < 5);
+
+				memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+				snprintf(g_file_name_playing, FILE_NAME_MAX, "%s",
+						info->filename);
+
+				ret = initAudioPlayerAlt(info);
+				if (ret == ACP_SUCCESS) {
+					sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
+							g_file_name_playing);
+				} else {
+					sendResultResponse(info->msgid, resp_cmd, ACP_FAILED,
+							g_file_name_playing);
+					free(info->filename);
+					free(info);
+				}
+			}
+		}
+
+	} else if (g_audio_flag == AUDIO_PAUSE) {
+		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
+				== 0) {
+			snprintf(shell_cmd, 256, "echo -n p > %s", FIFO_PLAYER_PATH);
+			appLog(LOG_DEBUG, "resume cmd: %s", shell_cmd);
+			if (system(shell_cmd) == 0) {
+				sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
+						g_file_name_playing);
+			} else {
+				sendResultResponse(info->msgid, resp_cmd, ACP_FAILED,
+						g_file_name_playing);
+			}
+			free(info->filename);
+			free(info);
+		} else { //play another file
+				 //stop recently player thread
+			memset(shell_cmd, 0x00, 256);
+			snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
+			if (system(shell_cmd) != 0) {
+				pthread_cancel(g_play_audio_thd);
+				pthread_mutex_lock(&g_audio_status_mutex);
+				g_audio_flag = AUDIO_STOP;
+				pthread_mutex_unlock(&g_audio_status_mutex);
+				sendPlayingStatusNotify(NULL, g_file_name_playing, 2,
+						"stopped!");
+			} else { //quit audio player success, terminate player thread
+				int check_count = 0;
+				do {
+					if (g_audio_flag == AUDIO_STOP) {
+						break;
+					} else {
+						check_count++;
+						if (check_count == 5) {
+							pthread_mutex_lock(&g_audio_status_mutex);
+							g_audio_flag = AUDIO_STOP;
+							pthread_mutex_unlock(&g_audio_status_mutex);
+							pthread_cancel(g_play_audio_thd);
+						}
+						usleep(50000);
+					}
+				} while (check_count < 5);
+
+				memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+				snprintf(g_file_name_playing, FILE_NAME_MAX, "%s",
+						info->filename);
+
+				ret = initAudioPlayerAlt(info);
+				if (ret == ACP_SUCCESS) {
+					sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
+							g_file_name_playing);
+				} else {
+					sendResultResponse(info->msgid, resp_cmd, ACP_FAILED,
+							g_file_name_playing);
+					free(info->filename);
+					free(info);
+				}
+			}
+
+		}
+
+	} else { // status is AUDIO_STOP
+
+		memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+		snprintf(g_file_name_playing, FILE_NAME_MAX, "%s", info->filename);
+
+		ret = initAudioPlayerAlt(info);
+		if (ret == ACP_SUCCESS) {
+			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
+					g_file_name_playing);
+		} else {
+			sendResultResponse(info->msgid, resp_cmd, ACP_FAILED,
+					g_file_name_playing);
+			free(info->filename);
+			free(info);
+		}
+
+	}
+	free(tmp);
+	free(resp_cmd);
+
 }
 int collectServerInfo( message) {
 
@@ -943,7 +1106,8 @@ int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
  free(data_buff);
  }*/
 
-int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag, char *status) {
+int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag,
+		char *status) {
 
 	char *data_buff;
 	int ret, i;
@@ -956,8 +1120,8 @@ int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag, char *st
 	notify_status.content_tag[1].ele_name = "status";
 	notify_status.content_tag[1].ele_content = status;
 
-	if(msg_id == NULL){
-		msg_id = (char *)MSG_ID_DEFAULT;
+	if (msg_id == NULL) {
+		msg_id = (char *) MSG_ID_DEFAULT;
 	}
 	data_buff = writeXmlToBuffNotify(msg_id, notify_status);
 
@@ -968,10 +1132,10 @@ int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag, char *st
 	appLog(LOG_DEBUG, "notify data: \n %s", data_buff);
 	ret = send(stream_sock_fd, data_buff, strlen(data_buff), 0);
 
-	 if( ret < 0){
-	 appLog(LOG_DEBUG, "send nofity failed!");
-	 return ACP_FAILED;
-	 }
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "send nofity failed!");
+		return ACP_FAILED;
+	}
 	free(data_buff);
 	return ACP_SUCCESS;
 }

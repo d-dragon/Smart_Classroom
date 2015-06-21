@@ -1,3 +1,6 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "playAudio.h"
 #include "logger.h"
 #include "FileHandler.h"
@@ -183,12 +186,45 @@ void *playAudioThread(void *arg) {
 
 	if (status == 0) {
 		sendPlayingStatusNotify(NULL, filename, 2, "Finished playing success!");
-	}else{
+	} else {
 		sendPlayingStatusNotify(NULL, filename, 2, "playing failed/stopped!");
 	}
 	free(arg);
 	free(FilePath);
 	appLog(LOG_DEBUG, "exit playAudioThread..........");
+	pthread_exit(NULL);
+}
+
+void *playAudioThreadAlt(void *arg) {
+
+	PlayingInfo *info = arg;
+	int count, status;
+	char cmd_buf[256];
+
+	snprintf(cmd_buf, 256, "omxplayer -o %s%s < %s", DEFAULT_PATH,
+			info->filename, FIFO_PLAYER_PATH);
+	appLog(LOG_DEBUG, "play command: %s", cmd_buf);
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_PLAY;
+	pthread_mutex_unlock(&g_audio_status_mutex);
+
+	if ((status = system(cmd_buf)) == -1) {
+		appLog(LOG_DEBUG, "play audio shell call failed");
+	} else if (status == 0) {
+		appLog(LOG_DEBUG, "play audio success");
+		sendPlayingStatusNotify(NULL, info->filename, 2,
+				"Finished playing success!");
+		free(info->filename);
+		free(info);
+	} else {
+		appLog(LOG_DEBUG, "playing failed");
+		sendPlayingStatusNotify(NULL, info->filename, 2,
+				"playing failed/stopped!");
+	}
+	memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_STOP;
+	pthread_mutex_unlock(&g_audio_status_mutex);
 	pthread_exit(NULL);
 }
 
@@ -228,20 +264,91 @@ int initAudioPlayer(char *filename) {
 	return ACP_SUCCESS;
 }
 
+int initAudioPlayerAlt(PlayingInfo *info) {
+
+	int count = 0;
+	//delete existed fifo
+	unlink(FIFO_PLAYER_PATH);
+	mkfifo(FIFO_PLAYER_PATH, 0777);
+
+	if (pthread_create(&g_play_audio_thd, NULL, &playAudioThreadAlt,
+			(void *) info)) {
+		appLog(LOG_DEBUG, "init playAudioThreadAlt failed!");
+		return ACP_FAILED;
+	}
+	usleep(100000);
+	do { // try to check audio flag for 0.5s
+		 //sleep short period time for waiting play audio thread start
+		usleep(100000);
+		if (g_audio_flag == AUDIO_PLAY) {
+			int cnt = 0;
+			do {
+				if (system("echo . > /tmp/omxplayer.fifo") != 0) {
+					cnt++;
+					if (cnt == 3) {
+						//play failed
+						pthread_cancel(g_play_audio_thd);
+						return ACP_FAILED;
+					}
+					usleep(200000);
+				} else {
+					appLog(LOG_DEBUG, "play %s success!", info->filename);
+					return ACP_SUCCESS;
+				}
+			} while (cnt < 3);
+			break; //play success
+		} else {
+			count++;
+			if (count == 5) {
+				appLog(LOG_DEBUG, "play %s failed!", info->filename);
+				pthread_cancel(g_play_audio_thd);
+				return ACP_FAILED;
+			}
+		}
+		//check
+	} while (count < 5);
+
+}
 int stopAudio(char *message) {
 
 	char *resp_for;
 	char *msg_id;
+	char shell_cmd[256];
 
+	memset(shell_cmd, 0x00, 256);
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
 
+	snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
+	if (system(shell_cmd) != 0) {
+		pthread_cancel(g_play_audio_thd);
+		pthread_mutex_lock(&g_audio_status_mutex);
+		g_audio_flag = AUDIO_STOP;
+		pthread_mutex_unlock(&g_audio_status_mutex);
+		sendPlayingStatusNotify(NULL, g_file_name_playing, 2, "stopped!");
+	} else { //quit audio player success, terminate player thread
+		int check_count = 0;
+		do {
+			if (g_audio_flag == AUDIO_STOP) {
+				break;
+			} else {
+				check_count++;
+				if (check_count == 5) {
+					pthread_cancel(g_play_audio_thd);
+				}
+				usleep(50000);
+			}
+		} while (check_count < 5);
+	}
+
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
-	appLog(LOG_DEBUG, "setting flag to AUDIO_STOP");
 	pthread_mutex_unlock(&g_audio_status_mutex);
+
 	memset(g_file_name_playing, 0x00, 128);
 	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
+	free(resp_for);
+	free(msg_id);
 	return ACP_SUCCESS;
 }
 
@@ -249,17 +356,22 @@ int pauseAudio(char *message) {
 
 	char *resp_for;
 	char *msg_id;
+	char shell_cmd[256];
 
+	memset(shell_cmd, 0x00, 256);
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
-
-	pthread_mutex_lock(&g_audio_status_mutex);
-	appLog(LOG_DEBUG, "setting flag to AUDIO_PAUSE");
-	if (g_audio_flag == AUDIO_PLAY) {
+	snprintf(shell_cmd, 256, "echo -n p > %s", FIFO_PLAYER_PATH);
+	if (system(shell_cmd) == 0) {
+		sendResultResponse(msg_id, resp_for, ACP_SUCCESS, g_file_name_playing);
+		pthread_mutex_lock(&g_audio_status_mutex);
 		g_audio_flag = AUDIO_PAUSE;
+		pthread_mutex_unlock(&g_audio_status_mutex);
+	} else {
+		sendResultResponse(msg_id, resp_for, ACP_FAILED, g_file_name_playing);
 	}
-	pthread_mutex_unlock(&g_audio_status_mutex);
-	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
+	free(msg_id);
+	free(resp_for);
 	return ACP_SUCCESS;
 }
 //#endif

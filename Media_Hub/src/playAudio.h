@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <pthread.h>
 
+#define FILE_NAME_MAX 256
+#define FIFO_PLAYER_PATH "/tmp/omxplayer.fifo"
 #define error_check(err) \
     do {\
         if (err) { \
@@ -51,10 +53,16 @@ typedef struct player
 	bool play;
 }mp3Player;
 #endif
+
+typedef struct playinfo{
+	int msgid;
+	char *filename;
+	int length; //by second
+}PlayingInfo;
 pthread_t g_play_audio_thd;
 pthread_mutex_t g_audio_status_mutex;
 g_audio_status g_audio_flag;
-char g_file_name_playing[128];
+char *g_file_name_playing;
 
 #ifdef AUDIO_ENABLE
 int play(mp3Player* player);// play and stop an mp3Player play(player);see ex in main function
@@ -62,8 +70,12 @@ int stop(mp3Player* player);//
 #endif
 
 int playAudio(char *message);
+int playAudioAlt(char *message);
+
 int initAudioPlayer(char *filename);
+int initAudioPlayerAlt(PlayingInfo *info);
 void *playAudioThread(void *);
+void *playAudioThreadAlt(void *);
 int stopAudio(char *message);
 int pauseAudio(char *message);
 

@@ -187,7 +187,7 @@ void startMulticastListener(){
 	char *msg_buff;
 
 	msg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
-
+	g_file_name_playing = calloc(FILE_NAME_MAX, sizeof(char));
 
 	if(msg_buff == NULL){
 		appLog(LOG_DEBUG, "allocate buffer failed, exit program");
