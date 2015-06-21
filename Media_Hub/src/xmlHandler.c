@@ -209,6 +209,7 @@ char *writeXmlToBuffResp(char *msg_id, char *resp_for, char *resp_code,
 		return NULL;
 	}
 	memcpy(tmp, buffer->content, strlen(buffer->content));
+	tmp[strlen(buffer->content)] = '\0';
 	xmlFreeTextWriter(writer);
 	xmlBufferFree(buffer);
 //	appLog(LOG_DEBUG, "xml response:  %s", (char *) buffer->content);
@@ -321,6 +322,7 @@ char *writeXmlToBuffNotify(char *msg_id, NotifyPiStatus notify_status) {
 		return NULL;
 	}
 	memcpy(tmp, buffer->content, strlen(buffer->content));
+	tmp[strlen(buffer->content)] = '\0';
 	xmlFreeTextWriter(writer);
 	xmlBufferFree(buffer);
 //	appLog(LOG_DEBUG, "xml response:  %s", (char *) buffer->content);
