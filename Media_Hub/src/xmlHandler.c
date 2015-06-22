@@ -208,9 +208,9 @@ char *writeXmlToBuffResp(char *msg_id, char *resp_for, char *resp_code,
 		appLog(LOG_DEBUG, "error in xmlTextWriterEndDocument");
 		return NULL;
 	}
-	memcpy(tmp, buffer->content, strlen(buffer->content));
+	strncpy(tmp, buffer->content, strlen(buffer->content));
 
-	tmp[strlen(buffer->content)] = '\0';
+	tmp[strlen(tmp)]='\n';
 	xmlFreeTextWriter(writer);
 	xmlBufferFree(buffer);
 //	appLog(LOG_DEBUG, "xml response:  %s", (char *) buffer->content);
@@ -322,9 +322,9 @@ char *writeXmlToBuffNotify(char *msg_id, NotifyPiStatus notify_status) {
 		appLog(LOG_DEBUG, "error in xmlTextWriterEndDocument");
 		return NULL;
 	}
-	memcpy(tmp, buffer->content, strlen(buffer->content));
+	strncpy(tmp, buffer->content, strlen(buffer->content));
 
-	tmp[strlen(buffer->content)] = '\0';
+	tmp[strlen(tmp)]='\n';
 	xmlFreeTextWriter(writer);
 	xmlBufferFree(buffer);
 //	appLog(LOG_DEBUG, "xml response:  %s", (char *) buffer->content);
