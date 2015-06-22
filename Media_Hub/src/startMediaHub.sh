@@ -4,8 +4,8 @@ flag=0
 echo $1
 while true; do 
 #ip=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1`
-ifconfig=`eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'`
-mask=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 4`
+ip=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'`
+#mask=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 4`
 gw=`route -n | grep 'UG[ \t]' | awk '{print $2}'`
 echo "ip=$ip" > /dev/ttyAMA0
 echo "netmask=$mask" > /dev/ttyAMA0
