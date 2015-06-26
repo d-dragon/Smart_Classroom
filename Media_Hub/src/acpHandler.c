@@ -1044,7 +1044,7 @@ int sendResultResponse(char *msg_id, char *resp_for, int resp_code,
 	}
 
 	appLog(LOG_DEBUG, "response content: %s", resp_buff);
-	ret = send(stream_sock_fd, resp_buff, BUFF_LEN_MAX, 0);
+	ret = send(stream_sock_fd, resp_buff, strlen(resp_buff) + 1, 0);
 	free(resp_buff);
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "send response failed");
@@ -1130,7 +1130,7 @@ int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag,
 		return ACP_FAILED;
 	}
 	appLog(LOG_DEBUG, "notify data: \n %s", data_buff);
-	ret = send(stream_sock_fd, data_buff, BUFF_LEN_MAX, 0);
+	ret = send(stream_sock_fd, data_buff, strlen(data_buff) + 1, 0);
 
 	if (ret < 0) {
 		appLog(LOG_DEBUG, "send nofity failed!");
