@@ -795,7 +795,6 @@ int playAudioAlt(char *message) {
 	int ret;
 	PlayingInfo *info; //this pointer will be freed in sub-function
 	char *resp_cmd;
-	char *tmp;
 	char shell_cmd[256];
 
 	//info struct will be freed in this function if play failed or not call initAudioPlayer
@@ -803,21 +802,20 @@ int playAudioAlt(char *message) {
 	info = malloc(sizeof(PlayingInfo));
 	info->filename = calloc(128, sizeof(char));
 
-	tmp = getXmlElementByName(message, "id");
+	info->msgid = getXmlElementByName(message, "id");
 	info->filename = getXmlElementByName(message, "filename");
 	resp_cmd = getXmlElementByName(message, "command");
 
-	if ((tmp == NULL) || (info->filename == NULL) || (resp_cmd == NULL)) {
+	if ((info->msgid == NULL) || (info->filename == NULL) || (resp_cmd == NULL)) {
 		appLog(LOG_DEBUG, "play failed");
 		sendResultResponse("000", "play", ACP_FAILED, NULL);
 		free(info->filename);
+		free(info->msgid);
 		free(info);
-		free(tmp);
 		free(resp_cmd);
 		return ACP_FAILED;
 	}
 
-	info->msgid = atoi(tmp);
 
 	if (g_audio_flag == AUDIO_PLAY) {
 		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
@@ -935,8 +933,10 @@ int playAudioAlt(char *message) {
 
 		memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
 		snprintf(g_file_name_playing, FILE_NAME_MAX, "%s", info->filename);
-
+		appLog(LOG_DEBUG, "debug-----");
 		ret = initAudioPlayerAlt(info);
+		appLog(LOG_DEBUG, "resp cmd: %s --- filename: %s", resp_cmd, info->filename);
+		appLog(LOG_DEBUG, "debug-----");
 		if (ret == ACP_SUCCESS) {
 			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
 					g_file_name_playing);
@@ -948,7 +948,6 @@ int playAudioAlt(char *message) {
 		}
 
 	}
-	free(tmp);
 	free(resp_cmd);
 
 }

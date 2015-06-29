@@ -201,7 +201,7 @@ void *playAudioThreadAlt(void *arg) {
 	int count, status;
 	char cmd_buf[256];
 
-	snprintf(cmd_buf, 256, "omxplayer -o %s%s < %s", DEFAULT_PATH,
+	snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s", DEFAULT_PATH,
 			info->filename, FIFO_PLAYER_PATH);
 	appLog(LOG_DEBUG, "play command: %s", cmd_buf);
 	pthread_mutex_lock(&g_audio_status_mutex);
@@ -318,35 +318,38 @@ int stopAudio(char *message) {
 	memset(shell_cmd, 0x00, 256);
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
+	if (g_audio_flag == AUDIO_STOP) {
+		sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "Stopped");
+	} else {
+		snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
+		if (system(shell_cmd) != 0) {
+			pthread_cancel(g_play_audio_thd);
+			pthread_mutex_lock(&g_audio_status_mutex);
+			g_audio_flag = AUDIO_STOP;
+			pthread_mutex_unlock(&g_audio_status_mutex);
+			sendPlayingStatusNotify(NULL, g_file_name_playing, 2, "stopped!");
+		} else { //quit audio player success, terminate player thread
+			int check_count = 0;
+			do {
+				if (g_audio_flag == AUDIO_STOP) {
+					break;
+				} else {
+					check_count++;
+					if (check_count == 5) {
+						pthread_cancel(g_play_audio_thd);
+					}
+					usleep(50000);
+				}
+			} while (check_count < 5);
+		}
 
-	snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
-	if (system(shell_cmd) != 0) {
-		pthread_cancel(g_play_audio_thd);
 		pthread_mutex_lock(&g_audio_status_mutex);
 		g_audio_flag = AUDIO_STOP;
 		pthread_mutex_unlock(&g_audio_status_mutex);
-		sendPlayingStatusNotify(NULL, g_file_name_playing, 2, "stopped!");
-	} else { //quit audio player success, terminate player thread
-		int check_count = 0;
-		do {
-			if (g_audio_flag == AUDIO_STOP) {
-				break;
-			} else {
-				check_count++;
-				if (check_count == 5) {
-					pthread_cancel(g_play_audio_thd);
-				}
-				usleep(50000);
-			}
-		} while (check_count < 5);
+
+		memset(g_file_name_playing, 0x00, 128);
+		sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
 	}
-
-	pthread_mutex_lock(&g_audio_status_mutex);
-	g_audio_flag = AUDIO_STOP;
-	pthread_mutex_unlock(&g_audio_status_mutex);
-
-	memset(g_file_name_playing, 0x00, 128);
-	sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
 	free(resp_for);
 	free(msg_id);
 	return ACP_SUCCESS;
