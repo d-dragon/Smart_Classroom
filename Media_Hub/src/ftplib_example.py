@@ -1,7 +1,8 @@
 from ftplib import FTP
+from os.path import expanduser
 
 def getFile(hostdomain, filename,user,passwd):
-
+	home = expanduser('~')
    	print(hostdomain)
 	print(user)
 	print(passwd)
@@ -9,13 +10,14 @@ def getFile(hostdomain, filename,user,passwd):
 #	ftp = FTP(hostdomain)
 	ftp.connect(hostdomain, 21212)
     	ftp.login(user, passwd)
-#	ftp.login()
+	ftp.login()
     	ftp.cwd('/demo')
 #	ftp.cwd('/Firmware')
-	localfile = open(filename, 'wb')
-	print(filename)
+	filepath = home + '/Smart_Classroom/Media_Hub/src/' + filename
+	print filepath
+	localfile = open(filepath, 'wb')
 	ftp.retrbinary('RETR ' + filename, localfile.write, 1024)
 	ftp.quit()
 	localfile.close()
 	return 123
-#getFile('10.0.0.111','README.md','user','pass')
+#getFile('192.168.1.102','zwave_programmer_tool','user','pass')
