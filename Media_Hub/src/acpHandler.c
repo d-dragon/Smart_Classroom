@@ -739,7 +739,7 @@ int playAudio(char *message) {
 			appLog(LOG_DEBUG, "%s is playing", pfile_name);
 			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "playing");
 		} else {
-			g_audio_flag = STOP_AUDIO;
+			g_audio_flag = AUDIO_STOP;
 			usleep(100000);
 			ret = initAudioPlayer(pfile_name);
 			usleep(500000); //0.5s
@@ -753,23 +753,16 @@ int playAudio(char *message) {
 			}
 		}
 
-	} else {
+	} else {// g_audio_flag == AUDIO_PLAY
 
 //		pfile_name = getXmlElementByName(message, "filename");
 
-		appLog(LOG_DEBUG, "file name: %s", pfile_name);
-		if (!pfile_name) {
-			appLog(LOG_DEBUG, "file is not exist");
-			free(pfile_name);
-			sendResultResponse(msg_id, resp_for, ACP_FAILED, NULL);
-			return ACP_FAILED;
-		}
 		if (strcmp(g_file_name_playing, pfile_name) == 0) {
 			appLog(LOG_DEBUG, "%s is playing", pfile_name);
 			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "playing");
 			return ACP_SUCCESS;
 		} else {
-			g_audio_flag = STOP_AUDIO;
+			g_audio_flag = AUDIO_STOP;
 			usleep(200000); //sleep 0.2s waiting for previous thread exit
 		}
 
@@ -819,7 +812,8 @@ int playAudioAlt(char *message) {
 
 	if (g_audio_flag == AUDIO_PLAY) {
 		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
-				== 0) {
+				== 0) {//Audio file is playing
+
 			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
 					g_file_name_playing);
 			free(info->filename);
@@ -829,13 +823,14 @@ int playAudioAlt(char *message) {
 			memset(shell_cmd, 0x00, 256);
 			snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
 			if (system(shell_cmd) != 0) {
-				pthread_cancel(g_play_audio_thd);
+				pthread_cancel(g_play_audio_thd);//force stop thread
 				pthread_mutex_lock(&g_audio_status_mutex);
 				g_audio_flag = AUDIO_STOP;
 				pthread_mutex_unlock(&g_audio_status_mutex);
 				sendPlayingStatusNotify(NULL, g_file_name_playing, 2,
 						"stopped!");
 			} else { //quit audio player success, terminate player thread
+				usleep(200000); //sleep 0.2s for waiting playing thread exit
 				int check_count = 0;
 				do {
 					if (g_audio_flag == AUDIO_STOP) {

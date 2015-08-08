@@ -162,17 +162,19 @@ int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
 	Py_Initialize();
 	PyRun_SimpleString("import sys");
 	PyRun_SimpleString(PY_SYS_PATH);
-
+	appLog(LOG_DEBUG,"init python interpreter done!!!");
 	//load python module
 	pName = PyString_FromString(PY_MODULE);
 	pModule = PyImport_Import(pName);
 	Py_DECREF(pName);
 
 	if (pModule != NULL) {
+		appLog(LOG_DEBUG,"Loaded module successfully!!!");
 		//get python function
 		pFunc = PyObject_GetAttrString(pModule, FTP_GET_FILE_FUNC);
 		//checking pFunc is callable
 		if (pFunc && PyCallable_Check(pFunc)) {
+			appLog(LOG_DEBUG,"Checking function is callable!!!");
 			//create arg list with n member
 			pArgs = PyTuple_New(numargs);
 			//convert arg from C to Python
@@ -201,18 +203,19 @@ int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
 				//set arg to python reference to pValue
 				PyTuple_SetItem(pArgs, i, pValue);
 			}
-
+			appLog(LOG_DEBUG,"Calling python function!!!");
 			//call Python Func
 			pValue = PyObject_CallObject(pFunc, pArgs);
+			appLog(LOG_DEBUG,"python function script done!!!");
 			Py_DECREF(pArgs);
 			if (pValue != NULL) {
-				printf("Result of Python call: %ld\n", PyInt_AsLong(pValue));
+				appLog(LOG_DEBUG,"Result of Python call: %ld\n", PyInt_AsLong(pValue));
 				Py_DECREF(pValue);
 			} else {
 				Py_DECREF(pFunc);
 				Py_DECREF(pModule);
 				PyErr_Print();
-				printf("call failed\n");
+				appLog(LOG_DEBUG,"python script falied!!!");
 				return FILE_ERROR;
 			}
 
