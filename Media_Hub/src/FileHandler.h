@@ -48,6 +48,7 @@ int getListFile(char *, char *);
 
 int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName, char *Password);
 int getFile(char *);
+int changeRoomName(char *old_name, char *new_name);
 
 
 #endif /* RECEIVE_FILE_H_ */

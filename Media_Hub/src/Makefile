@@ -17,9 +17,9 @@ endif
 			
 audio_app: $(OBJS)
 ifeq ($(TARGET),x86)
-	$(CC) -o MediaHub $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2
+	$(CC) -o MediaHub $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2 -lconfig
 else
-	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 libportaudio.a -lmpg123 -lm
+	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 -lconfig libportaudio.a -lmpg123 -lm
 endif
 			
 	rm *.o

@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <python2.7/Python.h>
+#include <libconfig.h>
 
 #include "FileHandler.h"
 #include "sock_infra.h"
@@ -276,4 +277,9 @@ int getFile(char *message) {
 	free(resp_for);
 
 	return ret;
+}
+
+int changeRoomName(char *old_name, char *new_name){
+
+    return FILE_SUCCESS;
 }
