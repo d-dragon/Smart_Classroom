@@ -232,7 +232,7 @@ int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
 	} else {
 		PyErr_Print();
 		printf("failed to load %s\n", PY_MODULE);
-		return 1;
+		return FILE_ERROR;
 	}
 	Py_Finalize();
 	return FILE_SUCCESS;

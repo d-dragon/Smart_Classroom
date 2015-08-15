@@ -28,7 +28,7 @@ echo "gateway=$gw" > /dev/ttyAMA0
 #echo $gw
 # -q quiet
 # -c nb of pings to perform
-ping -q -c5 $gw > /dev/null
+ping -c 2 $gw > /dev/null
 
 if [ $? -eq 0 ]
 then
@@ -37,7 +37,7 @@ then
 fi
 if [ $flag -eq 1 ]
 then
-	./MediaHub &
+	./home/pi/Smart_Classroom/Media_Hub/src/MediaHub &
 	wait 
 	echo "started MediaHub" > /dev/ttyAMA0
 	killall MediaHub
