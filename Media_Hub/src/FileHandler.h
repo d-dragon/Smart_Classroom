@@ -13,10 +13,12 @@
 #define DEFAULT_PATH "/home/pi/Smart_Classroom/Media_Hub/src/"
 #define SOURCE_PATH "/home/pi/Smart_Classroom/src/"
 #define PY_SYS_PATH "sys.path.append('/home/pi/Smart_Classroom/Media_Hub/src')"
+#define DEFAULT_CONFIG_PATH "/home/pi/mbox.cfg"
 #else
 #define DEFAULT_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/List_File/"
 #define SOURCE_PATH "/home/duyphan/git/Smart_Classroom/Media_Hub/src"
 #define PY_SYS_PATH "sys.path.append('/home/duyphan/git/Smart_Classroom/Media_Hub/src')"
+#define DEFAULT_CONFIG_PATH "/home/duyphan/mbox.cfg"
 //#define PY_SYS_PATH "sys.path.append('/home/r1/Downloads/testpi')"
 #endif
 //#define DEFAULT_PATH "/home/"
@@ -49,6 +51,7 @@ int getListFile(char *, char *);
 int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName, char *Password);
 int getFile(char *);
 int changeRoomName(char *old_name, char *new_name);
+int initDefaultConfigFile();
 
 
 #endif /* RECEIVE_FILE_H_ */
