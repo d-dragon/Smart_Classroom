@@ -504,7 +504,7 @@ int initTaskHandler(char *message) {
 
 		if (stream_sock_fd > 0) {
 			sendResultResponse(msg_id, resp_for, ACP_SUCCESS,
-					(char *) ROOM_NAME_DEFAULT);
+					(char *) g_device_info.device_name);
 			break;
 		} else {
 			sleep(1);
@@ -512,7 +512,7 @@ int initTaskHandler(char *message) {
 		}
 		if (count == 5) {
 			sendResultResponse(msg_id, resp_for, ACP_FAILED,
-					(char *) ROOM_NAME_DEFAULT);
+					(char *) g_device_info.device_name);
 			break;
 		}
 	}

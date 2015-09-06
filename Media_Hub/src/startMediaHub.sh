@@ -7,6 +7,7 @@ while true; do
 ip=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{print $1}'`
 #mask=`ifconfig | grep -A 1 $1 | tail -1 | cut -d ':' -f 4`
 gw=`route -n | grep 'UG[ \t]' | awk '{print $2}'`
+mac_addr=`cat /sys/class/net/eth0/address | sed 's/\://g' | tr 'a-z' 'A-Z'`
 echo "ip=$ip" > /dev/ttyAMA0
 echo "netmask=$mask" > /dev/ttyAMA0
 echo "gateway=$gw" > /dev/ttyAMA0
@@ -41,7 +42,7 @@ then
 	then
 		./home/pi/Smart_Classroom/Media_Hub/src/MediaHub &
 	else
-		./home/pi/Smart_Classroom/Media_Hub/src/MediaHub AABBCCDDEEFF &
+		./home/pi/Smart_Classroom/Media_Hub/src/MediaHub $mac_addr &
 	fi
 	wait 
 	echo "started MediaHub" > /dev/ttyAMA0
