@@ -35,6 +35,7 @@ enum request_cmd_index {
 	PLAY_AUDIO,
 	STOP_AUDIO,
 	PAUSE_AUDIO,
+	CHANGE_DEVICE_NAME,
 	CLOSE_TASK_HANDLER
 };
 
@@ -43,7 +44,8 @@ static struct RequestCmd RequestCmdList[] = {
 				PI_CONNECT_SERVER, 1, "server_ip" }, { "GetFile", GET_FILE, 2,
 				"list_file" }, { "PlayFile", PLAY_AUDIO, 1, "file_name" }, {
 				"StopFile", STOP_AUDIO, 1, "file_name" }, { "PauseFile",
-				PAUSE_AUDIO, 1, "file_name" } };
+				PAUSE_AUDIO, 1, "file_name" }, { "ChangeRoomName",
+				CHANGE_DEVICE_NAME, 1, "new_name" } };
 
 struct NotifyInfo {
 	const char *info_str;
@@ -66,6 +68,7 @@ int stream_sock_sd;
 int NotifyMessageHandler(char *message);
 int RequestMessageHandler(char *message);
 int ResponseMessageHandler(char *message);
+int changeRoomName(char *message);
 int playAudio(char *message);
 int getNotifyIndex(char *info);
 int getRequestCommandIndex(char *command);
@@ -470,23 +473,23 @@ int initTaskHandler(char *message) {
 
 	int ret;
 	char *server_ip = &(g_ServerInfo.serverIp);
-	char *room_list;
+	char *room_name;
 	char *msg_id;
 	char *resp_for;
 
-	room_list = getXmlElementByName(message, "room");
+	room_name = getXmlElementByName(message, "room");
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
 
-	if (!room_list) {
+	if (!room_name) {
 		appLog(LOG_DEBUG, "server_ip is invalid");
-		free(room_list);
+		free(room_name);
 		return ACP_FAILED;
 	}
-	if (strstr(room_list, (char *) ROOM_NAME_DEFAULT) != NULL) {
+	if (strstr(room_name, (char *) g_device_info.device_name) != NULL) {
 		ret = pthread_create(&g_TaskHandlerThread, NULL, &TaskHandlerThread,
 				(void *) server_ip);
-		free(room_list);
+		free(room_name);
 		if (ret) {
 			appLog(LOG_DEBUG, "init Task Handler failed");
 			ret = ACP_FAILED;
@@ -664,6 +667,10 @@ int RequestMessageHandler(char *message) {
 		appLog(LOG_DEBUG, "called pauseAudio");
 		ret = pauseAudio(message);
 		break;
+	case CHANGE_DEVICE_NAME:
+		appLog(LOG_DEBUG, "called changeRoomName");
+		ret = changeRoomName(message);
+		break;
 	default:
 		break;
 	}
@@ -753,7 +760,7 @@ int playAudio(char *message) {
 			}
 		}
 
-	} else {// g_audio_flag == AUDIO_PLAY
+	} else { // g_audio_flag == AUDIO_PLAY
 
 //		pfile_name = getXmlElementByName(message, "filename");
 
@@ -799,7 +806,8 @@ int playAudioAlt(char *message) {
 	info->filename = getXmlElementByName(message, "filename");
 	resp_cmd = getXmlElementByName(message, "command");
 
-	if ((info->msgid == NULL) || (info->filename == NULL) || (resp_cmd == NULL)) {
+	if ((info->msgid == NULL) || (info->filename == NULL)
+			|| (resp_cmd == NULL)) {
 		appLog(LOG_DEBUG, "play failed");
 		sendResultResponse("000", "play", ACP_FAILED, NULL);
 		free(info->filename);
@@ -809,10 +817,9 @@ int playAudioAlt(char *message) {
 		return ACP_FAILED;
 	}
 
-
 	if (g_audio_flag == AUDIO_PLAY) {
 		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
-				== 0) {//Audio file is playing
+				== 0) { //Audio file is playing
 
 			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
 					g_file_name_playing);
@@ -823,7 +830,7 @@ int playAudioAlt(char *message) {
 			memset(shell_cmd, 0x00, 256);
 			snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
 			if (system(shell_cmd) != 0) {
-				pthread_cancel(g_play_audio_thd);//force stop thread
+				pthread_cancel(g_play_audio_thd); //force stop thread
 				pthread_mutex_lock(&g_audio_status_mutex);
 				g_audio_flag = AUDIO_STOP;
 				pthread_mutex_unlock(&g_audio_status_mutex);
@@ -930,7 +937,8 @@ int playAudioAlt(char *message) {
 		snprintf(g_file_name_playing, FILE_NAME_MAX, "%s", info->filename);
 		appLog(LOG_DEBUG, "debug-----");
 		ret = initAudioPlayerAlt(info);
-		appLog(LOG_DEBUG, "resp cmd: %s --- filename: %s", resp_cmd, info->filename);
+		appLog(LOG_DEBUG, "resp cmd: %s --- filename: %s",
+				resp_cmd, info->filename);
 		appLog(LOG_DEBUG, "debug-----");
 		if (ret == ACP_SUCCESS) {
 			sendResultResponse(info->msgid, resp_cmd, ACP_SUCCESS,
@@ -1001,7 +1009,8 @@ int collectServerInfo( message) {
 	appLog(LOG_DEBUG, "%s || %s || %s || %s",
 			g_ServerInfo.serverIp, g_ServerInfo.ftp.Ip, g_ServerInfo.ftp.User, g_ServerInfo.ftp.Password);
 	char *buff = NULL;
-	buff = writeXmlToBuffResp(msg_id, resp_for, RESPONSE_SUCCESS, "room2");
+	buff = writeXmlToBuffResp(msg_id, resp_for, RESPONSE_SUCCESS,
+			(char *) g_device_info.device_name);
 	if (buff == NULL) {
 		return ACP_FAILED;
 	}
@@ -1131,5 +1140,41 @@ int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag,
 		return ACP_FAILED;
 	}
 	free(data_buff);
+	return ACP_SUCCESS;
+}
+
+//modify config file and update device info variable
+//if room name is not match current room->ignore it
+int changeRoomName(char *message) {
+
+	char *msg_id, *cmd, *cur_name, *new_name;
+
+	cur_name = getXmlElementByName(message, "currentname");
+	if (strcmp(g_device_info.device_name, cur_name) != 0) {
+		free(cur_name);
+		return ACP_SUCCESS;
+	}
+
+	msg_id = getXmlElementByName(message, "id");
+	cmd = getXmlElementByName(message, "command");
+	new_name = getXmlElementByName(message, "newName");
+
+	if (cmd == NULL || new_name == NULL) {
+		free(msg_id);
+		free(cmd);
+		free(new_name);
+		return ACP_FAILED;
+	}
+
+	if (changeConfigSetting("deviceName", new_name) == FILE_ERROR) {
+
+		return ACP_FAILED;
+	}
+	strcpy(g_device_info.device_name, new_name);
+
+	free(cur_name);
+	free(msg_id);
+	free(cmd);
+	free(new_name);
 	return ACP_SUCCESS;
 }

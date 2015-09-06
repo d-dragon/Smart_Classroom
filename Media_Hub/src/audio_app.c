@@ -16,7 +16,6 @@
 
 int main(int argc, char *argv[]) {
 
-
 /*
 #ifdef AUDIO_ENABLE
 	int status;
@@ -44,7 +43,7 @@ int main(int argc, char *argv[]) {
 	/*get network interface address*/
 	getInterfaceAddress();
 
-	startMulticastListener();
+	startMulticastListener(argv[1]);
 
 
 	/*init socket semaphore*/

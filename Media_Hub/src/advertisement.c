@@ -12,6 +12,7 @@
 #include "FileHandler.h"
 #include "playAudio.h"
 
+
 void *advertiseServerInfoThread() {
 
 	sem_wait(&sem_sock);
@@ -179,7 +180,7 @@ int parseDiscoveredMessage(char *message) {
 	}
 	return MESSAGE_VALID;
 }
-void startMulticastListener(){
+void startMulticastListener(char *mac_addr){
 
 	int ret;
 //	int multicast_fd;
@@ -194,6 +195,8 @@ void startMulticastListener(){
 		exit(1);
 	}
 	g_audio_flag = AUDIO_STOP;
+
+	initDeviceInfo(mac_addr);
 
 	multicast_fd = openMulRecvSocket();
 
@@ -218,3 +221,4 @@ void startMulticastListener(){
 
 
 }
+

@@ -20,6 +20,6 @@ void *advertiseServerInfoThread();
 char *AdvPackageWrapper(char * ,char *);
 int parseDiscoveredMessage(char *);
 
-void startMulticastListener();
+void startMulticastListener(char *mac_addr);
 
 #endif /* ADVERTISEMENT_H_ */

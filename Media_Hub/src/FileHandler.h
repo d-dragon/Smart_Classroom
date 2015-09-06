@@ -42,6 +42,12 @@ typedef struct file{
 	char *filename;
 }FileInfo;
 
+struct device_config_t{
+	char device_id[8];
+	char device_name[128];
+};
+
+struct device_config_t g_device_info;
 
 FILE *createFileStream(char *);
 void *FileStreamHandlerThread();
@@ -50,8 +56,9 @@ int getListFile(char *, char *);
 
 int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName, char *Password);
 int getFile(char *);
-int changeRoomName(char *old_name, char *new_name);
-int initDefaultConfigFile();
+int changeConfigSetting(char *setting_name, char *new_value);
+int createDefaultConfigFile(char *mac_addr);
+void initDeviceInfo(char *mac_addr);
 
 
 #endif /* RECEIVE_FILE_H_ */

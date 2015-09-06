@@ -37,7 +37,12 @@ then
 fi
 if [ $flag -eq 1 ]
 then
-	./home/pi/Smart_Classroom/Media_Hub/src/MediaHub &
+	if [ -f /home/pi/mbox.cfg ]
+	then
+		./home/pi/Smart_Classroom/Media_Hub/src/MediaHub &
+	else
+		./home/pi/Smart_Classroom/Media_Hub/src/MediaHub AABBCCDDEEFF &
+	fi
 	wait 
 	echo "started MediaHub" > /dev/ttyAMA0
 	killall MediaHub
