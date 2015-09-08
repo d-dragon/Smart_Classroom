@@ -174,6 +174,7 @@ int openMulRecvSocket() {
 	/* called for each local interface over which the multicast */
 	/* datagrams are to be received.
 	 */
+	u_char loop = 0;
 	mul_group.imr_multiaddr.s_addr = inet_addr((char *) MULTICAST_ADDR);
 	mul_group.imr_interface.s_addr = inet_addr(interface_addr);
 	if (setsockopt(mul_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mul_group,
@@ -183,6 +184,7 @@ int openMulRecvSocket() {
 		close(mul_fd);
 		return SOCK_ERROR;
 	} else {
+		setsockopt(mul_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &mul_group,sizeof(mul_group));
 		appLog(LOG_DEBUG, "joined multicast group %s on the %s succes\n",
 				MULTICAST_ADDR, interface_addr);
 	}
