@@ -13,7 +13,7 @@ def getFile(hostdomain, filename,user,passwd):
 #	ftp.login()
     	ftp.cwd('demo/')
 #	ftp.cwd('/Firmware')
-	filepath = home + '/Smart_Classroom/Media_Hub/src/' + filename
+	filepath = '/home/pi/Smart_Classroom/Media_Hub/src/' + filename
 	print filepath
 	localfile = open(filepath, 'wb')
 	ftp.retrbinary('RETR ' + filename, localfile.write, 1024)
