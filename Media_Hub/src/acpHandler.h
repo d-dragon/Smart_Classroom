@@ -21,7 +21,7 @@
 #define MAX_WAITING_COUNT 	3000
 #define ENABLED		1
 #define DISABLED	0
-#define BUFF_LEN_MAX 1024
+#define BUFF_LEN_MAX 2048
 #define NUM_CONTENT_TAG 5
 #define RESPONSE_SUCCESS	"SUCCESS"
 #define RESPONSE_FAILED		"FAILED"
@@ -140,6 +140,7 @@ static int isEOFPackage(char *);
 int initFileHandlerThread();
 int initAudioPlayer(char *);
 
+void TaskReceiver();
 int initTaskHandler(char *message);
 int collectServerInfo(message);
 void *TaskHandlerThread(void *arg);

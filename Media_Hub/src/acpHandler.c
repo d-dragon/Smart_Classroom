@@ -72,7 +72,7 @@ int changeRoomName(char *message);
 int playAudio(char *message);
 int getNotifyIndex(char *info);
 int getRequestCommandIndex(char *command);
-
+int connectStation(char *station_addr);
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
@@ -1177,4 +1177,70 @@ int changeRoomName(char *message) {
 	free(cmd);
 	free(new_name);
 	return ACP_SUCCESS;
+}
+
+int connectStation(char *station_addr) {
+
+	int count = 0;
+
+	//if the argument is host name -> call gethostbyname
+	//TO DO:
+	do {
+
+		stream_sock_fd = connecttoStreamSocket(station_addr, STREAM_SOCK_PORT);
+		if (stream_sock_fd < 0) {
+			count++;
+			usleep(100000);
+			appLog(LOG_DEBUG, "trying connect to station - %d failed", count++);
+		} else {
+			return ACP_SUCCESS;
+		}
+
+	} while (count < 10 && stream_sock_fd < 0);
+
+	return ACP_FAILED;
+}
+
+void TaskReceiver() {
+
+	int ret;
+	char *msg_buff;
+	int buff_len;
+
+	msg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
+	if (msg_buff == NULL) {
+		appLog(LOG_ERR, "allocate memory failed - app restart");
+		exit(EXIT_FAILURE);
+	}
+	ret = connectStation("192.168.1.199");
+	if (ret == ACP_FAILED) {
+		//terminate app
+		appLog(LOG_ERR, "connect to station failed - terminating app");
+		exit(EXIT_FAILURE);
+	}
+
+	//waiting for receiving message
+	while (1) {
+
+		appLog(LOG_DEBUG, "waiting incoming message...");
+		buff_len = recv(stream_sock_fd, msg_buff, BUFF_LEN_MAX, 0);
+		if (buff_len < 0) {
+			appLog(LOG_ERR, "have no message received!!!");
+
+		} else if (buff_len == 0) {
+			//station is down, need more handle
+			appLog(LOG_ERR, "station was disconnected");
+			close(stream_sock_fd);
+			free(msg_buff);
+			//marking station is down for next step
+			break;
+		} else {
+			//handle message
+			appLog(LOG_DEBUG, "message received>>>>> %s", msg_buff);
+			MessageProcessor(msg_buff);
+			memset(msg_buff, 0, BUFF_LEN_MAX);
+
+		}
+	}
+
 }
