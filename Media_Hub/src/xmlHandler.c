@@ -18,6 +18,7 @@
 #include "xmlHandler.h"
 #include "logger.h"
 #include "acpHandler.h"
+#include "FileHandler.h"
 
 char *findElement(xmlDocPtr doc, xmlNodePtr node, char *element_name);
 
@@ -163,6 +164,14 @@ char *writeXmlToBuffResp(char *msg_id, char *resp_for, char *resp_code,
 		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
 		return NULL;
 	}
+
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "deviceid",
+			(char *) g_device_info.device_id);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
+
 	/*start type elemnt*/
 	ret = xmlTextWriterWriteElement(writer, BAD_CAST "type", "response");
 	if (ret < 0) {
@@ -265,6 +274,14 @@ char *writeXmlToBuffNotify(char *msg_id, NotifyPiStatus notify_status) {
 		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
 		return NULL;
 	}
+
+	ret = xmlTextWriterWriteElement(writer, BAD_CAST "deviceid",
+			(char *) g_device_info.device_id);
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "error in xmlTextWriterWriteElement");
+		return NULL;
+	}
+
 	/*start type elemnt*/
 	ret = xmlTextWriterWriteElement(writer, BAD_CAST "type", "notify");
 	if (ret < 0) {

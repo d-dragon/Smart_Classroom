@@ -73,6 +73,7 @@ int playAudio(char *message);
 int getNotifyIndex(char *info);
 int getRequestCommandIndex(char *command);
 int connectStation(char *station_addr);
+int notifyDeviceInfo(int num_tag, char *status);
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
@@ -800,10 +801,12 @@ int playAudioAlt(char *message) {
 	//info struct will be freed in this function if play failed or not call initAudioPlayer
 	//otherwise, it will be freed in playAudioThread
 	info = malloc(sizeof(PlayingInfo));
-	info->filename = calloc(128, sizeof(char));
+//	info->filename = calloc(128, sizeof(char));
 
 	info->msgid = getXmlElementByName(message, "id");
 	info->filename = getXmlElementByName(message, "filename");
+	info->type = getXmlElementByName(message, "type");
+
 	resp_cmd = getXmlElementByName(message, "command");
 
 	if ((info->msgid == NULL) || (info->filename == NULL)
@@ -1191,7 +1194,7 @@ int connectStation(char *station_addr) {
 		if (stream_sock_fd < 0) {
 			count++;
 			usleep(100000);
-			appLog(LOG_DEBUG, "trying connect to station - %d failed", count++);
+			appLog(LOG_DEBUG, "trying connect to station - %d failed", count);
 		} else {
 			return ACP_SUCCESS;
 		}
@@ -1212,13 +1215,18 @@ void TaskReceiver() {
 		appLog(LOG_ERR, "allocate memory failed - app restart");
 		exit(EXIT_FAILURE);
 	}
-	ret = connectStation("192.168.1.199");
+	ret = connectStation("10.31.57.231");
 	if (ret == ACP_FAILED) {
 		//terminate app
 		appLog(LOG_ERR, "connect to station failed - terminating app");
 		exit(EXIT_FAILURE);
 	}
 
+	ret = notifyDeviceInfo(3,"idle");
+	if(ret == ACP_FAILED){
+		//need suitable handle
+		appLog(LOG_DEBUG, "sending notification failed!!1");
+	}
 	//waiting for receiving message
 	while (1) {
 
@@ -1242,5 +1250,37 @@ void TaskReceiver() {
 
 		}
 	}
+}
 
+int notifyDeviceInfo(int num_tag, char *status) {
+
+	char *data_buff;
+	int ret, i;
+	NotifyPiStatus notify_status;
+
+	notify_status.info = "mbox info";
+	notify_status.num_content_tag = num_tag;
+	notify_status.content_tag[0].ele_name = "devicename";
+	notify_status.content_tag[0].ele_content = g_device_info.device_name;
+	notify_status.content_tag[1].ele_name = "address";
+	notify_status.content_tag[1].ele_content = g_device_info.address;
+	notify_status.content_tag[2].ele_name = "status";
+	notify_status.content_tag[2].ele_content = status;
+
+
+	data_buff = writeXmlToBuffNotify("000", notify_status);
+
+	if (data_buff == NULL) {
+		appLog(LOG_DEBUG, "xml data is null");
+		return ACP_FAILED;
+	}
+	appLog(LOG_DEBUG, "notify data: \n %s", data_buff);
+	ret = send(stream_sock_fd, data_buff, strlen(data_buff) + 1, 0);
+
+	if (ret < 0) {
+		appLog(LOG_DEBUG, "send nofity failed!");
+		return ACP_FAILED;
+	}
+	free(data_buff);
+	return ACP_SUCCESS;
 }

@@ -8,7 +8,7 @@ def getFile(hostdomain, filename,user,passwd):
 	print(passwd)
 	ftp = FTP()
 #	ftp = FTP(hostdomain)
-	ftp.connect(hostdomain, 21212)
+	ftp.connect(hostdomain, 21)
     	ftp.login(user, passwd)
 #	ftp.login()
     	ftp.cwd('demo/')

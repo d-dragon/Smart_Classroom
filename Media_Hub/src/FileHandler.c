@@ -308,7 +308,7 @@ int createDefaultConfigFile(char *mac_addr) {
 	config_setting_set_int(setting, 0);
 
 	setting = config_setting_add(group, "deviceID", CONFIG_TYPE_STRING); //for future feature
-	config_setting_set_string(setting, "12345");
+	config_setting_set_string(setting, mac_addr);
 
 	snprintf(device_name, 128, "MBox.%s", mac_addr);
 	setting = config_setting_add(group, "deviceName", CONFIG_TYPE_STRING);

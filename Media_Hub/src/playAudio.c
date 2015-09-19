@@ -201,8 +201,22 @@ void *playAudioThreadAlt(void *arg) {
 	int count, status;
 	char cmd_buf[256];
 
-	snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s", DEFAULT_PATH,
-			info->filename, FIFO_PLAYER_PATH);
+	//this code is temporary while have no complete message formation
+	if (info->type == NULL) {
+		//play audio
+		snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s", DEFAULT_PATH,
+				info->filename, FIFO_PLAYER_PATH);
+	} else {
+		if (strcmp(info->type, "video")) {
+			//play audio
+			snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s",
+					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
+		} else {
+			//play video
+			snprintf(cmd_buf, 256, "omxplayer -o hdmi \"%s%s\" < %s",
+					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
+		}
+	}
 	appLog(LOG_DEBUG, "play command: %s", cmd_buf);
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_PLAY;

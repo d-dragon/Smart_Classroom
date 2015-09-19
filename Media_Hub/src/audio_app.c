@@ -42,8 +42,9 @@ int main(int argc, char *argv[]) {
 
 	/*get network interface address*/
 	getInterfaceAddress();
-
-	startMulticastListener(argv[1]);
+	initDeviceInfo(argv[1]);
+	TaskReceiver();
+//	startMulticastListener(argv[1]);
 
 
 	/*init socket semaphore*/

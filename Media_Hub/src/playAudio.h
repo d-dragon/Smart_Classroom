@@ -57,6 +57,7 @@ typedef struct player
 typedef struct playinfo{
 	int msgid;
 	char *filename;
+	char *type; //audio/video
 	int length; //by second
 }PlayingInfo;
 pthread_t g_play_audio_thd;
