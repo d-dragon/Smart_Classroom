@@ -55,7 +55,7 @@ typedef struct player
 #endif
 
 typedef struct playinfo{
-	int msgid;
+	char *msgid;
 	char *filename;
 	char *type; //audio/video
 	int length; //by second

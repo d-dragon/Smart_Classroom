@@ -658,6 +658,7 @@ int RequestMessageHandler(char *message) {
 		ret = getFile(message);
 		break;
 	case PLAY_AUDIO:
+		appLog(LOG_DEBUG, "called playAudio");
 		ret = playAudioAlt(message);
 		break;
 	case STOP_AUDIO:
@@ -800,15 +801,16 @@ int playAudioAlt(char *message) {
 
 	//info struct will be freed in this function if play failed or not call initAudioPlayer
 	//otherwise, it will be freed in playAudioThread
+	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	info = malloc(sizeof(PlayingInfo));
 //	info->filename = calloc(128, sizeof(char));
-
+	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	info->msgid = getXmlElementByName(message, "id");
 	info->filename = getXmlElementByName(message, "filename");
 	info->type = getXmlElementByName(message, "type");
 
 	resp_cmd = getXmlElementByName(message, "command");
-
+	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	if ((info->msgid == NULL) || (info->filename == NULL)
 			|| (resp_cmd == NULL)) {
 		appLog(LOG_DEBUG, "play failed");
@@ -1227,6 +1229,8 @@ void TaskReceiver() {
 		//need suitable handle
 		appLog(LOG_DEBUG, "sending notification failed!!1");
 	}
+	g_audio_flag = AUDIO_STOP;
+	g_file_name_playing = calloc(FILE_NAME_MAX, sizeof(char));
 	//waiting for receiving message
 	while (1) {
 
