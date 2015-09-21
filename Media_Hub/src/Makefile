@@ -23,18 +23,24 @@ else
 endif
 			
 	rm *.o
+	
+install:
 ifneq ($(TARGET),x86)
 ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
 	sudo rm /usr/bin/MediaHub
 endif
 ifneq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
-#	sudo rm /usr/bin/startMediaHub.sh
+	sudo rm /usr/bin/startMediaHub.sh
 endif
-#	sudo killall startMediaHub.sh
-#	sudo killall MediaHub
-#	sudo cp MediaHub /usr/bin/
-#	sudo cp startMediaHub.sh /usr/bin/
-endif			
+	killall startMediaHub.sh
+	killall MediaHub
+	cp MediaHub /usr/bin/
+	cp startMediaHub.sh /usr/bin/
+endif
+
+uninstall:
+	rm /usr/bin/startMediaHub.sh
+	rm /usr/bin/MediaHub		
 .PHONY: clean
 
 clean:

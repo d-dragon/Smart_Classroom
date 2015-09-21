@@ -40,9 +40,9 @@ if [ $flag -eq 1 ]
 then
 	if [ -f /home/pi/mbox.cfg ]
 	then
-		/home/pi/Smart_Classroom/Media_Hub/src/MediaHub &
+		MediaHub
 	else
-		/home/pi/Smart_Classroom/Media_Hub/src/MediaHub $mac_addr &
+		MediaHub $mac_addr
 	fi
 	wait 
 	echo "started MediaHub" > /dev/ttyAMA0
