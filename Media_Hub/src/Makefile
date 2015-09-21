@@ -1,50 +1,48 @@
 #CC=arm-linux-gnueabihf-gcc
+APP=Mbox
 CC=gcc
 CFLAGS=-I. -Wall
 PLAYAUDIOFLAG=-D AUDIO_ENABLE
 DEBUGFLAG=-D DEBUG
-TARGET = x86
+TARGET = pi
 DEPS = FileHandler.h sock_infra.h advertisement.h logger.h playAudio.h acpHandler.h xmlHandler.h
 OBJS = audio_app.o FileHandler.o advertisement.o sock_infra.o logger.o playAudio.o acpHandler.o xmlHandler.o
 
 		
 .c.o: $(DEPS)
-ifeq ($(TARGET),x86)
+ifneq ($(TARGET),pi)
 	$(CC) $(CFLAGS) $(DEBUGFLAG) -I/usr/include/python2.7 -I/usr/include/libxml2 -g -O0 -c -o $@  $<
 else
 	$(CC) $(CFLAGS) $(DEBUGFLAG) $(PLAYAUDIOFLAG) -D RPI -I/usr/include/python2.7 -I/usr/include/libxml2 -g -O0 -c -o $@  $<
 endif
 			
 audio_app: $(OBJS)
-ifeq ($(TARGET),x86)
-	$(CC) -o MediaHub $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2 -lconfig
+ifneq ($(TARGET),pi)
+	$(CC) -o $(APP) $^ $(CFLAGS) $(DEBUGFLAG) -pthread -lpython2.7 -lxml2 -lconfig
 else
-	$(CC) -o MediaHub $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 -lconfig libportaudio.a -lmpg123 -lm
+	$(CC) -o $(APP) $^ $(CFLAGS) $(PLAYAUDIOFLAG) -D RPI -pthread -lrt -lasound -ljack -lpython2.7 -lxml2 -lconfig libportaudio.a -lmpg123 -lm
 endif
 			
-	rm *.o
 	
 install:
-ifneq ($(TARGET),x86)
-ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
-	sudo rm /usr/bin/MediaHub
-endif
-ifneq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
-	sudo rm /usr/bin/startMediaHub.sh
-endif
-	killall startMediaHub.sh
-	killall MediaHub
-	cp MediaHub /usr/bin/
+#ifeq ($(TARGET),pi)
+#ifneq ("$(wildcard $(/usr/bin/MediaHub))","")
+#	rm /usr/bin/MediaHub
+#endif
+#ifeq ("$(wildcard $(/usr/bin/startMediaHub.sh))","")
+#	rm /usr/bin/startMediaHub.sh
+#endif
+	cp $(APP) /usr/bin/
 	cp startMediaHub.sh /usr/bin/
-endif
+#endif
 
 uninstall:
 	rm /usr/bin/startMediaHub.sh
-	rm /usr/bin/MediaHub		
+	rm /usr/bin/$(APP)		
 .PHONY: clean
 
 clean:
-	rm audio_app
+	rm *.o $(APP)
 
 
 

@@ -200,7 +200,7 @@ void *playAudioThreadAlt(void *arg) {
 	PlayingInfo *info = arg;
 	int count, status;
 	char cmd_buf[256];
-
+	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	//this code is temporary while have no complete message formation
 	if (info->type == NULL) {
 		//play audio

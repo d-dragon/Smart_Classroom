@@ -1217,7 +1217,7 @@ void TaskReceiver() {
 		appLog(LOG_ERR, "allocate memory failed - app restart");
 		exit(EXIT_FAILURE);
 	}
-	ret = connectStation("10.31.57.231");
+	ret = connectStation("192.168.1.199");
 	if (ret == ACP_FAILED) {
 		//terminate app
 		appLog(LOG_ERR, "connect to station failed - terminating app");

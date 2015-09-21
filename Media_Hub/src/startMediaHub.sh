@@ -40,13 +40,13 @@ if [ $flag -eq 1 ]
 then
 	if [ -f /home/pi/mbox.cfg ]
 	then
-		MediaHub
+		Mbox
 	else
-		MediaHub $mac_addr
+		Mbox $mac_addr
 	fi
 	wait 
-	echo "started MediaHub" > /dev/ttyAMA0
-	killall MediaHub
+	echo "started Mbox" > /dev/ttyAMA0
+	killall Mbox
 	flag=0
 fi
 done
