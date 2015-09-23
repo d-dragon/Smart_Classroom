@@ -207,13 +207,13 @@ void *playAudioThreadAlt(void *arg) {
 		snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s", DEFAULT_PATH,
 				info->filename, FIFO_PLAYER_PATH);
 	} else {
-		if (strcmp(info->type, "video")) {
-			//play audio
-			snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s",
+		if (strcmp(info->type, "video") == 0) {
+			//play video -> hdmi
+			snprintf(cmd_buf, 256, "omxplayer -o hdmi \"%s%s\" < %s",
 					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
 		} else {
-			//play video
-			snprintf(cmd_buf, 256, "omxplayer -o hdmi \"%s%s\" < %s",
+			//play audio -> jack 3.5
+			snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s",
 					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
 		}
 	}
@@ -228,14 +228,17 @@ void *playAudioThreadAlt(void *arg) {
 		appLog(LOG_DEBUG, "play audio success");
 		sendPlayingStatusNotify(NULL, info->filename, 2,
 				"Finished playing success!");
-		free(info->filename);
-		free(info);
+
 	} else {
 		appLog(LOG_DEBUG, "playing failed");
 		sendPlayingStatusNotify(NULL, info->filename, 2,
 				"playing failed/stopped!");
 	}
 	memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+	free(info->filename);
+	free(info->msgid);
+	free(info->type);
+	free(info);
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
 	pthread_mutex_unlock(&g_audio_status_mutex);

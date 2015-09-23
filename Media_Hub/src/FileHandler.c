@@ -314,6 +314,9 @@ int createDefaultConfigFile(char *mac_addr) {
 	setting = config_setting_add(group, "deviceName", CONFIG_TYPE_STRING);
 	config_setting_set_string(setting, (char *) device_name);
 
+	setting = config_setting_add(group, "station", CONFIG_TYPE_STRING);
+	config_setting_set_string(setting, (char *) STATION_DF_ADDR);
+
 	config_write(&cfg, config_file);
 	config_destroy(&cfg);
 	fclose(config_file);
@@ -360,12 +363,12 @@ void initDeviceInfo(char *mac_addr) {
 
 	config_t cfg;
 	config_setting_t *setting;
-	const char *device_id, *device_name;
+	const char *device_id, *device_name, *station;
 
 	//create config file if it not exist
-	if (mac_addr != NULL){
-		if (createDefaultConfigFile(mac_addr) == FILE_ERROR){
-			snprintf(g_device_info.device_name,128, "MBox.%s",mac_addr);
+	if (mac_addr != NULL) {
+		if (createDefaultConfigFile(mac_addr) == FILE_ERROR) {
+			snprintf(g_device_info.device_name, 128, "MBox.%s", mac_addr);
 			return;
 		}
 	}
@@ -382,16 +385,25 @@ void initDeviceInfo(char *mac_addr) {
 
 	setting = config_lookup(&cfg, "mbox_config");
 	if (setting != NULL) {
-		if (config_setting_lookup_string(setting, "deviceID", &device_id)!= NULL) {
+		if (config_setting_lookup_string(setting, "deviceID",
+				&device_id)!= NULL) {
 			strcpy(g_device_info.device_id, device_id);
-		}else{
+		} else {
 			strcpy(g_device_info.device_id, "12345");
 		}
-		if(config_setting_lookup_string(setting, "deviceName", &device_name) != NULL){
+		if (config_setting_lookup_string(setting, "deviceName",
+				&device_name) != NULL) {
 			strcpy(g_device_info.device_name, device_name);
-		}else{
+		} else {
 			strcpy(g_device_info.device_name, "mbox.MAC");
 		}
+		if (config_setting_lookup_string(setting, "station",
+				&station) != NULL) {
+			strcpy(g_device_info.station_addr, station);
+		} else {
+			strcpy(g_device_info.station_addr, STATION_DF_ADDR);
+		}
+		strcpy(g_device_info.address, interface_addr);
 	}
 	return;
 }

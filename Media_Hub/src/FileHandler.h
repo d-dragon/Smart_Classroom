@@ -45,7 +45,8 @@ typedef struct file{
 struct device_config_t{
 	char device_id[24];
 	char device_name[128];
-	char address[24];
+	char address[16];
+	char station_addr[16];
 };
 
 struct device_config_t g_device_info;

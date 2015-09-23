@@ -13,6 +13,7 @@
 #include "xmlHandler.h"
 #include <endian.h>
 #include <strings.h>
+#include <unistd.h>
 
 /*Task commands definition*/
 struct RequestCmd {
@@ -74,6 +75,7 @@ int getNotifyIndex(char *info);
 int getRequestCommandIndex(char *command);
 int connectStation(char *station_addr);
 int notifyDeviceInfo(int num_tag, char *status);
+void closePlayerfifo(char *file);
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
@@ -817,6 +819,7 @@ int playAudioAlt(char *message) {
 		sendResultResponse("000", "play", ACP_FAILED, NULL);
 		free(info->filename);
 		free(info->msgid);
+		free(info->type);
 		free(info);
 		free(resp_cmd);
 		return ACP_FAILED;
@@ -1195,13 +1198,13 @@ int connectStation(char *station_addr) {
 		stream_sock_fd = connecttoStreamSocket(station_addr, STREAM_SOCK_PORT);
 		if (stream_sock_fd < 0) {
 			count++;
-			usleep(100000);
+			sleep(2);
 			appLog(LOG_DEBUG, "trying connect to station - %d failed", count);
 		} else {
 			return ACP_SUCCESS;
 		}
 
-	} while (count < 10 && stream_sock_fd < 0);
+	} while (count < 5 && stream_sock_fd < 0);
 
 	return ACP_FAILED;
 }
@@ -1212,46 +1215,54 @@ void TaskReceiver() {
 	char *msg_buff;
 	int buff_len;
 
-	msg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
-	if (msg_buff == NULL) {
+	g_audio_flag = AUDIO_STOP;
+	g_file_name_playing = calloc(FILE_NAME_MAX, sizeof(char));
+	if (g_file_name_playing == NULL) {
 		appLog(LOG_ERR, "allocate memory failed - app restart");
 		exit(EXIT_FAILURE);
 	}
-	ret = connectStation("192.168.1.199");
-	if (ret == ACP_FAILED) {
-		//terminate app
-		appLog(LOG_ERR, "connect to station failed - terminating app");
-		exit(EXIT_FAILURE);
-	}
-
-	ret = notifyDeviceInfo(3,"idle");
-	if(ret == ACP_FAILED){
-		//need suitable handle
-		appLog(LOG_DEBUG, "sending notification failed!!1");
-	}
-	g_audio_flag = AUDIO_STOP;
-	g_file_name_playing = calloc(FILE_NAME_MAX, sizeof(char));
-	//waiting for receiving message
 	while (1) {
+		ret = connectStation((char *)g_device_info.station_addr);
+		if (ret == ACP_FAILED) {
+			//terminate app
+			appLog(LOG_ERR, "connect to station failed - terminating app");
+			exit(EXIT_FAILURE);
+		}
 
-		appLog(LOG_DEBUG, "waiting incoming message...");
-		buff_len = recv(stream_sock_fd, msg_buff, BUFF_LEN_MAX, 0);
-		if (buff_len < 0) {
-			appLog(LOG_ERR, "have no message received!!!");
+		ret = notifyDeviceInfo(3, "idle");
+		if (ret == ACP_FAILED) {
+			//need suitable handle
+			appLog(LOG_DEBUG, "sending notification failed!!1");
+		}
 
-		} else if (buff_len == 0) {
-			//station is down, need more handle
-			appLog(LOG_ERR, "station was disconnected");
-			close(stream_sock_fd);
-			free(msg_buff);
-			//marking station is down for next step
-			break;
-		} else {
-			//handle message
-			appLog(LOG_DEBUG, "message received>>>>> %s", msg_buff);
-			MessageProcessor(msg_buff);
-			memset(msg_buff, 0, BUFF_LEN_MAX);
+		msg_buff = calloc(BUFF_LEN_MAX, sizeof(char));
+		if (msg_buff == NULL) {
+			appLog(LOG_ERR, "allocate memory failed - app restart");
+			exit(EXIT_FAILURE);
+		}
+		//waiting for receiving message
+		while (1) {
 
+			appLog(LOG_DEBUG, "waiting incoming message...");
+			buff_len = recv(stream_sock_fd, msg_buff, BUFF_LEN_MAX, 0);
+			if (buff_len < 0) {
+				appLog(LOG_ERR, "have no message received!!!");
+
+			} else if (buff_len == 0) {
+				//station is down, need more handle
+				appLog(LOG_ERR, "station was disconnected");
+				close(stream_sock_fd);
+				free(msg_buff);
+				closePlayerfifo(FIFO_PLAYER_PATH);
+				//marking station is down for next step
+				break;
+			} else {
+				//handle message
+				appLog(LOG_DEBUG, "message received>>>>> %s", msg_buff);
+				MessageProcessor(msg_buff);
+				memset(msg_buff, 0, BUFF_LEN_MAX);
+
+			}
 		}
 	}
 }
@@ -1271,7 +1282,6 @@ int notifyDeviceInfo(int num_tag, char *status) {
 	notify_status.content_tag[2].ele_name = "status";
 	notify_status.content_tag[2].ele_content = status;
 
-
 	data_buff = writeXmlToBuffNotify("000", notify_status);
 
 	if (data_buff == NULL) {
@@ -1287,4 +1297,16 @@ int notifyDeviceInfo(int num_tag, char *status) {
 	}
 	free(data_buff);
 	return ACP_SUCCESS;
+}
+
+void closePlayerfifo(char *file) {
+
+	char cmd[128];
+	//check fifo file existed or not
+	if (access(file, F_OK) != -1) {
+		//File exist -> stop playing
+		sprintf(cmd, "echo -n q > %s", FIFO_PLAYER_PATH);
+		system(cmd);
+		unlink(file);
+	}
 }

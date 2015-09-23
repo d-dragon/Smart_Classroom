@@ -250,6 +250,7 @@ int connecttoStreamSocket(char *addr, char *port) {
 	int sd_sock;
 	struct sockaddr_in serv_addr;
 
+	appLog(LOG_DEBUG, "[debug]");
 	sd_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sd_sock < 0) {
 		appLog(LOG_DEBUG, "open socket failed!");
