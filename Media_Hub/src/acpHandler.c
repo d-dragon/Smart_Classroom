@@ -76,6 +76,8 @@ int getRequestCommandIndex(char *command);
 int connectStation(char *station_addr);
 int notifyDeviceInfo(int num_tag, char *status);
 void closePlayerfifo(char *file);
+void setSignalHandlers(void);
+static void handleSigSegv(int signum,siginfo_t *pInfo,void *pVoid);
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
@@ -1221,6 +1223,7 @@ void TaskReceiver() {
 		appLog(LOG_ERR, "allocate memory failed - app restart");
 		exit(EXIT_FAILURE);
 	}
+	setSignalHandlers();
 	while (1) {
 		ret = connectStation((char *)g_device_info.station_addr);
 		if (ret == ACP_FAILED) {
@@ -1305,8 +1308,41 @@ void closePlayerfifo(char *file) {
 	//check fifo file existed or not
 	if (access(file, F_OK) != -1) {
 		//File exist -> stop playing
-		sprintf(cmd, "echo -n q > %s", FIFO_PLAYER_PATH);
+		sprintf(cmd, "echo -n q > %s", file);
 		system(cmd);
 		unlink(file);
 	}
+}
+
+void setSignalHandlers(void)
+{
+   struct sigaction act, oldact;
+
+   act.sa_flags = (SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART | SA_SIGINFO);
+   act.sa_sigaction = handleSigSegv;
+   if(sigaction(SIGSEGV, &act, &oldact))
+   {
+   appLog(LOG_ERR,"sigaction failed... errno: %d", errno);
+   }
+   else
+   {
+   if(oldact.sa_handler == SIG_IGN)
+      appLog(LOG_DEBUG,"oldact RTMIN: SIGIGN");
+
+        if(oldact.sa_handler == SIG_DFL)
+      appLog(LOG_DEBUG,"oldact RTMIN: SIGDFL");
+   }
+
+}
+
+static void handleSigSegv(int signum,siginfo_t *pInfo,void *pVoid)
+{
+    uint32_t *up = (uint32_t *)&signum;
+    unsigned int sp = 0;
+
+    appLog(LOG_ALERT,"SIGNAL SIGSEGV [%d] RECEIVED, aborting...", signum);
+
+    closePlayerfifo(FIFO_PLAYER_PATH);
+
+    abort();
 }

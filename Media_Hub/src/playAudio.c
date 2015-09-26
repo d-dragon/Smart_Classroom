@@ -200,19 +200,22 @@ void *playAudioThreadAlt(void *arg) {
 	PlayingInfo *info = arg;
 	int count, status;
 	char cmd_buf[256];
-	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+	appLog(LOG_DEBUG, "inside %s info->type %s", __FUNCTION__,info->type);
 	//this code is temporary while have no complete message formation
 	if (info->type == NULL) {
 		//play audio
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 		snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s", DEFAULT_PATH,
 				info->filename, FIFO_PLAYER_PATH);
 	} else {
 		if (strcmp(info->type, "video") == 0) {
 			//play video -> hdmi
+			appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 			snprintf(cmd_buf, 256, "omxplayer -o hdmi \"%s%s\" < %s",
 					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
 		} else {
 			//play audio -> jack 3.5
+			appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 			snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\" < %s",
 					DEFAULT_PATH, info->filename, FIFO_PLAYER_PATH);
 		}
