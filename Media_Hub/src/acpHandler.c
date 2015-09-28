@@ -811,7 +811,7 @@ int playAudioAlt(char *message) {
 	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	info->msgid = getXmlElementByName(message, "id");
 	info->filename = getXmlElementByName(message, "filename");
-	info->type = getXmlElementByName(message, "type");
+	info->type = getXmlElementByName(message, "mediatype");
 
 	resp_cmd = getXmlElementByName(message, "command");
 	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
@@ -1232,7 +1232,7 @@ void TaskReceiver() {
 			exit(EXIT_FAILURE);
 		}
 
-		ret = notifyDeviceInfo(3, "idle");
+		ret = notifyDeviceInfo(3, "IDLE");
 		if (ret == ACP_FAILED) {
 			//need suitable handle
 			appLog(LOG_DEBUG, "sending notification failed!!1");
@@ -1346,3 +1346,5 @@ static void handleSigSegv(int signum,siginfo_t *pInfo,void *pVoid)
 
     abort();
 }
+
+

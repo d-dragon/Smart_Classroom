@@ -58,6 +58,7 @@ int getListFile(char *, char *);
 
 int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName, char *Password);
 int getFile(char *);
+int deleteFile(char *message);
 int changeConfigSetting(char *setting_name, char *new_value);
 int createDefaultConfigFile(char *mac_addr);
 void initDeviceInfo(char *mac_addr);

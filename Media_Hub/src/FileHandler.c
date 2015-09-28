@@ -245,12 +245,10 @@ int getFileFromFtp(char *FtpServerIP, char *FileName, char *UserName,
 int getFile(char *message) {
 
 	int ret;
-//	char *pftp_addr;
 	char *pfile_name;
 	char *msg_id;
 	char *resp_for;
 
-//	pftp_addr = getXmlElementByName(message, "ftpaddr");
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
 
@@ -278,6 +276,16 @@ int getFile(char *message) {
 	free(pfile_name);
 	free(msg_id);
 	free(resp_for);
+
+	return ret;
+}
+
+int deleteFile(char *message){
+
+	int ret;
+	char *file_name;
+	char *msg_id;
+	char *resp_for;
 
 	return ret;
 }

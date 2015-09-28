@@ -200,7 +200,7 @@ void *playAudioThreadAlt(void *arg) {
 	PlayingInfo *info = arg;
 	int count, status;
 	char cmd_buf[256];
-	appLog(LOG_DEBUG, "inside %s info->type %s", __FUNCTION__,info->type);
+	appLog(LOG_DEBUG, "inside %s info->type %s", __FUNCTION__, info->type);
 	//this code is temporary while have no complete message formation
 	if (info->type == NULL) {
 		//play audio
@@ -245,6 +245,7 @@ void *playAudioThreadAlt(void *arg) {
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
 	pthread_mutex_unlock(&g_audio_status_mutex);
+	appLog(LOG_DEBUG, "play audio thread exited");
 	pthread_exit(NULL);
 }
 
@@ -355,17 +356,16 @@ int stopAudio(char *message) {
 					break;
 				} else {
 					check_count++;
-					if (check_count == 5) {
+					if (check_count == 10) {
+						pthread_mutex_lock(&g_audio_status_mutex);
+						g_audio_flag = AUDIO_STOP;
+						pthread_mutex_unlock(&g_audio_status_mutex);
 						pthread_cancel(g_play_audio_thd);
 					}
-					usleep(50000);
+					usleep(100000);
 				}
-			} while (check_count < 5);
+			} while (check_count < 10);
 		}
-
-		pthread_mutex_lock(&g_audio_status_mutex);
-		g_audio_flag = AUDIO_STOP;
-		pthread_mutex_unlock(&g_audio_status_mutex);
 
 		memset(g_file_name_playing, 0x00, 128);
 		sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
@@ -385,9 +385,12 @@ int pauseAudio(char *message) {
 	msg_id = getXmlElementByName(message, "id");
 	resp_for = getXmlElementByName(message, "command");
 	snprintf(shell_cmd, 256, "echo -n p > %s", FIFO_PLAYER_PATH);
+	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	if (system(shell_cmd) == 0) {
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 		sendResultResponse(msg_id, resp_for, ACP_SUCCESS, g_file_name_playing);
 		pthread_mutex_lock(&g_audio_status_mutex);
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 		g_audio_flag = AUDIO_PAUSE;
 		pthread_mutex_unlock(&g_audio_status_mutex);
 	} else {
