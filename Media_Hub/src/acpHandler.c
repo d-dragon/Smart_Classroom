@@ -1306,11 +1306,16 @@ void closePlayerfifo(char *file) {
 
 	char cmd[128];
 	//check fifo file existed or not
+	appLog(LOG_DEBUG, "[debug]");
 	if (access(file, F_OK) != -1) {
+		appLog(LOG_DEBUG, "[debug]");
 		//File exist -> stop playing
 		sprintf(cmd, "echo -n q > %s", file);
+		appLog(LOG_DEBUG, "[debug]-%s", cmd);
 		system(cmd);
+		appLog(LOG_DEBUG, "[debug]");
 		unlink(file);
+		appLog(LOG_DEBUG, "[debug]");
 	}
 }
 

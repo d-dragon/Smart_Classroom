@@ -248,7 +248,13 @@ int sendMulMessage(char *message) {
 int connecttoStreamSocket(char *addr, char *port) {
 
 	int sd_sock;
+	int res;
 	struct sockaddr_in serv_addr;
+	long sock_mode;
+	fd_set myset; 
+	struct timeval tv; 
+  	int valopt; 
+	socklen_t lon;
 
 	appLog(LOG_DEBUG, "[debug]");
 	sd_sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -261,12 +267,66 @@ int connecttoStreamSocket(char *addr, char *port) {
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(atoi(port));
 	serv_addr.sin_addr.s_addr = inet_addr(addr);
+	//set non-blocking 
+	// Set non-blocking 
+  	if( (sock_mode = fcntl(sd_sock, F_GETFL, NULL)) < 0) { 
+     		fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno)); 
+     		exit(EXIT_FAILURE); 
+  	} 
+	sock_mode |= O_NONBLOCK; 
+  	if( fcntl(sd_sock, F_SETFL, sock_mode) < 0) { 
+     		fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno)); 
+     		exit(EXIT_FAILURE); 
+  	} 
 
+	appLog(LOG_DEBUG, "[debug]");
 	if (connect(sd_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr))
 			< 0) {
-		appLog(LOG_DEBUG, "connect to station failed");
-		return SOCK_ERROR;
+		if (errno == EINPROGRESS) {
+			appLog(LOG_DEBUG, "EINPROGRESS");
+			do { 
+           		tv.tv_sec = 15; 
+		        tv.tv_usec = 0; 
+           		FD_ZERO(&myset); 
+           		FD_SET(sd_sock, &myset); 
+           		res = select(sd_sock+1, NULL, &myset, NULL, &tv); 
+           		if (res < 0 && errno != EINTR) { 
+              			fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
+              			return SOCK_ERROR;
+           		} else if (res > 0) { 
+              			// Socket selected for write 
+              			lon = sizeof(int); 
+              			if (getsockopt(sd_sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) { 
+                 			fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno)); 
+                 			return SOCK_ERROR;
+              			} 
+              			// Check the value returned... 
+              			if (valopt) { 
+                 			fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)); 
+			                return SOCK_ERROR; 
+              			} 
+              			break; 
+           		} else { 
+              			fprintf(stderr, "Timeout in select() - Cancelling!\n"); 
+              			return SOCK_ERROR;
+           		} 
+        		} while (1);
+		}else{
+			appLog(LOG_DEBUG, "connect to station failed");
+			return SOCK_ERROR;
+		}
 	}
+
+	// Set to blocking mode again... 
+  	if( (sock_mode = fcntl(sd_sock, F_GETFL, NULL)) < 0) { 
+     		fprintf(stderr, "Error fcntl(..., F_GETFL) (%s)\n", strerror(errno)); 
+     		return SOCK_ERROR;
+  	} 
+  	sock_mode &= (~O_NONBLOCK); 
+  	if( fcntl(sd_sock, F_SETFL, sock_mode) < 0) { 
+     		fprintf(stderr, "Error fcntl(..., F_SETFL) (%s)\n", strerror(errno)); 
+     		return SOCK_ERROR;
+  	} 
 	return sd_sock;
 }
 
