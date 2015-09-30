@@ -1200,17 +1200,23 @@ int changeRoomName(char *message) {
 int deleteFile(char *message) {
 
 	int ret = ACP_SUCCESS;
-	char *msg_id;
-	char *device_id;
-	char *cmd;
-	char *file_name;
+	char *msg_id = NULL;
+	char *device_id = NULL;
+	char *cmd = NULL;
+	char *file_name = NULL;
 	char shell_cmd[128];
+	
+	msg_id = getXmlElementByName(message, "id");
+        device_id = getXmlElementByName(message, "deviceid");
+        cmd = getXmlElementByName(message, "command");
+        file_name = getXmlElementByName(message, "filename");
 
 	if (isRequestMessageValid(message, msg_id, device_id, cmd, file_name,
-			"filename") == ACP_FAILED) {
+			NULL) == ACP_FAILED) {
 		ret = ACP_FAILED;
 	}else{
-		sprintf(shell_cmd, "rm %s%s", DEFAULT_PATH, file_name);
+		sprintf(shell_cmd, "rm \"%s%s\"", DEFAULT_PATH, file_name);
+		appLog(LOG_DEBUG, "shell cmd >>> %s", shell_cmd);
 		if(system(shell_cmd) != 0){
 			ret = ACP_FAILED;
 		}
@@ -1226,18 +1232,9 @@ int deleteFile(char *message) {
 int isRequestMessageValid(char *message, char *msg_id, char *device_id,
 		char *cmd, char *arg, char *arg_name) {
 
-	msg_id = getXmlElementByName(message, "id");
-	device_id = getXmlElementByName(message, "deviceid");
-	cmd = getXmlElementByName(message, "command");
-	arg = getXmlElementByName(arg_name);
-
 	if (msg_id == NULL || device_id == NULL || cmd == NULL || arg == NULL) {
 		appLog(LOG_DEBUG, "message is not match!!");
-		free(msg_id);
-		free(device_id);
-		free(cmd);
-		free(arg);
-		return ACP_FAILED;
+			return ACP_FAILED;
 	}
 	if (strcmp(device_id, g_device_info.device_id) != 0) {
 		return ACP_FAILED;

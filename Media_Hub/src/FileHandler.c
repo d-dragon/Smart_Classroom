@@ -280,15 +280,6 @@ int getFile(char *message) {
 	return ret;
 }
 
-int deleteFile(char *message){
-
-	int ret;
-	char *file_name;
-	char *msg_id;
-	char *resp_for;
-
-	return ret;
-}
 
 /*if the config file is not exist, this function will be called at starting app.
  * the config will init with default configuration
