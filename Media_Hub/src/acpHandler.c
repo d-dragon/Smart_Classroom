@@ -37,6 +37,7 @@ enum request_cmd_index {
 	STOP_AUDIO,
 	PAUSE_AUDIO,
 	CHANGE_DEVICE_NAME,
+	DELETE_FILE,
 	CLOSE_TASK_HANDLER
 };
 
@@ -46,7 +47,8 @@ static struct RequestCmd RequestCmdList[] = {
 				"list_file" }, { "PlayFile", PLAY_AUDIO, 1, "file_name" }, {
 				"StopFile", STOP_AUDIO, 1, "file_name" }, { "PauseFile",
 				PAUSE_AUDIO, 1, "file_name" }, { "ChangeRoomName",
-				CHANGE_DEVICE_NAME, 1, "new_name" } };
+				CHANGE_DEVICE_NAME, 1, "new_name" }, { "DeleteFile",
+				DELETE_FILE, 1, "file_name" } };
 
 struct NotifyInfo {
 	const char *info_str;
@@ -77,7 +79,9 @@ int connectStation(char *station_addr);
 int notifyDeviceInfo(int num_tag, char *status);
 void closePlayerfifo(char *file);
 void setSignalHandlers(void);
-static void handleSigSegv(int signum,siginfo_t *pInfo,void *pVoid);
+static void handleSigSegv(int signum, siginfo_t *pInfo, void *pVoid);
+int isRequestMessageValid(char *message, char *msg_id, char *device_id,
+		char *cmd, char *arg, char *arg_name);
 /*
  pthread_mutex_t g_file_buff_mutex_2 = PTHREAD_MUTEX_INITIALIZER;
  pthread_cond_t	g_file_thread_cond = PTHREAD_COND_INITIALIZER;
@@ -677,6 +681,10 @@ int RequestMessageHandler(char *message) {
 		appLog(LOG_DEBUG, "called changeRoomName");
 		ret = changeRoomName(message);
 		break;
+	case DELETE_FILE:
+		appLog(LOG_DEBUG, "called delete file");
+		ret = deleteFile(message);
+		break;
 	default:
 		break;
 	}
@@ -1189,6 +1197,54 @@ int changeRoomName(char *message) {
 	return ACP_SUCCESS;
 }
 
+int deleteFile(char *message) {
+
+	int ret = ACP_SUCCESS;
+	char *msg_id;
+	char *device_id;
+	char *cmd;
+	char *file_name;
+	char shell_cmd[128];
+
+	if (isRequestMessageValid(message, msg_id, device_id, cmd, file_name,
+			"filename") == ACP_FAILED) {
+		ret = ACP_FAILED;
+	}else{
+		sprintf(shell_cmd, "rm %s%s", DEFAULT_PATH, file_name);
+		if(system(shell_cmd) != 0){
+			ret = ACP_FAILED;
+		}
+	}
+	sendResultResponse(msg_id, cmd, ret, NULL);
+	free(msg_id);
+	free(device_id);
+	free(cmd);
+	free(file_name);
+	return ret;
+}
+
+int isRequestMessageValid(char *message, char *msg_id, char *device_id,
+		char *cmd, char *arg, char *arg_name) {
+
+	msg_id = getXmlElementByName(message, "id");
+	device_id = getXmlElementByName(message, "deviceid");
+	cmd = getXmlElementByName(message, "command");
+	arg = getXmlElementByName(arg_name);
+
+	if (msg_id == NULL || device_id == NULL || cmd == NULL || arg == NULL) {
+		appLog(LOG_DEBUG, "message is not match!!");
+		free(msg_id);
+		free(device_id);
+		free(cmd);
+		free(arg);
+		return ACP_FAILED;
+	}
+	if (strcmp(device_id, g_device_info.device_id) != 0) {
+		return ACP_FAILED;
+	}
+	return ACP_SUCCESS;
+}
+
 int connectStation(char *station_addr) {
 
 	int count = 0;
@@ -1225,7 +1281,7 @@ void TaskReceiver() {
 	}
 	setSignalHandlers();
 	while (1) {
-		ret = connectStation((char *)g_device_info.station_addr);
+		ret = connectStation((char *) g_device_info.station_addr);
 		if (ret == ACP_FAILED) {
 			//terminate app
 			appLog(LOG_ERR, "connect to station failed - terminating app");
@@ -1319,37 +1375,31 @@ void closePlayerfifo(char *file) {
 	}
 }
 
-void setSignalHandlers(void)
-{
-   struct sigaction act, oldact;
+void setSignalHandlers(void) {
+	struct sigaction act, oldact;
 
-   act.sa_flags = (SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART | SA_SIGINFO);
-   act.sa_sigaction = handleSigSegv;
-   if(sigaction(SIGSEGV, &act, &oldact))
-   {
-   appLog(LOG_ERR,"sigaction failed... errno: %d", errno);
-   }
-   else
-   {
-   if(oldact.sa_handler == SIG_IGN)
-      appLog(LOG_DEBUG,"oldact RTMIN: SIGIGN");
+	act.sa_flags = (SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART | SA_SIGINFO);
+	act.sa_sigaction = handleSigSegv;
+	if (sigaction(SIGSEGV, &act, &oldact)) {
+		appLog(LOG_ERR, "sigaction failed... errno: %d", errno);
+	} else {
+		if (oldact.sa_handler == SIG_IGN)
+			appLog(LOG_DEBUG, "oldact RTMIN: SIGIGN");
 
-        if(oldact.sa_handler == SIG_DFL)
-      appLog(LOG_DEBUG,"oldact RTMIN: SIGDFL");
-   }
+		if (oldact.sa_handler == SIG_DFL)
+			appLog(LOG_DEBUG, "oldact RTMIN: SIGDFL");
+	}
 
 }
 
-static void handleSigSegv(int signum,siginfo_t *pInfo,void *pVoid)
-{
-    uint32_t *up = (uint32_t *)&signum;
-    unsigned int sp = 0;
+static void handleSigSegv(int signum, siginfo_t *pInfo, void *pVoid) {
+	uint32_t *up = (uint32_t *) &signum;
+	unsigned int sp = 0;
 
-    appLog(LOG_ALERT,"SIGNAL SIGSEGV [%d] RECEIVED, aborting...", signum);
+	appLog(LOG_ALERT, "SIGNAL SIGSEGV [%d] RECEIVED, aborting...", signum);
 
-    closePlayerfifo(FIFO_PLAYER_PATH);
+	closePlayerfifo(FIFO_PLAYER_PATH);
 
-    abort();
+	abort();
 }
-
 
