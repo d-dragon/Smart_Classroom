@@ -59,7 +59,7 @@ struct NotifyInfo {
 enum notify_info_index {
 	SERVER_INFO = 1, FTP_ADDR
 };
-static struct NotifyInfo InfoList[] = { { "ServerInfo", SERVER_INFO }, {
+static struct NotifyInfo InfoList[] = { { "server info", SERVER_INFO }, {
 		"ftpaddr", FTP_ADDR } };
 
 ServerInfo server_info;
@@ -1134,7 +1134,7 @@ int sendPlayingStatusNotify(char *msg_id, char *file_name, int num_tag,
 	int ret, i;
 	NotifyPiStatus notify_status;
 
-	notify_status.info = "AudioStatus";
+	notify_status.info = "audio status";
 	notify_status.num_content_tag = num_tag;
 	notify_status.content_tag[0].ele_name = "filename";
 	notify_status.content_tag[0].ele_content = file_name;
