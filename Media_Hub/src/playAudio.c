@@ -6,6 +6,8 @@
 #include "FileHandler.h"
 #include "acpHandler.h"
 
+void *playMediaThread(void *arg);
+
 #ifdef AUDIO_ENABLE
 // Play function use to play a mp3Player instance
 // To use this function, must have one mp3Player to call play
@@ -239,12 +241,58 @@ void *playAudioThreadAlt(void *arg) {
 	}
 	memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
 	free(info->filename);
-	free(info->msgid);
 	free(info->type);
 	free(info);
 	pthread_mutex_lock(&g_audio_status_mutex);
 	g_audio_flag = AUDIO_STOP;
 	pthread_mutex_unlock(&g_audio_status_mutex);
+	appLog(LOG_DEBUG, "play audio thread exited");
+	pthread_exit(NULL);
+}
+
+void *playMediaThread(void *arg) {
+
+	PlayingInfo *info = arg;
+	int count, status;
+	char cmd_buf[256];
+	appLog(LOG_DEBUG, "inside %s info->type %s", __FUNCTION__, info->type);
+	//this code is temporary while have no complete message formation
+
+	if (strcmp(info->type, "video") == 0) {
+		//play video -> hdmi
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+		snprintf(cmd_buf, 256, "omxplayer -o hdmi \"%s%s\"", DEFAULT_PATH,
+				info->filename);
+	} else {
+		//play audio -> jack 3.5
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+		snprintf(cmd_buf, 256, "omxplayer -o local \"%s%s\"", DEFAULT_PATH,
+				info->filename);
+	}
+	appLog(LOG_DEBUG, "play command: %s", cmd_buf);
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_PLAY;
+	pthread_mutex_unlock(&g_audio_status_mutex);
+
+	if ((status = system(cmd_buf)) == -1) {
+		appLog(LOG_DEBUG, "cannot create shell process");
+	} else if (status == 0) {
+		appLog(LOG_DEBUG, "play audio success");
+		sendPlayingStatusNotify(NULL, info->filename, 2,
+				"Finished playing success!");
+
+	}else {
+		appLog(LOG_DEBUG, "playing failed");
+		sendPlayingStatusNotify(NULL, info->filename, 2,
+				"playing failed/stopped!");
+	}
+	pthread_mutex_lock(&g_audio_status_mutex);
+	g_audio_flag = AUDIO_STOP;
+	pthread_mutex_unlock(&g_audio_status_mutex);
+	memset(g_file_name_playing, 0x00, FILE_NAME_MAX);
+	free(info->filename);
+	free(info->type);
+
 	appLog(LOG_DEBUG, "play audio thread exited");
 	pthread_exit(NULL);
 }
@@ -321,6 +369,52 @@ int initAudioPlayerAlt(PlayingInfo *info) {
 		} else {
 			count++;
 			if (count == 5) {
+				appLog(LOG_DEBUG, "play %s failed!", info->filename);
+				pthread_cancel(g_play_audio_thd);
+				return ACP_FAILED;
+			}
+		}
+		//check
+	} while (count < 5);
+
+}
+
+int initMediaPlayer(PlayingInfo *info) {
+
+	int count = 0;
+	char shell_cmd[256];
+
+	if (pthread_create(&g_media_player_thd, NULL, &playMediaThread,
+			(void *) info)) {
+		free(info->filename);
+		free(info->type);
+		appLog(LOG_DEBUG, "init playAudioThreadAlt failed!");
+		return ACP_FAILED;
+	}
+	do { // try to check audio flag for 0.5s
+		 //sleep short period time for waiting play audio thread start
+		usleep(100000);
+		//check player started or not
+		if (g_audio_flag == AUDIO_PLAY) {
+			usleep(100000);
+			snprintf(shell_cmd, "%s %s", PLAYER_CONTROLLER, "status");
+			//deep check player status
+			if (system(shell_cmd) == 0) {
+				//player started
+				appLog(LOG_DEBUG, "start player success!");
+				return ACP_SUCCESS;
+			} else {
+				//start player failed
+				appLog(LOG_DEBUG, "start player failed!");
+				return ACP_FAILED;
+			}
+
+		} else {
+			count++;
+			if (count == 5) {
+				pthread_mutex_lock(&g_audio_status_mutex);
+				g_audio_flag = AUDIO_PLAY;
+				pthread_mutex_unlock(&g_audio_status_mutex);
 				appLog(LOG_DEBUG, "play %s failed!", info->filename);
 				pthread_cancel(g_play_audio_thd);
 				return ACP_FAILED;

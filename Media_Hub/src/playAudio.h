@@ -12,6 +12,7 @@
 
 #define FILE_NAME_MAX 256
 #define FIFO_PLAYER_PATH "/tmp/omxplayer.fifo"
+#define PLAYER_CONTROLLER "omxplayer_dbus_control.sh"
 #define error_check(err) \
     do {\
         if (err) { \
@@ -55,12 +56,12 @@ typedef struct player
 #endif
 
 typedef struct playinfo{
-	char *msgid;
 	char *filename;
 	char *type; //audio/video
 	int length; //by second
 }PlayingInfo;
 pthread_t g_play_audio_thd;
+pthread_t g_media_player_thd;
 pthread_mutex_t g_audio_status_mutex;
 g_audio_status g_audio_flag;
 char *g_file_name_playing;
@@ -75,6 +76,7 @@ int playAudioAlt(char *message);
 
 int initAudioPlayer(char *filename);
 int initAudioPlayerAlt(PlayingInfo *info);
+int initMediaPlayer(PlayingInfo *info);
 void *playAudioThread(void *);
 void *playAudioThreadAlt(void *);
 int stopAudio(char *message);
