@@ -281,7 +281,7 @@ void *playMediaThread(void *arg) {
 		sendPlayingStatusNotify(NULL, info->filename, 2,
 				"Finished playing success!");
 
-	}else {
+	} else {
 		appLog(LOG_DEBUG, "playing failed");
 		sendPlayingStatusNotify(NULL, info->filename, 2,
 				"playing failed/stopped!");
@@ -396,19 +396,22 @@ int initMediaPlayer(PlayingInfo *info) {
 		usleep(100000);
 		//check player started or not
 		if (g_audio_flag == AUDIO_PLAY) {
-			usleep(100000);
+			int count_fail = 0;
 			snprintf(shell_cmd, "%s %s", PLAYER_CONTROLLER, "status");
-			//deep check player status
-			if (system(shell_cmd) == 0) {
-				//player started
-				appLog(LOG_DEBUG, "start player success!");
-				return ACP_SUCCESS;
-			} else {
-				//start player failed
-				appLog(LOG_DEBUG, "start player failed!");
-				return ACP_FAILED;
-			}
+			do {
+				//deep check player status
+				if (system(shell_cmd) == 0) {
+					//player started
+					appLog(LOG_DEBUG, "start player success!");
+					return ACP_SUCCESS;
+				} else {
+					//start player failed
+					count_fail++;
 
+				}
+			} while (count_fail < 5);
+			appLog(LOG_DEBUG, "start player failed!");
+			return ACP_FAILED;
 		} else {
 			count++;
 			if (count == 5) {

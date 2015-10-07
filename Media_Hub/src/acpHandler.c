@@ -668,7 +668,8 @@ int RequestMessageHandler(char *message) {
 		break;
 	case PLAY_AUDIO:
 		appLog(LOG_DEBUG, "called playAudio");
-		ret = playAudioAlt(message);
+//		ret = playAudioAlt(message);
+		ret = playMedia(message);
 		break;
 	case STOP_AUDIO:
 		appLog(LOG_DEBUG, "called stopAudio");
@@ -983,7 +984,7 @@ int playMedia(char *message) {
 
 	//info struct will be freed in this function if play failed or not call initAudioPlayer
 	//otherwise, it will be freed in playAudioThread
-	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+	info = malloc(sizeof(PlayingInfo));
 	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
 	msg_id = getXmlElementByName(message, "id");
 	device_id = getXmlElementByName(message, "deviceid");
@@ -1374,7 +1375,7 @@ int deleteFile(char *message) {
 	cmd = getXmlElementByName(message, "command");
 	file_name = getXmlElementByName(message, "filename");
 
-	if (isRequestMessageValid(message, msg_id, device_id, cmd, file_name,
+	if (isRequestMessageValid(msg_id, device_id, cmd, file_name,
 			NULL) == ACP_FAILED) {
 		ret = ACP_FAILED;
 	} else {
