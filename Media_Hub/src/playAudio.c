@@ -397,7 +397,8 @@ int initMediaPlayer(PlayingInfo *info) {
 		//check player started or not
 		if (g_audio_flag == AUDIO_PLAY) {
 			int count_fail = 0;
-			snprintf(shell_cmd, "%s %s", PLAYER_CONTROLLER, "status");
+			snprintf(shell_cmd,256, "%s %s", PLAYER_CONTROLLER, "status");
+			appLog(LOG_DEBUG, "shell cmd: %s", shell_cmd);
 			do {
 				//deep check player status
 				if (system(shell_cmd) == 0) {
@@ -407,7 +408,7 @@ int initMediaPlayer(PlayingInfo *info) {
 				} else {
 					//start player failed
 					count_fail++;
-
+					usleep(100000);
 				}
 			} while (count_fail < 5);
 			appLog(LOG_DEBUG, "start player failed!");

@@ -673,11 +673,13 @@ int RequestMessageHandler(char *message) {
 		break;
 	case STOP_AUDIO:
 		appLog(LOG_DEBUG, "called stopAudio");
-		ret = stopAudio(message);
+//		ret = stopAudio(message);
+		ret = stopMediaPlayer(message);
 		break;
 	case PAUSE_AUDIO:
 		appLog(LOG_DEBUG, "called pauseAudio");
-		ret = pauseAudio(message);
+//		ret = pauseAudio(message);
+		ret = pauseMedia(message);
 		break;
 	case CHANGE_DEVICE_NAME:
 		appLog(LOG_DEBUG, "called changeRoomName");
@@ -825,8 +827,7 @@ int playAudioAlt(char *message) {
 
 	resp_cmd = getXmlElementByName(message, "command");
 	appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
-	if ((msg_id == NULL) || (info->filename == NULL)
-			|| (resp_cmd == NULL)) {
+	if ((msg_id == NULL) || (info->filename == NULL) || (resp_cmd == NULL)) {
 		appLog(LOG_DEBUG, "play failed");
 		sendResultResponse("000", "play", ACP_FAILED, NULL);
 		free(info->filename);
@@ -1007,8 +1008,7 @@ int playMedia(char *message) {
 		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
 				== 0) { //Audio file is playing
 
-			sendResultResponse(msg_id, cmd, ACP_SUCCESS,
-					g_file_name_playing);
+			sendResultResponse(msg_id, cmd, ACP_SUCCESS, g_file_name_playing);
 		} else { //play another file
 			//stop recently player thread
 			memset(shell_cmd, 0x00, 256);
@@ -1058,9 +1058,12 @@ int playMedia(char *message) {
 	} else if (g_audio_flag == AUDIO_PAUSE) {
 		if (strncmp(g_file_name_playing, info->filename, strlen(info->filename))
 				== 0) {
-			snprintf(shell_cmd, 256, "echo -n p > %s", FIFO_PLAYER_PATH);
+			snprintf(shell_cmd, 256, "%s pause", PLAYER_CONTROLLER);
 			appLog(LOG_DEBUG, "resume cmd: %s", shell_cmd);
 			if (system(shell_cmd) == 0) {
+				pthread_mutex_lock(&g_audio_status_mutex);
+				g_audio_flag = AUDIO_PLAY;
+				pthread_mutex_unlock(&g_audio_status_mutex);
 				sendResultResponse(msg_id, cmd, ACP_SUCCESS,
 						g_file_name_playing);
 			} else {
@@ -1072,7 +1075,7 @@ int playMedia(char *message) {
 		} else { //play another file
 				 //stop recently player thread
 			memset(shell_cmd, 0x00, 256);
-			snprintf(shell_cmd, 256, "echo -n q > %s", FIFO_PLAYER_PATH);
+			snprintf(shell_cmd, 256, "%s stop", PLAYER_CONTROLLER);
 			if (system(shell_cmd) != 0) {
 				pthread_cancel(g_play_audio_thd);
 				pthread_mutex_lock(&g_audio_status_mutex);
@@ -1123,11 +1126,9 @@ int playMedia(char *message) {
 		ret = initMediaPlayer(info);
 		appLog(LOG_DEBUG, "debug-----");
 		if (ret == ACP_SUCCESS) {
-			sendResultResponse(msg_id, cmd, ACP_SUCCESS,
-					g_file_name_playing);
+			sendResultResponse(msg_id, cmd, ACP_SUCCESS, g_file_name_playing);
 		} else {
-			sendResultResponse(msg_id, cmd, ACP_FAILED,
-					g_file_name_playing);
+			sendResultResponse(msg_id, cmd, ACP_FAILED, g_file_name_playing);
 		}
 
 	}
@@ -1396,7 +1397,7 @@ int deleteFile(char *message) {
 int isRequestMessageValid(char *msg_id, char *device_id, char *cmd, char *arg,
 		char *arg_name) {
 
-	if (msg_id == NULL || device_id == NULL || cmd == NULL || arg == NULL) {
+	if (msg_id == NULL || device_id == NULL || cmd == NULL) {
 		appLog(LOG_DEBUG, "message is not match!!");
 		return ACP_FAILED;
 	}
@@ -1564,3 +1565,94 @@ static void handleSigSegv(int signum, siginfo_t *pInfo, void *pVoid) {
 	abort();
 }
 
+int stopMediaPlayer(char *message) {
+
+	char *resp_for;
+	char *msg_id;
+	char *device_id;
+	char shell_cmd[256];
+
+	memset(shell_cmd, 0x00, 256);
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
+	device_id = getXmlElementByName(message, "deviceid");
+	if (isRequestMessageValid(msg_id, device_id, resp_for, NULL,
+			NULL) != ACP_SUCCESS) {
+		sendResultResponse(msg_id, resp_for, ACP_FAILED, "Request invalid");
+	} else {
+		if (g_audio_flag == AUDIO_STOP) {
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, "Stopped");
+		} else {
+			snprintf(shell_cmd, 256, "%s stop", PLAYER_CONTROLLER);
+			if (system(shell_cmd) != 0) {
+				pthread_cancel(g_play_audio_thd);
+				pthread_mutex_lock(&g_audio_status_mutex);
+				g_audio_flag = AUDIO_STOP;
+				pthread_mutex_unlock(&g_audio_status_mutex);
+				sendPlayingStatusNotify(NULL, g_file_name_playing, 2,
+						"stopped!");
+			} else { //quit audio player success, terminate player thread
+				int check_count = 0;
+				do {
+					if (g_audio_flag == AUDIO_STOP) {
+						break;
+					} else {
+						check_count++;
+						if (check_count == 10) {
+							pthread_mutex_lock(&g_audio_status_mutex);
+							g_audio_flag = AUDIO_STOP;
+							pthread_mutex_unlock(&g_audio_status_mutex);
+							pthread_cancel(g_play_audio_thd);
+						}
+						usleep(100000);
+					}
+				} while (check_count < 10);
+			}
+
+			memset(g_file_name_playing, 0x00, 128);
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS, NULL);
+		}
+	}
+	free(resp_for);
+	free(msg_id);
+	free(device_id);
+	return ACP_SUCCESS;
+}
+
+int pauseMedia(char *message) {
+
+	char *resp_for;
+	char *msg_id;
+	char *device_id;
+	char shell_cmd[256];
+
+	memset(shell_cmd, 0x00, 256);
+	msg_id = getXmlElementByName(message, "id");
+	resp_for = getXmlElementByName(message, "command");
+	device_id = getXmlElementByName(message, "deviceid");
+	if (isRequestMessageValid(msg_id, device_id, resp_for, NULL,
+			NULL) != ACP_SUCCESS) {
+		sendResultResponse(msg_id, resp_for, ACP_FAILED, "Request invalid");
+	} else if (g_audio_flag != AUDIO_PAUSE) {
+
+		snprintf(shell_cmd, 256, "%s pause", PLAYER_CONTROLLER);
+		appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+		if (system(shell_cmd) == 0) {
+			appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+			sendResultResponse(msg_id, resp_for, ACP_SUCCESS,
+					g_file_name_playing);
+			pthread_mutex_lock(&g_audio_status_mutex);
+			appLog(LOG_DEBUG, "inside %s", __FUNCTION__);
+			g_audio_flag = AUDIO_PAUSE;
+			pthread_mutex_unlock(&g_audio_status_mutex);
+		} else {
+			sendResultResponse(msg_id, resp_for, ACP_FAILED,
+					g_file_name_playing);
+		}
+
+	}
+	free(msg_id);
+	free(resp_for);
+	free(device_id);
+	return ACP_SUCCESS;
+}
