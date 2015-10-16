@@ -410,7 +410,7 @@ int initMediaPlayer(PlayingInfo *info) {
 					count_fail++;
 					usleep(100000);
 				}
-			} while (count_fail < 5);
+			} while (count_fail < 10);
 			appLog(LOG_DEBUG, "start player failed!");
 			return ACP_FAILED;
 		} else {

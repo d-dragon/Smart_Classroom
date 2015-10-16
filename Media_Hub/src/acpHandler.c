@@ -672,7 +672,7 @@ int RequestMessageHandler(char *message) {
 		ret = playMedia(message);
 		break;
 	case STOP_AUDIO:
-		appLog(LOG_DEBUG, "called stopAudio");
+		appLog(LOG_DEBUG, "called stopMediaPlayer");
 //		ret = stopAudio(message);
 		ret = stopMediaPlayer(message);
 		break;

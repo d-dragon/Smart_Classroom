@@ -34,6 +34,8 @@ install:
 #endif
 	cp $(APP) /usr/bin/
 	cp startMediaHub.sh /usr/bin/
+	cp omxplayer_dbus_control.sh /usr/bin/
+	cp ftplib_example.py /usr/bin/
 #endif
 
 uninstall:
