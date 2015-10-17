@@ -38,7 +38,7 @@ then
 fi
 if [ $flag -eq 1 ]
 then
-	if [ -f /home/pi/mbox.cfg ]
+	if [ -f /etc/mbox.cfg ]
 	then
 		Mbox
 	else

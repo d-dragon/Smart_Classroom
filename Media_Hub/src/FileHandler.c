@@ -280,7 +280,6 @@ int getFile(char *message) {
 	return ret;
 }
 
-
 /*if the config file is not exist, this function will be called at starting app.
  * the config will init with default configuration
  */
@@ -396,8 +395,7 @@ void initDeviceInfo(char *mac_addr) {
 		} else {
 			strcpy(g_device_info.device_name, "mbox.MAC");
 		}
-		if (config_setting_lookup_string(setting, "station",
-				&station) != NULL) {
+		if (config_setting_lookup_string(setting, "station", &station) != NULL) {
 			strcpy(g_device_info.station_addr, station);
 		} else {
 			strcpy(g_device_info.station_addr, STATION_DF_ADDR);
