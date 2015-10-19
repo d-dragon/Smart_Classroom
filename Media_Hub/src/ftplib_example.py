@@ -8,9 +8,9 @@ def getFile(hostdomain, filename,user,passwd):
 	print(passwd)
 	ftp = FTP()
 	ftp.connect(hostdomain, 2121)
-    ftp.login(user, passwd)
-    ftp.cwd('demo/')
-	filepath = '/media/data/mbox' + filename
+	ftp.login(user, passwd)
+    	ftp.cwd('demo/')
+	filepath = '/media/data/' + filename
 	print filepath
 	localfile = open(filepath, 'wb')
 	ftp.retrbinary('RETR ' + filename, localfile.write, 1024)
