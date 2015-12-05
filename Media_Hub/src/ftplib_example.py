@@ -8,6 +8,7 @@ def getFile(hostdomain, filename,user,passwd):
 	print(passwd)
 	ftp = FTP()
 	ftp.connect(hostdomain, 2121)
+	ftp.set_pasv(False)
 	ftp.login(user, passwd)
     	ftp.cwd('demo/')
 	filepath = '/media/data/' + filename
